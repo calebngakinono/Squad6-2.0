@@ -1,0 +1,103 @@
+# Deploys after a PR is merged into staging or main.
+#
+#   push to staging -> CI -> [staging env]                 migrate wrench-staging -> deploy Railway staging
+#   push to main    -> CI -> [Production env: waits for Caleb] migrate wrench-prod -> deploy Railway production
+#
+# Secrets live only in GitHub Environments (not repo-level), so only jobs that
+# declare `environment:` can read them, and each environment only accepts its
+# own branch. PR workflows never get them.
+name: Deploy
+
+on:
+  push:
+    branches: [staging, main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      security-events: write
+
+  deploy:
+    name: Deploy ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Production pauses here until Caleb approves in the Actions tab.
+    environment:
+      name: ${{ github.ref_name == 'main' && 'Production' || 'staging' }}
+      url: ${{ vars.APP_URL }}
+    # Never run two deploys to the same environment at once, and never cancel one mid-migration.
+    concurrency:
+      group: deploy-${{ github.ref_name }}
+      cancel-in-progress: false
+    env:
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check configuration
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          APP_URL: ${{ vars.APP_URL }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: |
+          missing=""
+          [ -n "$SUPABASE_DB_URL" ]      || missing="$missing SUPABASE_DB_URL(secret)"
+          [ -n "$RAILWAY_TOKEN" ]        || missing="$missing RAILWAY_TOKEN(secret)"
+          [ -n "$APP_URL" ]              || missing="$missing APP_URL(variable)"
+          [ -n "$RAILWAY_SERVICE" ]      || missing="$missing RAILWAY_SERVICE(variable)"
+          [ -n "$SUPABASE_PROJECT_REF" ] || missing="$missing SUPABASE_PROJECT_REF(variable)"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing in this GitHub Environment:$missing"
+            exit 1
+          fi
+          # Catch a staging/prod mix-up before touching any database.
+          case "$SUPABASE_DB_URL" in
+            *"postgres.$SUPABASE_PROJECT_REF:"*) echo "Database secret matches project $SUPABASE_PROJECT_REF" ;;
+            *) echo "::error::SUPABASE_DB_URL is not the session-pooler URL for project $SUPABASE_PROJECT_REF"; exit 1 ;;
+          esac
+
+      # 1. Database first, so the new app version never runs against an old schema.
+      #    `db push` only applies migrations the database has not seen. It never resets.
+      - name: Pending migrations (dry run)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: pnpm exec supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+      - name: Apply migrations
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: pnpm exec supabase db push --db-url "$SUPABASE_DB_URL"
+
+      # 2. App. The project token is scoped to one Railway environment, so the
+      #    staging token cannot deploy production and vice versa.
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: pnpm dlx @railway/cli@5.71.0 up --ci --service "$RAILWAY_SERVICE"
+
+      # 3. Confirm the new version is actually serving.
+      - name: Smoke test
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          for _ in $(seq 1 10); do
+            if curl -fsS "$APP_URL/api/health" | grep -q '"ok"'; then
+              echo "Healthy: $APP_URL"; exit 0
+            fi
+            sleep 6
+          done
+          echo "::error::$APP_URL/api/health did not return ok"
+          exit 1
