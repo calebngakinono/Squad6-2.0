@@ -34,10 +34,12 @@ PR required, review conversations resolved. Required status checks are added onc
 
 ## Database migrations in releases
 
-- Migrations are tested in CI on a disposable database for every PR.
+- Every PR: the **migration guard** rejects edits to merged migrations and data-destroying SQL
+  (`drop table`, `drop column`, `drop schema`, `truncate`, `delete from`) unless the new file contains
+  `-- destructive-ok: <reason>`. Then every migration is applied to a disposable database and tested.
 - Merging to `staging` applies new migrations to `wrench-staging`, then deploys the app.
 - Merging to `main` waits for Caleb's approval in the `Production` GitHub Environment, shows the pending
   migrations, applies them to `wrench-prod`, then deploys the app.
 - Only `supabase db push` (apply new migrations) is used against cloud databases. Never `db reset`.
 
-(Deploy workflow details are added in the deploy phase.)
+Details, approval steps and rollback: [deployment.md](deployment.md).

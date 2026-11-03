@@ -29,4 +29,5 @@ pnpm db:test
 - [Testing strategy](docs/testing-strategy.md)
 - [MVP plan](docs/mvp-plan.md)
 - [Branches, PRs and releases](docs/workflow.md)
+- [Deployment and rollback](docs/deployment.md)
 - [Engineering instructions for AI assistants](CLAUDE.md)

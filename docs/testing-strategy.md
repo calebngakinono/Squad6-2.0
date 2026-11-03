@@ -25,7 +25,7 @@ Every PR and push to a long-lived branch runs:
 
 1. **Promotion guard**: PRs follow `feature/* → dev → qa → staging → main`
 2. **App checks**: lint (zero warnings) → typecheck → unit tests → `pnpm audit --audit-level=high` → build → Playwright
-3. **Database checks**: disposable local Supabase applies every migration from scratch → pgTAP tests → schema lint
+3. **Database checks**: migration guard → disposable local Supabase applies every migration from scratch → pgTAP tests → schema lint
 4. **CodeQL**: static security analysis
 
 CI has no access to staging or production secrets.
