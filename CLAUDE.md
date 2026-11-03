@@ -14,6 +14,7 @@ beats infrastructure, and one fully verified repair journey beats broad coverage
 - `docs/mvp-plan.md` — current scope and priorities
 - `docs/testing-strategy.md` — what to test where
 - `docs/workflow.md` — branches, PRs, releases, migrations in deploys
+- `docs/deployment.md` — deploy pipeline, approving production, rollback
 
 ## Stack
 
