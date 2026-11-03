@@ -1,0 +1,9 @@
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
+
+# Force patched versions of vulnerable transitive dev-tool dependencies (pnpm audit).
+# Remove an entry once the upstream package ships the fix itself.
+overrides:
+  zod@<4.6.6: ^4.6.6
+  minimatch@<11.0.1: ^11.0.1
