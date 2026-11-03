@@ -37,7 +37,7 @@ jobs:
       group: deploy-${{ github.ref_name }}
       cancel-in-progress: false
     env:
-      RAILWAY_SERVICE: web
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -47,20 +47,28 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      - name: Check required secrets
+      - name: Check configuration
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           APP_URL: ${{ vars.APP_URL }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: |
           missing=""
-          [ -n "$SUPABASE_DB_URL" ] || missing="$missing SUPABASE_DB_URL(secret)"
-          [ -n "$RAILWAY_TOKEN" ]   || missing="$missing RAILWAY_TOKEN(secret)"
-          [ -n "$APP_URL" ]         || missing="$missing APP_URL(variable)"
+          [ -n "$SUPABASE_DB_URL" ]      || missing="$missing SUPABASE_DB_URL(secret)"
+          [ -n "$RAILWAY_TOKEN" ]        || missing="$missing RAILWAY_TOKEN(secret)"
+          [ -n "$APP_URL" ]              || missing="$missing APP_URL(variable)"
+          [ -n "$RAILWAY_SERVICE" ]      || missing="$missing RAILWAY_SERVICE(variable)"
+          [ -n "$SUPABASE_PROJECT_REF" ] || missing="$missing SUPABASE_PROJECT_REF(variable)"
           if [ -n "$missing" ]; then
-            echo "::error::Missing in the '${{ github.ref_name }}' GitHub Environment:$missing"
+            echo "::error::Missing in this GitHub Environment:$missing"
             exit 1
           fi
+          # Catch a staging/prod mix-up before touching any database.
+          case "$SUPABASE_DB_URL" in
+            *"postgres.$SUPABASE_PROJECT_REF:"*) echo "Database secret matches project $SUPABASE_PROJECT_REF" ;;
+            *) echo "::error::SUPABASE_DB_URL is not the session-pooler URL for project $SUPABASE_PROJECT_REF"; exit 1 ;;
+          esac
 
       # 1. Database first, so the new app version never runs against an old schema.
       #    `db push` only applies migrations the database has not seen. It never resets.

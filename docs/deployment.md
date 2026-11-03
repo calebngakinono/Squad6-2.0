@@ -14,6 +14,8 @@ merge to main    ─► CI ─► ⏸ Caleb approves ─► migrate wrench-prod 
 | `SUPABASE_DB_URL` | GitHub Environment secret (`staging`, `Production`) | Session-pooler connection string for that environment's database. Used only to apply migrations. |
 | `RAILWAY_TOKEN` | GitHub Environment secret | Railway *project token* scoped to one Railway environment. |
 | `APP_URL` | GitHub Environment variable | Public URL, used for the health check and shown on the deployment. |
+| `RAILWAY_SERVICE` | GitHub Environment variable | Railway service name: `web2` (staging), `web` (production). |
+| `SUPABASE_PROJECT_REF` | GitHub Environment variable | Expected project; the deploy refuses a `SUPABASE_DB_URL` for any other project. |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Railway service variables (per environment) | Needed at build time; Railway injects them into the build. |
 
 Nothing is stored as a repository-level secret, so PR workflows cannot read any of it.
@@ -31,7 +33,7 @@ through this workflow and, for production, through your approval.
 
 ## Rolling back
 
-- **App:** Railway → project `WrenchAi` → `production` → `web` → **Deployments** → previous good
+- **App:** Railway → project `WrenchAi` → `production` → `web` (staging: `web2`) → **Deployments** → previous good
   deployment → **Redeploy**. Then fix forward through the normal branch flow.
 - **Database:** never reset. Write a new migration that reverses the change and ship it through the
   normal flow. Before a risky production migration, take a manual backup first:
