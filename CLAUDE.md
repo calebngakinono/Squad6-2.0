@@ -11,6 +11,7 @@ beats infrastructure, and one fully verified repair journey beats broad coverage
 - `docs/architecture.md` — system design and module boundaries
 - `docs/database-schema.md` — tables, RLS rules, migration rules
 - `docs/content-verification.md` — **mandatory** for anything that shows repair information
+- `docs/source-strategy.md` — approved sources, licenses, `CONTENT_LICENSE_MODE`
 - `docs/mvp-plan.md` — current scope and priorities
 - `docs/testing-strategy.md` — what to test where
 - `docs/workflow.md` — branches, PRs, releases, migrations in deploys

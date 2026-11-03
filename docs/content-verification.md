@@ -5,18 +5,22 @@ These rules apply to guides, Quick Lookup answers, diagrams, seed data, UI copy 
 
 ## 1. Allowed sources
 
-Information may come only from sources we are permitted to use:
+Information may come only from sources we are permitted to use. The evaluated list, with licenses and
+costs, is in [source-strategy.md](source-strategy.md):
 
-- Licensed repair data or APIs (under their license terms)
-- Manufacturer owner's manuals and documentation used within their terms
-- Material we create ourselves by performing and photographing the repair
+- Manufacturer owner's manuals: **cite** them (manual code and page) and write our own instructions. Never copy
+  their text or illustrations.
+- Openly licensed media (CC0, CC BY, CC BY-SA), with attribution
+- Noncommercial sources such as iFixit (CC BY-NC-SA), flagged `commercial_use = false`
+- Licensed repair data or APIs, under their license terms
 - Other sources whose license or written permission allows our use
 
-Not allowed: indiscriminate scraping, copying forum posts or videos, or republishing copyrighted text
-or images without permission. When the license is unclear, the source is not used.
+Not allowed: indiscriminate scraping, copying forum posts or videos, rehosting YouTube videos, training models
+on sources whose terms forbid it, or republishing copyrighted text or images without permission. When the
+license is unclear, the source is not used.
 
-Every source is recorded in `sources` with publisher, URL or reference, license type, license notes and
-retrieval date.
+Every source is recorded in `sources` with publisher, URL or identifier, source type, license code,
+commercial-use flag, attribution text, terms URL and retrieval date.
 
 ## 2. Safety-critical facts need a citation
 
@@ -31,17 +35,22 @@ If we do not have a verified value, the guide says so and points to the owner's 
 ## 3. Lifecycle
 
 ```
-draft ──► in_review ──► verified ──► retired
+draft ──► needs_review ──► approved ──► superseded
   ▲            │
-  └── changes ─┘
+  └─ rejected ◄┘
 ```
 
-- **draft**: anyone with the editor role can write. Not visible to users.
-- **in_review**: a different person than the author checks it against the checklist below.
-- **verified**: visible to users. The revision becomes immutable. Fixes create a new revision.
-- **retired**: replaced or withdrawn; kept for history, because user progress and records point to it.
+- **draft**: created by an editor or an ingestion adapter. Not visible to users.
+- **needs_review**: a reviewer checks it against the checklist below.
+- **approved**: visible to users. The revision becomes immutable. Fixes create a new revision.
+- **rejected**: not published; the reason is recorded. It can be revised into a new draft.
+- **superseded**: replaced by a newer approved revision; kept for history, because user progress, feedback
+  and maintenance records point to it.
 
-For the capstone, Caleb is the verifier. The app records `verified_by` and `verified_at`.
+Records, media hotspots and vehicle applicability are reviewed separately. A procedure can't be approved
+while an image it uses still has unapproved hotspots.
+
+For the capstone, Caleb is the reviewer. The app records `reviewed_by`, `reviewed_at` and the review notes.
 
 ## 4. Verification checklist
 
@@ -51,7 +60,8 @@ For the capstone, Caleb is the verifier. The app records `verified_by` and `veri
 - [ ] Tools and parts lists are complete; safety gates sit before the steps they protect
 - [ ] Branches (e.g. "clips or screws?") lead somewhere valid; no dead ends
 - [ ] Wording works for a beginner (Guided View) and is fast for a pro (Quick View)
-- [ ] Ideally the repair was walked through on a real vehicle or against a verified reference
+- [ ] Source permissions recorded and compatible with how the record and its media are used
+- [ ] Cross-checked against at least two independent sources where available; contradictions resolved or flagged
 
 ## 5. AI assistant rules
 
@@ -67,4 +77,4 @@ For the capstone, Caleb is the verifier. The app records `verified_by` and `veri
 ## 6. Tests and seed data
 
 Seed data and test fixtures use obviously fake values (e.g. "Test Vehicle 2000", "10 Nm (fixture)") unless
-they copy a verified revision. Never put realistic-looking but unverified specs in fixtures.
+they copy an approved revision. Never put realistic-looking but unverified specs in fixtures.
