@@ -34,7 +34,7 @@ pnpm lint                # ESLint, zero warnings allowed
 pnpm typecheck           # next typegen + tsc
 pnpm test                # Vitest unit/integration
 pnpm build && pnpm test:e2e   # Playwright against the production build
-pnpm db:start            # local Supabase in Docker (ports 553xx)
+pnpm db:start            # local Supabase in Docker (ports 253xx)
 pnpm db:test             # pgTAP tests in supabase/tests
 pnpm db:lint             # schema lint
 pnpm db:reset            # rebuild LOCAL database from migrations
