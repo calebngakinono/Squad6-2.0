@@ -1,0 +1,118 @@
+# Runs on every PR and on every push to a long-lived branch.
+# This workflow never receives deployment secrets: it uses no `environment:`
+# and reads no `secrets.*`. Deploys live in a separate workflow.
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, qa, staging, main]
+  push:
+    branches: [dev, qa, staging, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  promotion-guard:
+    name: Promotion guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Enforce feature/* -> dev -> qa -> staging -> main
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          case "$BASE" in
+            dev)     ok=true ;;
+            qa)      [ "$HEAD" = "dev" ]     && ok=true || ok=false ;;
+            staging) [ "$HEAD" = "qa" ]      && ok=true || ok=false ;;
+            main)    [ "$HEAD" = "staging" ] && ok=true || ok=false ;;
+            *)       ok=false ;;
+          esac
+          if [ "$ok" != true ]; then
+            echo "::error::PRs into '$BASE' must come from the previous branch in feature/* -> dev -> qa -> staging -> main (got '$HEAD')."
+            exit 1
+          fi
+          echo "OK: $HEAD -> $BASE"
+
+  app:
+    name: App checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit tests
+        run: pnpm test
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+      - name: Build
+        run: pnpm build
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: E2E tests
+        run: pnpm test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  database:
+    name: Database checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # A throwaway Postgres on this CI machine. Every migration is applied
+      # from scratch, so a broken or out-of-order migration fails here,
+      # long before it reaches staging or production.
+      - name: Start disposable local Supabase (applies all migrations)
+        run: >
+          pnpm exec supabase start
+          -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,postgres-meta,realtime,storage-api
+      - name: Database tests (RLS and triggers)
+        run: pnpm db:test
+      - name: Schema lint
+        run: pnpm exec supabase db lint --level warning --fail-on warning
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          build-mode: none
+      - uses: github/codeql-action/analyze@v4
