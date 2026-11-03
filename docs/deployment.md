@@ -37,7 +37,7 @@ through this workflow and, for production, through your approval.
   deployment → **Redeploy**. Then fix forward through the normal branch flow.
 - **Database:** never reset. Write a new migration that reverses the change and ship it through the
   normal flow. Before a risky production migration, take a manual backup first:
-  `pnpm exec supabase db dump --db-url "<prod session pooler url>" -f backup.sql` (keep it out of the repo).
+  `pnpm exec supabase db dump --remote="<prod session pooler url>" -f backup.sql` (keep it out of the repo).
 
 ## Troubleshooting
 
