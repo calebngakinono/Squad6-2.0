@@ -20,12 +20,15 @@ Column lists are indicative; the migration is the source of truth.
 
 ## Verified content (Knowledge Engine)
 
+Phase 2 refines these tables per [source-strategy.md](source-strategy.md): vehicle configurations from vPIC,
+components with aliases, license fields on sources and media, and separate review status for hotspots.
+
 | Table | Status | Purpose | Access |
 |---|---|---|---|
 | `sources` | 📝 | Where information came from: title, publisher, URL, license type, license notes, retrieved date. | Editors. |
 | `repairs` | 📝 | Repair types (e.g. engine air filter replacement), category, slug. | Public read. |
-| `guides` | 📝 | One guide per repair × vehicle applicability set; points at its current verified revision. | Public read when it has a verified revision. |
-| `guide_revisions` | 📝 | Versioned guide JSON (`content jsonb`), `status` (`draft` → `in_review` → `verified` → `retired`), author, verifier, verified_at, change notes. Immutable once verified. | Public read of `verified`; editors otherwise. |
+| `guides` | 📝 | One guide per repair × vehicle applicability set; points at its current approved revision. | Public read when it has an approved revision. |
+| `guide_revisions` | 📝 | Versioned guide JSON (`content jsonb`), `status` (`draft` → `needs_review` → `approved` / `rejected` → `superseded`), author, reviewer, reviewed_at, change notes. Immutable once approved. | Public read of `approved`; editors otherwise. |
 | `guide_applicability` | 📝 | Which `vehicles` a revision applies to. | Same as revision. |
 | `guide_revision_sources` | 📝 | Sources backing a revision, with locator (page/section). Steps cite these by id. | Same as revision. |
 | `part_locations` | 📝 | Quick Lookup answers: vehicle, part, location description, diagram, sources, verification status. | Public read of verified. |

@@ -51,7 +51,7 @@ Browser ──► Next.js on Railway ──► Supabase (Auth + Postgres with RL
    Guided View and AI grounding.
 2. **Revisions are immutable once verified.** Corrections create a new revision. User progress and
    maintenance records point at the exact revision they used.
-3. **The AI never authors repair content.** It retrieves verified revisions and their sources, answers
+3. **The AI never authors repair content.** It retrieves approved revisions and their sources, answers
    from them, and says so when it has nothing verified. See `content-verification.md`.
 4. **Server-first rendering.** Content pages are Server Components (fast on phones, good SEO);
    interactive pieces (hotspot viewer, step state, checklists) are small client components.

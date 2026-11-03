@@ -26,6 +26,7 @@ pnpm db:test
 - [Architecture](docs/architecture.md)
 - [Database schema](docs/database-schema.md)
 - [Content verification rules](docs/content-verification.md)
+- [Source strategy and licensing](docs/source-strategy.md)
 - [Testing strategy](docs/testing-strategy.md)
 - [MVP plan](docs/mvp-plan.md)
 - [Branches, PRs and releases](docs/workflow.md)
