@@ -1,8 +1,10 @@
 # Wrench AI — engineering instructions
 
-Wrench AI is an automotive repair platform: vehicle-specific Quick Lookup, an interactive Repair Studio,
-a grounded AI assistant, My Garage, and maintenance tracking. It is a 21-day capstone: product quality
-beats infrastructure, and one fully verified repair journey beats broad coverage.
+Wrench AI is an AI copilot for DIY car repairs: watch a YouTube repair tutorial in the Wrench workspace,
+pause at a confusing moment, and ask. The assistant answers from the analyzed video, the timestamp and the
+user's vehicle. Around it: a digital garage, repair missions with bookmarks and notes, and a light
+maintenance log. It is a capstone due 2026-11-23: the video-aware answer is the core; everything else
+supports it.
 
 @AGENTS.md
 
@@ -10,8 +12,7 @@ beats infrastructure, and one fully verified repair journey beats broad coverage
 
 - `docs/architecture.md` — system design and module boundaries
 - `docs/database-schema.md` — tables, RLS rules, migration rules
-- `docs/content-verification.md` — **mandatory** for anything that shows repair information
-- `docs/source-strategy.md` — approved sources, licenses, `CONTENT_LICENSE_MODE`
+- `docs/ai-rules.md` — **mandatory** for anything the AI says or any repair information shown
 - `docs/mvp-plan.md` — current scope and priorities
 - `docs/testing-strategy.md` — what to test where
 - `docs/workflow.md` — branches, PRs, releases, migrations in deploys
@@ -55,10 +56,10 @@ pnpm exec supabase migration new <name>   # new migration file
 4. **No secrets in the repo.** It is public. Only `.env.example` is committed. `NEXT_PUBLIC_*` values are
    shipped to browsers — never put a secret key in one. The Supabase secret key is server-only.
 5. **Never fabricate automotive information.** No invented specs, torque values, part numbers, fluid
-   capacities or safety steps — not in seed data, UI copy, tests or AI output. All repair content follows
-   `docs/content-verification.md`.
+   capacities or safety steps — not in seed data, UI copy, tests or AI output. Never let the AI claim to
+   have seen a video that was not analyzed. See `docs/ai-rules.md`.
 6. **Validate all external input with Zod** at the boundary (Server Actions, Route Handlers, AI tool calls,
-   ingested content).
+   AI provider responses).
 7. Do not push to `dev`, `qa`, `staging` or `main` directly, and never merge a PR without Caleb's approval.
 
 ## How to work
@@ -68,7 +69,7 @@ pnpm exec supabase migration new <name>   # new migration file
 - Before saying work is done: `pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e`,
   plus `pnpm db:test` if the schema changed. Report real results.
 - Prefer Server Components; add `"use client"` only for interactivity. Use shadcn/ui components before
-  building custom ones. Design for mobile first — users read guides next to a car.
+  building custom ones. Design for mobile and desktop; the workspace (video and chat side by side) is desktop-first.
 - Keep explanations simple: Caleb is returning after a few months away, so explain major technical
   decisions in plain terms.
 - Update the relevant doc in `docs/` in the same PR when a decision changes it.

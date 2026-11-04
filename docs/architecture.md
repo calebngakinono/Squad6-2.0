@@ -1,72 +1,78 @@
 # Architecture
 
-## Shape
-
-One Next.js app, one Postgres database per environment. No separate backend.
+Revised 2026-11-04 for the video-copilot pivot. One Next.js app, one Postgres database per environment,
+one AI provider behind an interface.
 
 ```
-Browser ──► Next.js on Railway ──► Supabase (Auth + Postgres with RLS + Storage)
-             │  Server Components      (reads)
-             │  Server Actions         (writes)
-             │  Route Handlers         (health check, AI streaming, webhooks)
-             └► LLM provider           (AI assistant, server-side only)
+Browser
+ ├─ YouTube IFrame Player (official embed): reports currentTime, state, errors 101/150
+ └─ Wrench UI (garage, missions, chat)
+        │  Server Actions / Route Handlers (sign-in required for AI)
+        ▼
+Next.js on Railway ──► Supabase (Auth, Postgres + RLS)
+        │
+        └─► AI provider interface ──► Gemini API (video understanding via public YouTube URL; chat)
 ```
 
-| Environment | Branch | Railway | Supabase project |
+| Environment | Branch | Railway | Supabase |
 |---|---|---|---|
-| local | any | `pnpm dev` | Docker (`pnpm db:start`) |
-| CI | PRs | — | Disposable Docker database |
-| staging | `staging` | `staging` env | `wrench-staging` |
-| production | `main` | `production` env | `wrench-prod` |
+| local | any | `pnpm dev` | Docker |
+| CI | PRs | — | disposable Docker DB |
+| staging | `staging` | `staging` env (`web2`) | `Wrench-staging` |
+| production | `main` (after Caleb approves) | `production` env (`web`) | `Wrench-prod` |
 
-`dev` and `qa` are integration branches that run CI only; they have no hosted environment.
+## Video status: the honesty contract
+
+Every video in a session has exactly one status, and the UI and assistant behave accordingly:
+
+| Status | Meaning | Assistant may |
+|---|---|---|
+| `analyzed` | The provider processed this public video and we stored its index | Answer about the video, cite timestamps |
+| `analyzing` | The index is being built | Say so; answer general questions only |
+| `embeddable_not_analyzed` | Plays fine but isn't analyzed (limits, length cap, failure) | General questions only; must say it has not seen the video |
+| `not_embeddable` | Player error 101/150, private, unlisted, or removed | Nothing about the video; suggest another |
+
+The assistant prompt receives the status. Grounded answers are only produced when the status is `analyzed`.
+Each stored message records whether it was `video_grounded` or `general`.
+
+## How a timestamp question is answered
+
+1. The client sends `{missionId, question, currentTime}`. The server loads the vehicle, the video and a bounded
+   chat history (the last N turns).
+2. **Video index** (built once per video, cached and shared across users): summary plus timestamped step list,
+   as Zod-validated JSON stored in `videos.analysis`.
+3. **Moment call:** the provider gets the YouTube URL **clipped to a window around `currentTime`** (e.g. −30 s /
+   +10 s, at a higher frame rate), the index for overall context, the vehicle, and the question.
+4. The answer separates **what is visible or said** from **inference**, cites `MM:SS`, and states uncertainty.
+   No torque specs, part numbers or vehicle-specific procedures unless they are shown or said in the video,
+   and even then they are attributed to the video, never presented as verified for the user's car.
+
+## Provider interface
+
+`src/server/ai/` exposes `analyzeVideo(url)`, `answerAboutMoment(...)` and `answerGeneral(...)`. Gemini is the
+only implementation for the MVP. The model id comes from an environment variable, so swapping models or
+providers does not touch the UI.
+
+## Cost and abuse controls
+
+- AI features require sign-in, with a per-user daily question quota counted from `ai_usage`.
+- The video index is cached per YouTube id, so the same video is never re-analyzed.
+- Max video length for analysis (e.g. 30 min), max output tokens, and a clip window for moment questions.
+- Zod validation on every input. Provider errors map to clear user messages. Usage is logged with token counts.
 
 ## Security model
 
-- **RLS is the real access control.** The browser and server both use the Supabase *publishable* key with
-  the user's session, so Postgres policies decide what each user can see. Code bugs cannot leak other
-  users' data if policies are right.
-- The Supabase *secret* key bypasses RLS. It is used only in server code for admin tasks (content
-  ingestion, migrations in CI) and never in a `NEXT_PUBLIC_*` variable.
-- Published, verified repair content is readable by anonymous visitors (Quick Lookup needs no account).
-  Drafts and unverified content are visible only to editors.
-
-## Modules and where they live
-
-| Module | Priority | Route(s) | Notes |
-|---|---|---|---|
-| A. Quick Lookup | 1 | `/`, `/lookup/...` | No login. Quick View and Guided View of the same verified content. |
-| C. Repair Studio | 1 | `/repair/[guide]` | Renders schema-driven guide JSON: steps, branches, hotspots, safety gates. |
-| B. Onboarding & My Garage | 2 | `/onboarding`, `/garage` | Supabase Auth; profile + vehicles. |
-| F. Maintenance tracking | 2 | `/garage/[vehicle]/history` | Records; can be created from a completed repair. |
-| D. AI Assistant | 3 | `/assistant`, in-guide help | Answers only from verified content; cites sources; refuses otherwise. |
-| G. Analytics & feedback | 3 | — | Consent-based events + post-repair feedback. |
-| E. Knowledge Engine | foundation | admin only | Sources, licensing, revisions, verification workflow. Full ingestion is post-MVP. |
-
-## Key design decisions
-
-1. **Guides are data, not pages.** A guide revision is a JSON document validated by a Zod schema
-   (`src/features/guides/schema.ts`, added with the Repair Studio). One renderer handles every guide, so
-   adding a repair means adding verified content, not code. The same document powers Quick View,
-   Guided View and AI grounding.
-2. **Revisions are immutable once verified.** Corrections create a new revision. User progress and
-   maintenance records point at the exact revision they used.
-3. **The AI never authors repair content.** It retrieves approved revisions and their sources, answers
-   from them, and says so when it has nothing verified. See `content-verification.md`.
-4. **Server-first rendering.** Content pages are Server Components (fast on phones, good SEO);
-   interactive pieces (hotspot viewer, step state, checklists) are small client components.
+RLS on every user table (owner-only). `videos` is readable by signed-in users and written only by the server.
+The Gemini key is server-only (`GEMINI_API_KEY`, never `NEXT_PUBLIC_*`). The repo is public, so no secrets
+go in it.
 
 ## Code layout
 
 ```
-src/
-  app/                 routes only; thin
-  features/<module>/   components, server actions, queries, schemas per module
-  components/ui/       shadcn/ui primitives
-  lib/                 env, supabase clients, shared utilities
-supabase/
-  migrations/          the only way schema changes
-  tests/               pgTAP tests (RLS, triggers)
-e2e/                   Playwright
-docs/
+src/app/             routes (garage, missions/[id] workspace, auth)
+src/features/        garage, missions, workspace, maintenance
+src/server/ai/       provider interface, Gemini implementation, prompts, schemas
+src/lib/             env, supabase clients, utilities
+supabase/            migrations, pgTAP tests
+scripts/experiments/ one-off research scripts (not shipped)
 ```

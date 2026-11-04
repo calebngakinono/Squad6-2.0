@@ -1,7 +1,7 @@
 # Wrench AI
 
-Vehicle-specific repair lookups and interactive repair guides, with an AI assistant that only answers
-from verified information.
+Your AI copilot for DIY car repairs. YouTube shows you how to fix it; Wrench AI helps you understand
+what you're watching.
 
 ## Quick start
 
@@ -25,8 +25,7 @@ pnpm db:test
 
 - [Architecture](docs/architecture.md)
 - [Database schema](docs/database-schema.md)
-- [Content verification rules](docs/content-verification.md)
-- [Source strategy and licensing](docs/source-strategy.md)
+- [AI honesty and safety rules](docs/ai-rules.md)
 - [Testing strategy](docs/testing-strategy.md)
 - [MVP plan](docs/mvp-plan.md)
 - [Branches, PRs and releases](docs/workflow.md)

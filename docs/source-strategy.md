@@ -1,3 +1,6 @@
+> **Superseded on 2026-11-04 by the product pivot** (see `mvp-plan.md`). Kept for reference: the vPIC,
+> YouTube and licensing findings still apply; the guide and knowledge-ingestion plan does not.
+
 # Source strategy
 
 Researched 2026-11-03. Wrench AI gets repair knowledge from external, authorized sources and turns it into
