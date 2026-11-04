@@ -1,48 +1,72 @@
-# MVP plan (21-day capstone)
+# MVP plan: Wrench AI, your AI copilot for DIY car repairs
 
-Start: 2026-11-03 · **Deadline: 2026-11-23**
+Revised 2026-11-04 (product pivot). Idea presentation: **Friday 2026-11-06**. Deadline: **2026-11-23**.
 
-**Goal:** Wrench AI acquires repair knowledge from authorized external sources, reviews it, and serves it
-through Quick Lookup, the interactive Repair Studio and Ask Wrench, all from the same approved records.
-The demo proves the pipeline end to end on one carefully verified vehicle, and shows how licensed data
-sources would scale it. Sources, licensing and costs: [source-strategy.md](source-strategy.md).
+> YouTube shows you how to fix it. Wrench AI helps you understand what you're watching.
 
-## Pilot (decided by source availability)
+## Problem and hypothesis
 
-- **Vehicle:** 2018 Toyota Camry, gasoline. The engine-bay locator covers the 2.5 L A25A-FKS. The hybrid is
-  explicitly not supported.
-- **Quick Lookup pilot:** engine compartment components, cited to owner's manual OM33B95U p. 432, with hotspots
-  on a CC BY-SA 4.0 engine-bay photo.
-- **Repair Studio pilot:** cabin air filter replacement, from manual pp. 464–465, corroborated by iFixit #199368.
-- **Any vehicle** can be selected (NHTSA vPIC). Wrench shows exactly which features are verified for it.
+People can find repair tutorials, but when a moment is confusing they leave the video and describe what
+they saw to another tool, which never saw the video. **Hypothesis:** a video-aware assistant that knows the
+repair being shown, the playback moment and the user's vehicle reduces that friction. This is a hypothesis
+to validate, not a proven market claim.
 
-## Phases
+## The one demo that matters
 
-| Days | Phase | Done when |
+Pause a real repair video, ask "what did he just do?", and get an accurate answer grounded in the actual
+video, with the timestamp. Real model output, not a script.
+
+## Scope
+
+| Priority | Feature | MVP |
 |---|---|---|
-| 1 ✅ | Pipeline: CI, gated deploys, foundation | CI green; deploy workflow merged |
-| 2–4 | **1. Auth, design system, app shell, garage** | Sign up and log in; add a vehicle from the vPIC picker; garage persists; guest Quick Lookup page reachable; mobile and desktop polished |
-| 5–8 | **2. Knowledge system** | Schema for vehicle configs, components and aliases, locations, procedures and revisions, sources, media and hotspots, review status; license enforcement plus `CONTENT_LICENSE_MODE`; adapters for vPIC, iFixit, YouTube, Commons/Openverse and manual citations; review UI (Draft → Needs review → Approved / Rejected / Superseded); duplicate and contradiction flags; pilot records approved |
-| 9–11 | **3. Quick Lookup and visual locator** | Alias and fuzzy search over approved records with timing measured; Quick View and Guided View; reusable hotspot viewer (zoom, keyboard, mobile); honest fallbacks |
-| 12–15 | **4. Repair Studio** | Schema-driven engine with all 9 step types; branching; safety gates; progress (local for guests, database for accounts); completion creates a maintenance record; feedback |
-| 16–17 | **5. Ask Wrench** | Quick Question and in-guide help, grounded only on approved records with citations; safety screening; limited Guided Diagnosis that escalates when evidence is missing; configurable model provider |
-| 18 | **6. Analytics and feedback** | Typed consented events; protected dashboard on real data; feedback per guide revision; retention and deletion |
-| 19–21 | **7. Stabilize, deploy, demo** | P0/P1 fixed; full test suite; production release approved; README, demo script, honest completion report |
+| 1 | **Prove video understanding** on authorized, public, embeddable videos | Experiment first (below) |
+| 2 | **Repair workspace**: YouTube IFrame player, current timestamp, AI chat, honest status per video | ✅ |
+| 3 | **Auth and digital garage**: dark, game-inspired; vPIC year/make/model picker; active vehicle; generic (labelled) vehicle art | ✅ |
+| 4 | **Repair missions**: video, questions, timestamp bookmarks, notes, status planned / in progress / completed | ✅ |
+| 5 | **Maintenance log** (date, mileage, parts, cost) and light gamification (mission count, milestones) | ✅ lightweight |
+| 5 | **General automotive assistant** (no video needed), vehicle-aware, safety rules | ✅ |
+| 6 | Polish, tests, production deploy, demo script | ✅ |
+| Later | Chrome extension side panel, verified maintenance schedules, photo questions | ❌ |
 
-**If time slips, cut in this order:** Guided Diagnosis depth → revision-comparison analytics → YouTube adapter
-→ Openverse discovery (keep Commons by direct file reference).
+**Removed from the MVP:** knowledge ingestion, guide authoring and review, component-location database,
+hotspot diagrams, guided diagnostics, marketplaces, large analytics dashboards, predictive maintenance,
+universal coverage. The previous strategy is kept for reference in `source-strategy.md` (superseded).
 
-**Day-16 checkpoint:** decide what is in or out of the demo, based on what actually works.
+## Schedule
 
-## Scope rules
+| Date | Work | Done when |
+|---|---|---|
+| **Nov 4** | Plan approved; Gemini key; **video-understanding experiment** | Go/no-go with scored answers, latency and cost per question |
+| **Nov 5** | Proof-of-concept workspace: paste URL → embedded player → pause → ask → grounded answer with timestamp (staging) | Works live on 2 chosen videos |
+| **Nov 6** | **Idea presentation** (live PoC demo plus slides) | — |
+| Nov 7–9 | Workspace for real: video status states, cached video index, chat persistence, provider interface, rate limits and quotas, tests | Analyzed vs not-analyzed vs not-embeddable handled honestly |
+| Nov 10–12 | Auth, onboarding (18+ confirmation), garage with vPIC picker, visual identity | Vehicle saved, persists, RLS-tested |
+| Nov 13–15 | Missions, bookmarks, notes, mission history | Full mission flow E2E-tested |
+| Nov 16–17 | Maintenance log, light gamification, general assistant mode with safety handling | — |
+| **Nov 18** | **Feature freeze checkpoint**: cut anything not solid | — |
+| Nov 19–21 | Polish, mobile, accessibility, E2E suite, approved production release | Prod live |
+| Nov 22–23 | Demo script, README, honest completion report, buffer | Submitted |
 
-- No internet-wide crawler. Adapters fetch specific records on request or from a short list of seeds.
-- No invented instructions, locations, diagrams or specs. Where verified data is missing, the UI says so.
-- Every displayed fact traces to an approved record with a recorded source and license.
-- The capstone runs in `CONTENT_LICENSE_MODE=noncommercial`. Switching to `commercial` must hide all
-  noncommercial-only content, and a test proves it.
+**If time runs short, cut in this order:** gamification → maintenance log → general assistant polish. The
+video workspace and garage stay.
 
-## Explicitly later
+## First experiment (Priority 1)
 
-Licensed OEM data (MOTOR or similar), more vehicles and years, contributor photo uploads, photo-based
-questions, native apps, full Guided Diagnosis.
+Goal: find out whether Gemini can answer timestamp questions about real repair videos accurately enough.
+
+1. **Videos:** 2 public, embeddable repair tutorials, one short (air or cabin filter, about 5–10 min) and one
+   longer (front brake pads, about 15–20 min). Prefer videos marked Creative Commons on YouTube.
+2. **Script** (`scripts/experiments/`, not app code). For each video:
+   - one call to build a video index (summary plus timestamped step list, as JSON);
+   - 5 timestamp questions ("What is he doing at 04:32, and why?"), each run both against the whole video and
+     against a clip around the timestamp;
+   - 2 honesty probes: a question about something not in the video, and one about a moment that isn't there.
+3. **Models:** the cheapest capable model against one stronger Flash model. Record latency and token usage.
+4. **Scoring:** Caleb watches each moment and marks each answer correct / partial / wrong / hallucinated.
+5. **Pass:** ≥ 8 of 10 timestamp answers correct or partial with honest hedging; **zero** confident answers
+   on the honesty probes; p50 latency under about 15 s per question; cost per question measured.
+
+**If it fails:** report why, then fall back to (a) clip-only analysis with a narrower window, or (b) a
+Creative-Commons video from a source that permits download (e.g. Wikimedia Commons), uploaded through the
+Gemini File API and played in our own player. Never by downloading from YouTube.
