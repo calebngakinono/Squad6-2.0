@@ -4,19 +4,19 @@ Test what would hurt users or block the demo. Skip tests that only restate the i
 
 | Layer | Tool | Location | What it covers |
 |---|---|---|---|
-| Unit | Vitest | `src/**/*.test.ts` | Zod schemas (especially the guide schema), pure logic: branch resolution, progress state, search ranking, formatting. |
-| Component | Vitest + Testing Library | `src/**/*.test.tsx` | Interactive pieces: hotspot viewer, safety gate blocks progress until confirmed, checklist state. |
+| Unit | Vitest | `src/**/*.test.ts` | Zod schemas (AI responses, video index, inputs), timestamp parsing and formatting, video-status rules, quota logic. |
+| Component | Vitest + Testing Library | `src/**/*.test.tsx` | Chat panel states (analyzed / not analyzed / error), bookmark list, vehicle picker. |
 | Database | pgTAP via `supabase test db` | `supabase/tests/*.test.sql` | Every RLS policy (allowed and denied), triggers, constraints. |
-| End-to-end | Playwright | `e2e/*.spec.ts` | Golden paths on desktop and mobile Chrome: Quick Lookup → guide → complete repair; signup → add vehicle; log maintenance. |
+| End-to-end | Playwright | `e2e/*.spec.ts` | Golden paths on desktop and mobile Chrome: sign up → add vehicle → start mission → ask at a timestamp (AI provider stubbed) → bookmark → complete; log maintenance. |
+| AI evaluation | script | `scripts/experiments/` | Real-model runs on chosen videos, scored by a human, including honesty probes. Not in CI (costs money, non-deterministic). |
 
 ## Rules
 
 - **Every RLS policy has a pgTAP test** for both "can" and "cannot".
-- **The guide JSON schema has tests** for valid guides and for each rejection (missing citation on a
-  safety-critical field, branch pointing to a missing step, etc.).
+- **AI responses are schema-validated**, and tests cover provider failures and the not-analyzed path. CI never calls the real AI provider.
 - E2E runs against the **production build** (`pnpm build && pnpm test:e2e`), like CI.
 - E2E tests that need data use a local database seeded with clearly fake fixture content
-  (see `content-verification.md` §6). They never touch staging or production.
+  (see `ai-rules.md` §7). They never touch staging or production.
 - A bug fix starts with a failing test that reproduces it.
 
 ## In CI (`.github/workflows/ci.yml`)
