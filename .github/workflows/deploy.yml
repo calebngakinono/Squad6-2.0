@@ -75,11 +75,13 @@ jobs:
       - name: Pending migrations (dry run)
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: pnpm exec supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+        run: pnpm exec supabase db push --remote="$SUPABASE_DB_URL" --dry-run
       - name: Apply migrations
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: pnpm exec supabase db push --db-url "$SUPABASE_DB_URL"
+        # --yes: CI has no terminal to answer the CLI's confirmation prompt.
+        # The human approval already happened (Production environment gate).
+        run: pnpm exec supabase db push --remote="$SUPABASE_DB_URL" --yes
 
       # 2. App. The project token is scoped to one Railway environment, so the
       #    staging token cannot deploy production and vice versa.
