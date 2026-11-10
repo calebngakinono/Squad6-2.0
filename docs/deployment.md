@@ -3,8 +3,8 @@
 `.github/workflows/deploy.yml` runs when a PR is merged into `staging` or `main`.
 
 ```
-merge to staging ─► CI ─► migrate wrench-staging ─► railway up (staging) ─► health check
-merge to main    ─► CI ─► ⏸ Caleb approves ─► migrate wrench-prod ─► railway up (production) ─► health check
+merge to staging ─► CI ─► migrate staging DB ─► railway up (staging) ─► health check
+merge to main    ─► CI ─► ⏸ Caleb approves ─► migrate production DB ─► railway up (production) ─► health check
 ```
 
 ## Where configuration lives
@@ -38,6 +38,16 @@ through this workflow and, for production, through your approval.
 - **Database:** never reset. Write a new migration that reverses the change and ship it through the
   normal flow. Before a risky production migration, take a manual backup first:
   `pnpm exec supabase db dump --remote="<prod session pooler url>" -f backup.sql` (keep it out of the repo).
+
+## Leftover Wrench AI names outside the repo
+
+The pipeline was built for Wrench AI and kept for Squad Six. These names live in dashboards, not code:
+
+| Name | Where | Safe to rename? |
+|---|---|---|
+| Railway project `WrenchAi` | Railway dashboard | Yes. Display name only; tokens keep working. |
+| Supabase projects `wrench-staging`, `wrench-prod` | Supabase dashboard | Yes. Display names only; the project refs in `SUPABASE_PROJECT_REF` never change. |
+| `wrenchaistaging.up.railway.app`, `wrenchaiprod.up.railway.app` | Railway service domains | Yes, but change `APP_URL` in the matching GitHub Environment at the same time, or the post-deploy health check fails. |
 
 ## Troubleshooting
 
