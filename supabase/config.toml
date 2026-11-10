@@ -2,11 +2,11 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "wrench-ai"
+project_id = "squad-six"
 
 [api]
 enabled = true
-# Wrench AI uses 253xx (not the default 543xx): below the OS ephemeral port ranges
+# Squad Six uses 253xx (not the default 543xx): below the OS ephemeral port ranges
 # (Linux 32768-60999, macOS 49152-65535), so CI never collides with a random outbound
 # port, and it can run beside other local Supabase projects.
 # Port to use for the API URL.

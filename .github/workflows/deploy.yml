@@ -1,7 +1,7 @@
 # Deploys after a PR is merged into staging or main.
 #
-#   push to staging -> CI -> [staging env]                 migrate wrench-staging -> deploy Railway staging
-#   push to main    -> CI -> [Production env: waits for Caleb] migrate wrench-prod -> deploy Railway production
+#   push to staging -> CI -> [staging env]                 migrate staging DB -> deploy Railway staging
+#   push to main    -> CI -> [Production env: waits for Caleb] migrate production DB -> deploy Railway production
 #
 # Secrets live only in GitHub Environments (not repo-level), so only jobs that
 # declare `environment:` can read them, and each environment only accepts its

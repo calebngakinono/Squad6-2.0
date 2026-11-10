@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wrench AI",
-  description: "Vehicle-specific repair lookups and interactive guides.",
+  title: "Squad Six",
+  description: "Fitness accountability in squads of up to six.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

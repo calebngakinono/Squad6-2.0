@@ -48,3 +48,7 @@ next-env.d.ts
 
 # env files: commit only the example
 !.env.example
+
+# Design skills: restore with `npx skills experimental_install` (versions pinned in skills-lock.json)
+/.claude/skills/design-taste-frontend/
+/.claude/skills/impeccable/
