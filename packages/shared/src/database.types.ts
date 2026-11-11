@@ -57,14 +57,156 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"squad_invite_codes": {
+                  Row: {
+                    "code": string,"created_at": string,"squad_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code": string,"created_at"?: string,"squad_id": string
+                  }
+                  Update: {
+                    "code"?: string,"created_at"?: string,"squad_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "squad_invite_codes_squad_id_fkey"
+      columns: ["squad_id"]
+isOneToOne: true
+      referencedRelation: "squads"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"squad_join_requests": {
+                  Row: {
+                    "created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"squad_id": string,"status": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"squad_id": string,"status"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"squad_id"?: string,"status"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "squad_join_requests_decided_by_fkey"
+      columns: ["decided_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "squad_join_requests_squad_id_fkey"
+      columns: ["squad_id"]
+isOneToOne: false
+      referencedRelation: "squads"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "squad_join_requests_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"squad_members": {
+                  Row: {
+                    "id": string,"joined_at": string,"left_at": string | null,"left_reason": string | null,"role": string,"squad_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "id"?: string,"joined_at"?: string,"left_at"?: string | null,"left_reason"?: string | null,"role"?: string,"squad_id": string,"user_id": string
+                  }
+                  Update: {
+                    "id"?: string,"joined_at"?: string,"left_at"?: string | null,"left_reason"?: string | null,"role"?: string,"squad_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "squad_members_squad_id_fkey"
+      columns: ["squad_id"]
+isOneToOne: false
+      referencedRelation: "squads"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "squad_members_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"squads": {
+                  Row: {
+                    "archived_at": string | null,"city": string,"created_at": string,"created_by": string | null,"description": string | null,"id": string,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "archived_at"?: string | null,"city": string,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"name": string
+                  }
+                  Update: {
+                    "archived_at"?: string | null,"city"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"name"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "squads_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "set_home_timezone":
+            "cancel_join_request":
+{ Args: { "request_id": string }; Returns: undefined
+                           },
+"create_squad":
+{ Args: { "squad_city": string,"squad_description"?: string,"squad_name": string }; Returns: string
+                           },
+"decide_join_request":
+{ Args: { "approve": boolean,"request_id": string }; Returns: undefined
+                           },
+"end_membership":
+{ Args: { "member_user": string,"reason": string }; Returns: undefined
+                           },
+"generate_invite_code":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"is_squad_captain":
+{ Args: { "target_squad": string }; Returns: boolean
+                           },
+"is_squad_member":
+{ Args: { "target_squad": string }; Returns: boolean
+                           },
+"leave_squad":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"preview_squad":
+{ Args: { "invite_code": string }; Returns: {
+              "city": string,"is_full": boolean,"member_count": number,"name": string,"squad_id": string
+            }[]
+                           },
+"regenerate_invite_code":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"remove_squad_member":
+{ Args: { "member_user": string }; Returns: undefined
+                           },
+"request_to_join":
+{ Args: { "invite_code": string }; Returns: string
+                           },
+"require_user":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"set_home_timezone":
 { Args: { "tz": string }; Returns: undefined
+                           },
+"transfer_captaincy":
+{ Args: { "new_captain": string }; Returns: undefined
                            }
           }
           Enums: {
