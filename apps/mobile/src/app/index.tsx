@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,7 +25,11 @@ export default function HomeScreen() {
           Squads and live workouts arrive in the next builds.
         </Text>
       </View>
-      <Button
+      <View style={styles.actions}>
+        {__DEV__ && (
+          <Button variant="secondary" label="Device check (dev only)" onPress={() => router.push("/device-check")} />
+        )}
+        <Button
         variant="secondary"
         label="Sign out"
         busy={busy}
@@ -33,7 +38,8 @@ export default function HomeScreen() {
           await supabase.auth.signOut();
           setBusy(false);
         }}
-      />
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -41,4 +47,5 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, justifyContent: "space-between", padding: space.lg },
   header: { gap: space.sm, paddingTop: space.xl },
+  actions: { gap: space.md },
 });

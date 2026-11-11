@@ -38,6 +38,10 @@ Email and password sign-up and sign-in, staying signed in across restarts (sessi
 Android Keystore), and sign-out. Sign in with Apple and Google come later in phase 1 once the developer
 accounts are set up.
 
+## Device check
+
+Development builds have a **Device check** screen for the phase-1 spike. See [device-spike.md](device-spike.md).
+
 ## Server settings to match
 
 Local `supabase/config.toml` requires 8-character passwords and allows the `squadsix://` redirect. Set the
