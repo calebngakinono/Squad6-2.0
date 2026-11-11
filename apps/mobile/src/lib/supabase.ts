@@ -1,3 +1,4 @@
+import type { Database } from "@squad-six/shared";
 import { createClient } from "@supabase/supabase-js";
 import * as SecureStore from "expo-secure-store";
 import { AppState } from "react-native";
@@ -6,7 +7,7 @@ import { getSupabaseConfig } from "./env";
 
 const config = getSupabaseConfig();
 
-export const supabase = createClient(config.url, config.publishableKey, {
+export const supabase = createClient<Database>(config.url, config.publishableKey, {
   auth: {
     storage: createChunkedStorage(SecureStore),
     autoRefreshToken: true,

@@ -65,6 +65,8 @@ Mobile (from `apps/mobile`; setup in `docs/mobile-setup.md`):
 pnpm start               # Metro for the installed development build
 npx expo install <pkg>   # add a dependency at the SDK-compatible version (not pnpm add)
 pnpm doctor              # expo-doctor
+# data-layer tests against LOCAL Supabase (pnpm db:start first; key from `supabase status -o env`):
+SQUADS_IT_URL=http://127.0.0.1:25321 SQUADS_IT_KEY=<local publishable key> pnpm test
 npx eas-cli@latest build --profile development --platform ios   # new dev build (after native changes)
 ```
 
