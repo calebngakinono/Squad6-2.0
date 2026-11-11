@@ -21,6 +21,8 @@ function RootNavigator() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="create-squad" />
+        <Stack.Screen name="join" />
         <Stack.Protected guard={__DEV__}>
           <Stack.Screen name="device-check" />
         </Stack.Protected>

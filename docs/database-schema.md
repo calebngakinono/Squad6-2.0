@@ -7,9 +7,10 @@ migration for the feature that needs it). The migration is the source of truth; 
 |---|---|---|---|
 | `profiles` | ✅ | **Public** profile, 1:1 with `auth.users`, created by the signup trigger: display name, city (avatar later). Wrench `experience_level` removed 2026-11-11 (approved). | Signed-in users read; owner updates `display_name`, `city` only (column grants) |
 | `profile_private` | ✅ | Home timezone (set only via `set_home_timezone()`: valid IANA name, at most one change per 7 days), personal weekly commitment (not scored), onboarding completion. Goals, measurements and wearable ownership are added with onboarding | Owner only; owner updates `weekly_commitment`, `onboarding_completed_at` |
-| `squads` | 📝 | Name, city, description, created_by, invite code | Signed-in read; writes via functions |
-| `squad_members` | 📝 | Squad, user, role (captain / member), joined_at. Max six, enforced with a lock | Members read; writes via functions |
-| `squad_join_requests` | 📝 | Pending requests and approvals | Requester and captain |
+| `squads` | ✅ | Name, city, description, created_by, archived_at (set when the last member leaves) | Signed-in read; writes via functions only |
+| `squad_members` | ✅ | Membership **history**: squad, user, role, joined_at, left_at, left_reason. One active squad per athlete, one captain per squad (unique indexes). Max six, enforced by locking the squad row on approval (race-tested) | Squadmates and self read; writes via functions only |
+| `squad_invite_codes` | ✅ | One 8-character code per squad (no look-alike characters); captain can regenerate | Active members read |
+| `squad_join_requests` | ✅ | pending → approved / declined / cancelled / expired. Max 3 pending per athlete; joining a squad cancels the others | Requester and captain read; writes via functions only |
 | `workout_sessions` | 📝 | Live session state machine (see architecture.md) | Owner full; squad sees summary only |
 | `workout_session_events` | 📝 | Append-only start/pause/resume/finish log | Owner read; written by functions |
 | `workout_metrics` | 📝 | Measurement with `source` and `provenance` | Owner only (location never shared) |
@@ -26,6 +27,14 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `squad_messages` | 📝 | Basic squad chat | Squad members |
 | `entitlements` | 📝 | Pro status from RevenueCat webhook | Owner reads; server writes |
 | `onboarding_flows` | 📝 | Versioned onboarding configuration (screens, branches) | Read: signed in |
+
+## Squad functions (the app's API)
+
+`create_squad(name, city, description)` (max 3 per 30 days) · `preview_squad(code)` · `request_to_join(code)` ·
+`cancel_join_request(id)` · `decide_join_request(id, approve)` (captain) · `leave_squad()` ·
+`remove_squad_member(user)` (captain) · `transfer_captaincy(user)` (captain) · `regenerate_invite_code()` (captain).
+When a captain leaves, the longest-standing member becomes captain; when the last member leaves, the squad is
+archived. Errors are stable codes (`already_in_squad`, `squad_full`, `invalid_invite_code`, …) the app maps to text.
 
 ## Rules for every migration
 

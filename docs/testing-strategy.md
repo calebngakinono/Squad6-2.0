@@ -9,6 +9,7 @@ implementation.
 | Component | Vitest + Testing Library | `**/*.test.tsx` | Web components; mobile components once `apps/mobile` exists. |
 | Database | pgTAP via `supabase test db` | `supabase/tests/*.test.sql` | Every RLS policy (allowed and denied), column privileges, every workout state transition (valid and invalid), idempotency, one-active-session rule, no double awards, max-six squads. |
 | End-to-end (web) | Playwright | `apps/web/e2e/*.spec.ts` | Marketing site and server endpoints against the production build. |
+| API integration (mobile) | Vitest + local Supabase | `apps/mobile/src/**/*.integration.test.ts` | The app's data layer against the real local database (RLS, RPC names, embedded selects). Skipped unless `SQUADS_IT_URL`/`SQUADS_IT_KEY` point at a **local** stack; refuses non-local URLs. |
 | On-device | manual checklist, later Maestro | `docs/` | Kill the app mid-workout, airplane mode, permission denied, background GPS, HealthKit matching. |
 
 ## Rules
