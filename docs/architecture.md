@@ -94,8 +94,10 @@ A running timer alone never proves activity. It is the weakest evidence level.
 
 ## Tracking and evidence
 
-Evidence decides **whether a workout is accepted**. It never adds points: an Apple Watch owner and a phone-only
-user get the same points for the same accepted workout.
+Evidence decides **whether a workout is accepted** and sets a small **verification bonus** (0–30). The bonus
+counts independent evidence *categories* (location, motion, heart rate, platform record, live set log, later
+camera), never device brands, so phone-only users can reach most of it. Details and simulations:
+[`scoring-proposal.md`](scoring-proposal.md). Platform specifics: [`health-integrations.md`](health-integrations.md).
 
 | Source | Live? | MVP |
 |---|---|---|
@@ -105,7 +107,7 @@ user get the same points for the same accepted workout.
 | Strength set/rep logging | manual | ✅ labeled manual |
 | HealthKit (iPhone) | **no**, after sync | ✅ after finish, look for an overlapping workout recorded by Apple Watch, Garmin, Strava etc. and attach it as evidence |
 | Health Connect (Android) | **no**, after sync | ✅ same matching approach |
-| Bluetooth heart-rate strap | yes | stretch: standard BLE heart-rate profile |
+| Bluetooth heart-rate strap | yes | stretch: standard BLE heart-rate profile (cheap path to the HR evidence category) |
 | Apple Watch / Wear OS live data | yes | ❌ later: needs a native watch app |
 | Garmin / Fitbit / Whoop / Oura / Polar cloud APIs | no | ❌ later: partner approval and webhooks |
 | Live camera verification | — | ❌ deferred: privacy cost, weak reliability |
@@ -114,8 +116,9 @@ The exact capabilities are confirmed by a device spike in phase 1 before being r
 
 ## Scoring engine
 
-- `scoring_rule_versions`: versioned JSON config (base, duration curve and cap, commitment contribution,
-  per-activity eligibility minimums, daily cap). Only one version is active; changing rules means a new version.
+- `scoring_rule_versions`: versioned JSON config (base, verification table, activity-specific performance
+  ramps and caps, eligibility minimums, daily schedule, merge rule). Only one version is active; changing rules
+  means a new version. Proposed values are in [`scoring-proposal.md`](scoring-proposal.md) (not yet approved).
 - `points_ledger`: append-only. Every row references a session (or other source) and a rule version, and a
   unique key `(source_type, source_id, rule_version, kind)` makes double-awarding impossible. Corrections are
   new negative rows, never edits.
@@ -123,8 +126,15 @@ The exact capabilities are confirmed by a device spike in phase 1 before being r
   editable number on a profile.
 - Seasons run January 1 – December 31 **in the user's home timezone, locked at the moment a session starts**.
   Daily caps use the same rule.
-- Provisional formula (not final): `Base 100 + Duration 0–40 (capped) + Commitment 0–30`. Final rules need
-  Caleb's approval before production competitive scoring is switched on.
+- Approved formula (rule v1, 2026-11-10, see scoring-proposal.md): `Base 170 (eligible only) + Verification 0–30 + Performance 0–50`, maximum
+  250. Weekly-goal points were dropped on 2026-11-10. Switching on production competitive scoring still needs
+  Caleb's sign-off at release.
+- **Challenges** (`challenges`, `challenge_participants`, `challenge_awards`): official, versioned, locked once
+  started, open to Free and Pro equally. Awards are ledger rows with a unique key per challenge, participant and
+  tier. Pro custom challenges never award competitive points.
+- **Season archive:** standings and champions are frozen per season after a review period.
+- **Watch-ready:** session events carry `device_id`, so a future watchOS app uses the same RPCs (see
+  `health-integrations.md`).
 
 ## Subscriptions (Squad Six Pro)
 

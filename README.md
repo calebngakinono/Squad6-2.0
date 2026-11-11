@@ -31,6 +31,8 @@ pnpm db:test
 - [Database schema](docs/database-schema.md)
 - [Data integrity and privacy rules](docs/data-integrity.md)
 - [MVP plan](docs/mvp-plan.md)
+- [Scoring proposal](docs/scoring-proposal.md)
+- [Health integrations](docs/health-integrations.md)
 - [Testing strategy](docs/testing-strategy.md)
 - [Branches, PRs and releases](docs/workflow.md)
 - [Deployment and rollback](docs/deployment.md)
