@@ -8,7 +8,7 @@ implementation.
 | Unit | Vitest | `**/*.test.ts` | Zod schemas, scoring-rule calculations (table of scenarios: activities, durations, schedules, evidence levels), offline event queue, timezone/season boundaries. |
 | Component | Vitest + Testing Library | `**/*.test.tsx` | Web components; mobile components once `apps/mobile` exists. |
 | Database | pgTAP via `supabase test db` | `supabase/tests/*.test.sql` | Every RLS policy (allowed and denied), column privileges, every workout state transition (valid and invalid), idempotency, one-active-session rule, no double awards, max-six squads. |
-| End-to-end (web) | Playwright | `e2e/*.spec.ts` | Marketing site and server endpoints against the production build. |
+| End-to-end (web) | Playwright | `apps/web/e2e/*.spec.ts` | Marketing site and server endpoints against the production build. |
 | On-device | manual checklist, later Maestro | `docs/` | Kill the app mid-workout, airplane mode, permission denied, background GPS, HealthKit matching. |
 
 ## Rules

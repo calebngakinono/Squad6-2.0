@@ -33,7 +33,7 @@ iPhone / Android (Expo app)                    Browser
 
 ## Repository layout
 
-Today the Next.js app sits at the repo root. Phase 1 moves it into a pnpm workspace:
+A pnpm workspace:
 
 ```
 apps/mobile/       Expo app (screens, device integrations, offline queue)

@@ -4,8 +4,8 @@ Fitness consistency is easier when five people are counting on you. Squad Six pu
 six, turns every workout into a live session, and keeps an honest, auditable score across a season that runs
 from January 1 to December 31.
 
-Status: early development. The mobile app is being built; this repo currently contains the web app,
-database and deploy pipeline. See [the MVP plan](docs/mvp-plan.md).
+Status: early development. The mobile app is being built; this repo contains the mobile app (sign-in so far),
+the web app, database and deploy pipeline. See [the MVP plan](docs/mvp-plan.md).
 
 ## Quick start (web)
 
@@ -14,9 +14,13 @@ Requires Node 24, pnpm and Docker.
 ```bash
 pnpm install
 pnpm db:start                 # local Supabase in Docker; prints the local publishable key
-cp .env.example .env.local    # paste the PUBLISHABLE_KEY from db:start
+cp apps/web/.env.example apps/web/.env.local   # paste the PUBLISHABLE_KEY from db:start
 pnpm dev                      # http://localhost:3000
 ```
+
+## Quick start (mobile)
+
+See [mobile setup](docs/mobile-setup.md). Expo Go is not supported; the app runs as a development build.
 
 ## Checks
 
@@ -33,6 +37,7 @@ pnpm db:test
 - [MVP plan](docs/mvp-plan.md)
 - [Scoring proposal](docs/scoring-proposal.md)
 - [Health integrations](docs/health-integrations.md)
+- [Mobile setup](docs/mobile-setup.md)
 - [Testing strategy](docs/testing-strategy.md)
 - [Branches, PRs and releases](docs/workflow.md)
 - [Deployment and rollback](docs/deployment.md)
