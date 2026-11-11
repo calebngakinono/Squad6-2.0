@@ -6,7 +6,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 | Table | Status | Purpose | Access |
 |---|---|---|---|
 | `profiles` | ✅ | **Public** profile, 1:1 with `auth.users`, created by the signup trigger: display name, city (avatar later). Wrench `experience_level` removed 2026-11-11 (approved). | Signed-in users read; owner updates `display_name`, `city` only (column grants) |
-| `profile_private` | ✅ | Home timezone (set only via `set_home_timezone()`: valid IANA name, at most one change per 7 days), personal weekly commitment (not scored), onboarding completion. Goals, measurements and wearable ownership are added with onboarding | Owner only; owner updates `weekly_commitment`, `onboarding_completed_at` |
+| `profile_private` | ✅ | Home timezone (set only via `set_home_timezone()`: valid IANA name, at most one change per 7 days), personal weekly commitment (not scored), onboarding progress (`onboarding_flow_version`, `onboarding_step`, `onboarding_answers` ≤ 16 KB: goal, experience, activities, wearables) and completion | Owner only; owner updates `weekly_commitment`; progress via `save_onboarding_progress()`, completion via `complete_onboarding()` |
 | `squads` | ✅ | Name, city, description, created_by, archived_at (set when the last member leaves) | Signed-in read; writes via functions only |
 | `squad_members` | ✅ | Membership **history**: squad, user, role, joined_at, left_at, left_reason. One active squad per athlete, one captain per squad (unique indexes). Max six, enforced by locking the squad row on approval (race-tested) | Squadmates and self read; writes via functions only |
 | `squad_invite_codes` | ✅ | One 8-character code per squad (no look-alike characters); captain can regenerate | Active members read |
@@ -26,7 +26,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `season_standings` | 📝 | Derived athlete / squad / city totals per season. Squads rank by average per member (seats weighted by days in squad; 3 members minimum to rank) | Read: signed in |
 | `squad_messages` | 📝 | Basic squad chat | Squad members |
 | `entitlements` | 📝 | Pro status from RevenueCat webhook | Owner reads; server writes |
-| `onboarding_flows` | 📝 | Versioned onboarding configuration (screens, branches) | Read: signed in |
+| `onboarding_flows` | ✅ | Versioned onboarding config (steps, types, branches, profile-field mapping); one active. v1 = core questions, placeholder copy. Structure validated by `onboardingFlowSchema` (packages/shared), which a unit test runs against the migration | Read: signed in; changed by migrations only |
 
 ## Squad functions (the app's API)
 
