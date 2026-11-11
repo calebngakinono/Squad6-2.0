@@ -23,19 +23,39 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "profile_private": {
+            "onboarding_flows": {
                   Row: {
-                    "created_at": string,"home_timezone": string | null,"home_timezone_changed_at": string | null,"onboarding_completed_at": string | null,"updated_at": string,"user_id": string,"weekly_commitment": number | null
+                    "active": boolean,"created_at": string,"definition": NonNullable<Json>,"version": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"home_timezone"?: string | null,"home_timezone_changed_at"?: string | null,"onboarding_completed_at"?: string | null,"updated_at"?: string,"user_id": string,"weekly_commitment"?: number | null
+                    "active"?: boolean,"created_at"?: string,"definition": NonNullable<Json>,"version": number
                   }
                   Update: {
-                    "created_at"?: string,"home_timezone"?: string | null,"home_timezone_changed_at"?: string | null,"onboarding_completed_at"?: string | null,"updated_at"?: string,"user_id"?: string,"weekly_commitment"?: number | null
+                    "active"?: boolean,"created_at"?: string,"definition"?: NonNullable<Json>,"version"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"profile_private": {
+                  Row: {
+                    "created_at": string,"home_timezone": string | null,"home_timezone_changed_at": string | null,"onboarding_answers": NonNullable<Json>,"onboarding_completed_at": string | null,"onboarding_flow_version": number | null,"onboarding_step": string | null,"updated_at": string,"user_id": string,"weekly_commitment": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"home_timezone"?: string | null,"home_timezone_changed_at"?: string | null,"onboarding_answers"?: NonNullable<Json>,"onboarding_completed_at"?: string | null,"onboarding_flow_version"?: number | null,"onboarding_step"?: string | null,"updated_at"?: string,"user_id": string,"weekly_commitment"?: number | null
+                  }
+                  Update: {
+                    "created_at"?: string,"home_timezone"?: string | null,"home_timezone_changed_at"?: string | null,"onboarding_answers"?: NonNullable<Json>,"onboarding_completed_at"?: string | null,"onboarding_flow_version"?: number | null,"onboarding_step"?: string | null,"updated_at"?: string,"user_id"?: string,"weekly_commitment"?: number | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "profile_private_onboarding_flow_version_fkey"
+      columns: ["onboarding_flow_version"]
+isOneToOne: false
+      referencedRelation: "onboarding_flows"
+      referencedColumns: ["version"]
+    },{
       foreignKeyName: "profile_private_user_id_fkey"
       columns: ["user_id"]
 isOneToOne: true
@@ -164,6 +184,9 @@ isOneToOne: false
             "cancel_join_request":
 { Args: { "request_id": string }; Returns: undefined
                            },
+"complete_onboarding":
+{ Args: { "answers": Json,"city": string,"display_name": string,"flow_version": number,"home_timezone": string,"weekly_commitment": number }; Returns: undefined
+                           },
 "create_squad":
 { Args: { "squad_city": string,"squad_description"?: string,"squad_name": string }; Returns: string
                            },
@@ -201,6 +224,9 @@ isOneToOne: false
                            },
 "require_user":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"save_onboarding_progress":
+{ Args: { "answers": Json,"current_step": string,"flow_version": number }; Returns: undefined
                            },
 "set_home_timezone":
 { Args: { "tz": string }; Returns: undefined

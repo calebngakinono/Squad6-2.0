@@ -9,7 +9,6 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
-import { NameCard } from "@/features/squads/name-card";
 import { SquadPanel } from "@/features/squads/squad-panel";
 import { space } from "@/theme/tokens";
 import { usePalette } from "@/theme/use-palette";
@@ -19,16 +18,13 @@ export default function HomeScreen() {
   const { session } = useSession();
   const userId = session!.user.id;
   const [home, setHome] = useState<SquadHome | null>(null);
-  const [displayName, setDisplayName] = useState<string | null | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [h, name] = await Promise.all([loadSquadHome(userId), squadApi.getDisplayName(userId)]);
-      setHome(h);
-      setDisplayName(name);
+      setHome(await loadSquadHome(userId));
       setLoadError(null);
     } catch {
       setLoadError("Couldn't load your squad. Pull down to try again.");
@@ -69,19 +65,6 @@ export default function HomeScreen() {
       >
         {loadError && <T tone="danger">{loadError}</T>}
         {home === null && !loadError && <ActivityIndicator accessibilityLabel="Loading" />}
-
-        {displayName === null && (
-          <NameCard
-            onSave={async (name) => {
-              try {
-                await squadApi.setDisplayName(userId, name);
-                await load();
-              } catch {
-                Alert.alert("Couldn't save your name", "Check your connection and try again.");
-              }
-            }}
-          />
-        )}
 
         {home?.kind === "in-squad" && (
           <SquadPanel
