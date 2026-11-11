@@ -9,7 +9,7 @@ This repo previously held Wrench AI. Its infrastructure (CI, gated deploys, bran
 Some external names still say "wrench" (Railway URLs, Supabase dashboard names); see `docs/deployment.md`
 before renaming anything outside the repo.
 
-@AGENTS.md
+@apps/web/AGENTS.md
 
 ## Read before major work
 
@@ -28,7 +28,7 @@ before renaming anything outside the repo.
 | Part | Tech |
 |---|---|
 | Mobile app (planned: `apps/mobile`) | Expo (React Native, TypeScript), development builds via EAS. Expo Go is not supported (HealthKit, Health Connect, background GPS need native code). |
-| Web (today: repo root; planned: `apps/web`) | Next.js 16 App Router (React 19, Cache Components on), Tailwind v4, shadcn/ui. Public marketing site plus server-only endpoints (webhooks, account deletion). |
+| Web (`apps/web`) | Next.js 16 App Router (React 19, Cache Components on), Tailwind v4, shadcn/ui. Public marketing site plus server-only endpoints (webhooks, account deletion). |
 | Data and auth | Supabase (Auth, Postgres, RLS). Business rules live in Postgres functions. |
 | Subscriptions | RevenueCat (not live until store products and sandbox testing are set up). |
 | Validation, tests, tooling | Zod 4, Vitest, Playwright, pgTAP, pnpm, GitHub Actions, Railway. |
@@ -37,26 +37,31 @@ Do not add a separate backend, worker or microservice without a demonstrated nee
 Do not change frameworks or deployment providers without approval.
 
 Next.js 16 differs from older versions (e.g. `middleware.ts` is now `proxy.ts`). Check
-`node_modules/next/dist/docs/` before using a Next.js API you have not verified in this version.
+`apps/web/node_modules/next/dist/docs/` before using a Next.js API you have not verified in this version.
 
 ## Commands
 
 ```bash
 pnpm dev                 # web app on http://localhost:3000
-pnpm lint                # ESLint, zero warnings allowed
-pnpm typecheck           # next typegen + tsc
-pnpm test                # Vitest unit/integration
+pnpm lint                # ESLint in every workspace package, zero warnings allowed
+pnpm typecheck           # tsc in every package (web also runs next typegen)
+pnpm test                # Vitest in every package
 pnpm build && pnpm test:e2e   # Playwright against the production build
 pnpm db:start            # local Supabase in Docker (ports 253xx)
 pnpm db:test             # pgTAP tests in supabase/tests
 pnpm db:lint             # schema lint
 pnpm db:reset            # rebuild LOCAL database from migrations
-pnpm db:types            # regenerate src/lib/supabase/database.types.ts
+pnpm db:types            # regenerate packages/shared/src/database.types.ts
+pnpm scoring:simulate    # print the scoring-rule simulation tables
+pnpm --filter @squad-six/web <script>     # run one package's script
 pnpm exec supabase migration new <name>   # new migration file
 npx skills experimental_install           # restore design skills pinned in skills-lock.json
 ```
 
-Mobile commands are added to this file when `apps/mobile` lands.
+Layout: `apps/web` (Next.js), `packages/shared` (Zod schemas, DB types; no React or platform APIs),
+`supabase/` at the root (the deploy pipeline depends on it). Root scripts run every package, so CI and
+Railway (`pnpm build`, `pnpm start` from the root) did not change. Mobile commands are added to this file when
+`apps/mobile` lands.
 
 ## Hard rules
 

@@ -14,7 +14,7 @@ Requires Node 24, pnpm and Docker.
 ```bash
 pnpm install
 pnpm db:start                 # local Supabase in Docker; prints the local publishable key
-cp .env.example .env.local    # paste the PUBLISHABLE_KEY from db:start
+cp apps/web/.env.example apps/web/.env.local   # paste the PUBLISHABLE_KEY from db:start
 pnpm dev                      # http://localhost:3000
 ```
 
