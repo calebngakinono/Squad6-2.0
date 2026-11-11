@@ -146,11 +146,11 @@ create policy "squad_join_requests: requester and captain can read"
   on public.squad_join_requests for select to authenticated
   using (user_id = (select auth.uid()) or public.is_squad_captain(squad_id));
 
+-- Clients get read access only (filtered by the policies above); every write goes through a function.
 revoke all on public.squads, public.squad_members, public.squad_invite_codes, public.squad_join_requests
-  from anon;
-revoke insert, update, delete, truncate on
-  public.squads, public.squad_members, public.squad_invite_codes, public.squad_join_requests
-  from authenticated;
+  from anon, authenticated;
+grant select on public.squads, public.squad_members, public.squad_invite_codes, public.squad_join_requests
+  to authenticated;
 
 -- 4. Actions ----------------------------------------------------------------------------------
 -- Errors use a stable machine-readable message (SQLSTATE P0001) that the app maps to friendly text.
