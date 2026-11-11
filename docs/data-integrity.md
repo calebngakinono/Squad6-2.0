@@ -18,7 +18,10 @@ about their fitness. Squad Six only works if people trust the standings and trus
 
 - The server calculates every award from the session, its evidence and the active scoring-rule version.
 - One session can be awarded once. Corrections are reversing ledger rows with a reason.
-- Owning a wearable never adds points. Evidence only affects whether a workout is accepted.
+- Evidence can add a small verification bonus, judged by data quality and independent evidence categories,
+  never by device brand. Every activity must have a realistic phone-only path to most of that bonus.
+- Performance rewards validated, activity-specific measurements. It never rewards calories, heart rate above
+  safe zones, or duration beyond the cap.
 - No pay-to-win: Pro never changes points, eligibility or rankings.
 - Sponsored challenges, if added later, stay outside competitive points.
 - No uncapped duration rewards and no calorie-based rankings. Caps exist partly to avoid rewarding overtraining.
@@ -40,6 +43,7 @@ about their fitness. Squad Six only works if people trust the standings and trus
 ## 5. Prizes and rewards
 
 - Physical prizes and drawings are planned, not promised. Copy must not imply they exist at launch.
+- Drawings give Pro members no extra entries and need a free entry method and published official rules.
 - No prize campaign goes live without funding, eligibility rules and legal review, approved by Caleb.
 
 ## 6. Account deletion

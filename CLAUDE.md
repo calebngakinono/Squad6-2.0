@@ -17,6 +17,8 @@ before renaming anything outside the repo.
 - `docs/database-schema.md` — tables, RLS rules, migration rules
 - `docs/data-integrity.md` — **mandatory** for anything that touches points, workouts, metrics or location
 - `docs/mvp-plan.md` — scope for 2026-12-09 and what is deliberately deferred
+- `docs/scoring-proposal.md` — scoring rules v1, daily rules, challenges (**approved 2026-11-10**; production competitive scoring still needs Caleb's sign-off at release)
+- `docs/health-integrations.md` — HealthKit, Health Connect, evidence providers, future watch app
 - `docs/testing-strategy.md` — what to test where
 - `docs/workflow.md` — branches, PRs, releases, migrations in deploys
 - `docs/deployment.md` — deploy pipeline, approving production, rollback
