@@ -10,6 +10,7 @@ Some external names still say "wrench" (Railway URLs, Supabase dashboard names);
 before renaming anything outside the repo.
 
 @apps/web/AGENTS.md
+@apps/mobile/AGENTS.md
 
 ## Read before major work
 
@@ -27,7 +28,7 @@ before renaming anything outside the repo.
 
 | Part | Tech |
 |---|---|
-| Mobile app (planned: `apps/mobile`) | Expo (React Native, TypeScript), development builds via EAS. Expo Go is not supported (HealthKit, Health Connect, background GPS need native code). |
+| Mobile app (`apps/mobile`) | Expo SDK 58 (React Native, TypeScript, Expo Router), development builds via EAS. Expo Go is not supported (HealthKit, Health Connect, background GPS need native code). |
 | Web (`apps/web`) | Next.js 16 App Router (React 19, Cache Components on), Tailwind v4, shadcn/ui. Public marketing site plus server-only endpoints (webhooks, account deletion). |
 | Data and auth | Supabase (Auth, Postgres, RLS). Business rules live in Postgres functions. |
 | Subscriptions | RevenueCat (not live until store products and sandbox testing are set up). |
@@ -58,10 +59,19 @@ pnpm exec supabase migration new <name>   # new migration file
 npx skills experimental_install           # restore design skills pinned in skills-lock.json
 ```
 
-Layout: `apps/web` (Next.js), `packages/shared` (Zod schemas, DB types; no React or platform APIs),
-`supabase/` at the root (the deploy pipeline depends on it). Root scripts run every package, so CI and
-Railway (`pnpm build`, `pnpm start` from the root) did not change. Mobile commands are added to this file when
-`apps/mobile` lands.
+Mobile (from `apps/mobile`; setup in `docs/mobile-setup.md`):
+
+```bash
+pnpm start               # Metro for the installed development build
+npx expo install <pkg>   # add a dependency at the SDK-compatible version (not pnpm add)
+pnpm doctor              # expo-doctor
+npx eas-cli@latest build --profile development --platform ios   # new dev build (after native changes)
+```
+
+Layout: `apps/web` (Next.js), `apps/mobile` (Expo), `packages/shared` (Zod schemas, DB types; no React or
+platform APIs), `supabase/` at the root (the deploy pipeline depends on it). Root scripts run every package,
+so CI and Railway (`pnpm build`, `pnpm start` from the root) did not change. The session token is stored in the
+OS keychain (`expo-secure-store`), never in plain storage.
 
 ## Hard rules
 

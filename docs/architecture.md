@@ -33,7 +33,7 @@ iPhone / Android (Expo app)                    Browser
 
 ## Repository layout
 
-A pnpm workspace (`apps/web` and `packages/shared` exist; `apps/mobile` lands next in phase 1):
+A pnpm workspace:
 
 ```
 apps/mobile/       Expo app (screens, device integrations, offline queue)
