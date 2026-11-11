@@ -38,6 +38,7 @@ pnpm db:test
 - [Scoring proposal](docs/scoring-proposal.md)
 - [Health integrations](docs/health-integrations.md)
 - [Mobile setup](docs/mobile-setup.md)
+- [Device spike](docs/device-spike.md)
 - [Testing strategy](docs/testing-strategy.md)
 - [Branches, PRs and releases](docs/workflow.md)
 - [Deployment and rollback](docs/deployment.md)

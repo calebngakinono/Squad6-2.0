@@ -11,3 +11,13 @@ allowBuilds:
 overrides:
   zod@<4.6.6: ^4.6.6
   minimatch@<11.0.1: ^11.0.1
+
+# The HealthKit library's Expo config plugin imports @expo/config-plugins without declaring it, which
+# pnpm's strict layout hides (expo config / EAS build then fail). Remove once upstream declares it.
+packageExtensions:
+  "@kingstinct/react-native-healthkit":
+    dependencies:
+      "@expo/config-plugins": "*"
+  "@react-native-healthkit/core":
+    dependencies:
+      "@expo/config-plugins": "*"

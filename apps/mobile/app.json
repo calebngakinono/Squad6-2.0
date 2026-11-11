@@ -19,7 +19,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.squadsix.app"
+      "package": "com.squadsix.app",
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -31,11 +35,48 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Squad Six uses your location during outdoor workouts to measure distance and pace. Your exact location is never shown to other people.",
+          "locationAlwaysAndWhenInUsePermission": "Squad Six keeps measuring your outdoor workout while your phone is locked or another app is open. Location is only used during a workout you started.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "locationAlwaysPermission": "Squad Six keeps measuring your outdoor workout while your phone is locked or another app is open. Location is only used during a workout you started."
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Squad Six uses motion data during a workout to confirm movement, like steps and cadence."
+        }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Squad Six reads workouts and heart rate from Apple Health to verify the workouts you log. It never sells or advertises with this data.",
+          "NSHealthUpdateUsageDescription": false,
+          "background": false
+        }
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7761527c-6a8a-461b-bf3e-76da1c070d6f"
+      }
+    },
+    "owner": "cndigital"
   }
 }
