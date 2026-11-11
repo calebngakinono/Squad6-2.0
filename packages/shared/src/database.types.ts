@@ -175,6 +175,72 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"strength_sets": {
+                  Row: {
+                    "after_finish": boolean,"client_at": string | null,"client_set_id": string,"deleted_at": string | null,"effective_at": string,"exercise": string,"id": string,"offline": boolean,"reps": number,"server_at": string,"session_id": string,"weight_kg": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "after_finish"?: boolean,"client_at"?: string | null,"client_set_id": string,"deleted_at"?: string | null,"effective_at": string,"exercise": string,"id"?: string,"offline"?: boolean,"reps": number,"server_at"?: string,"session_id": string,"weight_kg"?: number | null
+                  }
+                  Update: {
+                    "after_finish"?: boolean,"client_at"?: string | null,"client_set_id"?: string,"deleted_at"?: string | null,"effective_at"?: string,"exercise"?: string,"id"?: string,"offline"?: boolean,"reps"?: number,"server_at"?: string,"session_id"?: string,"weight_kg"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "strength_sets_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workout_session_events": {
+                  Row: {
+                    "client_at": string | null,"client_event_id": string,"device_id": string | null,"effective_at": string,"id": number,"kind": string,"offline": boolean,"server_at": string,"session_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "client_at"?: string | null,"client_event_id": string,"device_id"?: string | null,"effective_at": string,"id"?: never,"kind": string,"offline"?: boolean,"server_at"?: string,"session_id": string
+                  }
+                  Update: {
+                    "client_at"?: string | null,"client_event_id"?: string,"device_id"?: string | null,"effective_at"?: string,"id"?: never,"kind"?: string,"offline"?: boolean,"server_at"?: string,"session_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_session_events_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workout_sessions": {
+                  Row: {
+                    "active_seconds": number | null,"activity": string,"client_session_id": string,"created_at": string,"device_id": string | null,"ended_at": string | null,"home_timezone": string,"id": string,"local_date": string,"squad_id": string | null,"started_at": string,"started_offline": boolean,"state": string,"user_id": string,"version": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active_seconds"?: number | null,"activity": string,"client_session_id": string,"created_at"?: string,"device_id"?: string | null,"ended_at"?: string | null,"home_timezone": string,"id"?: string,"local_date": string,"squad_id"?: string | null,"started_at": string,"started_offline"?: boolean,"state"?: string,"user_id": string,"version"?: number
+                  }
+                  Update: {
+                    "active_seconds"?: number | null,"activity"?: string,"client_session_id"?: string,"created_at"?: string,"device_id"?: string | null,"ended_at"?: string | null,"home_timezone"?: string,"id"?: string,"local_date"?: string,"squad_id"?: string | null,"started_at"?: string,"started_offline"?: boolean,"state"?: string,"user_id"?: string,"version"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_sessions_squad_id_fkey"
+      columns: ["squad_id"]
+isOneToOne: false
+      referencedRelation: "squads"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "workout_sessions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -184,6 +250,30 @@ isOneToOne: false
             "cancel_join_request":
 { Args: { "request_id": string }; Returns: undefined
                            },
+"cancel_workout":
+{ Args: { "client_at"?: string,"client_event_id": string,"device_id"?: string,"expected_version": number,"session_id": string }; Returns: {
+              "active_seconds": number | null,
+"activity": string,
+"client_session_id": string,
+"created_at": string,
+"device_id": string | null,
+"ended_at": string | null,
+"home_timezone": string,
+"id": string,
+"local_date": string,
+"squad_id": string | null,
+"started_at": string,
+"started_offline": boolean,
+"state": string,
+"user_id": string,
+"version": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "complete_onboarding":
 { Args: { "answers": Json,"city": string,"display_name": string,"flow_version": number,"home_timezone": string,"weekly_commitment": number }; Returns: undefined
                            },
@@ -193,12 +283,66 @@ isOneToOne: false
 "decide_join_request":
 { Args: { "approve": boolean,"request_id": string }; Returns: undefined
                            },
+"delete_strength_set":
+{ Args: { "session_id": string,"set_id": string }; Returns: undefined
+                           },
 "end_membership":
 { Args: { "member_user": string,"reason": string }; Returns: undefined
                            },
+"expire_stale_workouts":
+{ Args: { "target_user": string }; Returns: undefined
+                           },
+"finish_workout":
+{ Args: { "client_at"?: string,"client_event_id": string,"device_id"?: string,"expected_version": number,"session_id": string }; Returns: {
+              "active_seconds": number | null,
+"activity": string,
+"client_session_id": string,
+"created_at": string,
+"device_id": string | null,
+"ended_at": string | null,
+"home_timezone": string,
+"id": string,
+"local_date": string,
+"squad_id": string | null,
+"started_at": string,
+"started_offline": boolean,
+"state": string,
+"user_id": string,
+"version": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "generate_invite_code":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"get_open_workout":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "active_seconds": number | null,
+"activity": string,
+"client_session_id": string,
+"created_at": string,
+"device_id": string | null,
+"ended_at": string | null,
+"home_timezone": string,
+"id": string,
+"local_date": string,
+"squad_id": string | null,
+"started_at": string,
+"started_offline": boolean,
+"state": string,
+"user_id": string,
+"version": number
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "workout_sessions"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "is_squad_captain":
 { Args: { "target_squad": string }; Returns: boolean
                            },
@@ -208,6 +352,51 @@ isOneToOne: false
 "leave_squad":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"log_strength_set":
+{ Args: { "client_at"?: string,"client_set_id": string,"exercise": string,"reps": number,"session_id": string,"weight_kg"?: number }; Returns: {
+              "after_finish": boolean,
+"client_at": string | null,
+"client_set_id": string,
+"deleted_at": string | null,
+"effective_at": string,
+"exercise": string,
+"id": string,
+"offline": boolean,
+"reps": number,
+"server_at": string,
+"session_id": string,
+"weight_kg": number | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "strength_sets"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"pause_workout":
+{ Args: { "client_at"?: string,"client_event_id": string,"device_id"?: string,"expected_version": number,"session_id": string }; Returns: {
+              "active_seconds": number | null,
+"activity": string,
+"client_session_id": string,
+"created_at": string,
+"device_id": string | null,
+"ended_at": string | null,
+"home_timezone": string,
+"id": string,
+"local_date": string,
+"squad_id": string | null,
+"started_at": string,
+"started_offline": boolean,
+"state": string,
+"user_id": string,
+"version": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "preview_squad":
 { Args: { "invite_code": string }; Returns: {
               "city": string,"is_full": boolean,"member_count": number,"name": string,"squad_id": string
@@ -225,15 +414,99 @@ isOneToOne: false
 "require_user":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"require_user_uid":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"resume_workout":
+{ Args: { "client_at"?: string,"client_event_id": string,"device_id"?: string,"expected_version": number,"session_id": string }; Returns: {
+              "active_seconds": number | null,
+"activity": string,
+"client_session_id": string,
+"created_at": string,
+"device_id": string | null,
+"ended_at": string | null,
+"home_timezone": string,
+"id": string,
+"local_date": string,
+"squad_id": string | null,
+"started_at": string,
+"started_offline": boolean,
+"state": string,
+"user_id": string,
+"version": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "save_onboarding_progress":
 { Args: { "answers": Json,"current_step": string,"flow_version": number }; Returns: undefined
                            },
 "set_home_timezone":
 { Args: { "tz": string }; Returns: undefined
                            },
+"start_workout":
+{ Args: { "activity": string,"client_session_id": string,"client_started_at"?: string,"device_id"?: string }; Returns: {
+              "active_seconds": number | null,
+"activity": string,
+"client_session_id": string,
+"created_at": string,
+"device_id": string | null,
+"ended_at": string | null,
+"home_timezone": string,
+"id": string,
+"local_date": string,
+"squad_id": string | null,
+"started_at": string,
+"started_offline": boolean,
+"state": string,
+"user_id": string,
+"version": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "transfer_captaincy":
 { Args: { "new_captain": string }; Returns: undefined
-                           }
+                           },
+"workout_active_seconds":
+{ Args: { "target": string,"until"?: string }; Returns: number
+                           },
+"workout_clamp":
+{ Args: { "client_at": string,"lower_bound": string }; Returns: Record<string, unknown>
+                           },
+"workout_max_open":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"workout_transition":
+{ Args: { "client_at": string,"client_event_id": string,"device_id": string,"expected_version": number,"kind": string,"session_id": string }; Returns: {
+              "active_seconds": number | null,
+"activity": string,
+"client_session_id": string,
+"created_at": string,
+"device_id": string | null,
+"ended_at": string | null,
+"home_timezone": string,
+"id": string,
+"local_date": string,
+"squad_id": string | null,
+"started_at": string,
+"started_offline": boolean,
+"state": string,
+"user_id": string,
+"version": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } }
           }
           Enums: {
             [_ in never]: never
