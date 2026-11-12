@@ -1,4 +1,4 @@
-import { workoutMetricSchema, type WorkoutMetric } from "@squad-six/shared";
+import { attachedEvidenceSchema, workoutMetricSchema, type AttachedEvidence, type PlatformEvidence, type WorkoutMetric } from "@squad-six/shared";
 import { supabase } from "@/lib/supabase";
 import { TransportError, type ServerSession, type Transport } from "./queue";
 import type { TrackingApi } from "./tracking/upload";
@@ -95,4 +95,37 @@ export async function fetchWorkoutMetrics(serverSessionId: string): Promise<Work
     const parsed = workoutMetricSchema.safeParse(row);
     return parsed.success ? [parsed.data] : [];
   });
+}
+
+/** Attach a health-platform workout summary as evidence (see evidence/attach.ts). */
+export async function attachEvidence(serverSessionId: string, evidence: PlatformEvidence): Promise<void> {
+  await rpc("attach_workout_evidence", { session_id: serverSessionId, evidence });
+}
+
+export async function fetchEvidence(serverSessionId: string): Promise<AttachedEvidence[]> {
+  const { data, error } = await supabase
+    .from("workout_evidence")
+    .select("provider, source_name, device_name, overlap, hr_avg")
+    .eq("session_id", serverSessionId);
+  if (error) throw classify(error);
+  return data.flatMap((row) => {
+    const parsed = attachedEvidenceSchema.safeParse(row);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
+
+/** Workouts finished in the last 24 hours that have no Apple Health evidence yet (watches can sync late). */
+export async function fetchWorkoutsAwaitingEvidence(): Promise<{ id: string; start: number; end: number }[]> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("workout_sessions")
+    .select("id, started_at, ended_at, workout_evidence(provider)")
+    .in("state", ["submitted", "accepted", "needs_review", "rejected"])
+    .gt("ended_at", since)
+    .order("ended_at", { ascending: false })
+    .limit(10);
+  if (error) throw classify(error);
+  return data
+    .filter((s) => s.ended_at !== null && !s.workout_evidence.some((e) => e.provider === "healthkit"))
+    .map((s) => ({ id: s.id, start: Date.parse(s.started_at), end: Date.parse(s.ended_at!) }));
 }

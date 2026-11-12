@@ -1,7 +1,9 @@
 import * as Crypto from "expo-crypto";
 import Storage from "expo-sqlite/kv-store";
 import { AppState } from "react-native";
-import type { WorkoutMetric } from "@squad-six/shared";
+import type { AttachedEvidence, WorkoutMetric } from "@squad-six/shared";
+import { matchAndAttach } from "./evidence/attach";
+import { appleHealth, appleHealthAvailable, requestAppleHealth } from "./evidence/healthkit";
 import { activeSeconds, activityInfo, canApply, nextEventTime, stateOf, type Activity, type EventKind, type LocalEvent } from "./machine";
 import { drain, type Command, type SyncContext } from "./queue";
 import {
@@ -16,7 +18,15 @@ import {
 } from "./tracking/device";
 import { activeIntervals, addPoint, emptyTotals, maxSpeedFor, summarizeTrack, type TrackTotals } from "./tracking/track";
 import { hasPendingTracking, uploadTracking } from "./tracking/upload";
-import { createTransport, fetchOpenWorkout, fetchWorkoutMetrics, trackingApi } from "./transport";
+import {
+  attachEvidence,
+  createTransport,
+  fetchEvidence,
+  fetchOpenWorkout,
+  fetchWorkoutMetrics,
+  fetchWorkoutsAwaitingEvidence,
+  trackingApi,
+} from "./transport";
 
 // The live workout as the phone knows it, saved to on-device storage after every change so a killed
 // app comes back exactly where it was. Commands sync to the server through the queue.
@@ -35,6 +45,18 @@ export type WorkoutSnapshot = {
   /** The server's copy, once synced: its times and active_seconds are the official ones. */
   server: SyncContext["sessions"][string] | null;
   tracking: TrackingSnapshot;
+  health: HealthSnapshot;
+};
+
+/** Apple Health evidence for the finished workout. */
+export type HealthSnapshot = {
+  /** This phone has Apple Health. */
+  available: boolean;
+  /** The athlete turned the integration on (permission is only asked then). */
+  connected: boolean;
+  /** idle: not looked yet. none: no matching workout found (so far). closed: the server no longer takes evidence. */
+  status: "idle" | "checking" | "attached" | "none" | "closed";
+  attached: AttachedEvidence | null;
 };
 
 /** What the phone's sensors have measured so far. Live values only: the official ones are `metrics`. */
@@ -56,13 +78,33 @@ const EMPTY: Persisted = { workout: null, queue: [], context: { sessions: {}, se
 let userId: string | null = null;
 let data: Persisted = EMPTY;
 const NO_TRACKING: TrackingSnapshot = { gps: "off", motion: "off", distanceM: null, steps: null, pending: false, metrics: null };
-let snapshot: WorkoutSnapshot = { ready: false, workout: null, pending: 0, syncing: false, notice: null, server: null, tracking: NO_TRACKING };
+let snapshot: WorkoutSnapshot = {
+  ready: false,
+  workout: null,
+  pending: 0,
+  syncing: false,
+  notice: null,
+  server: null,
+  tracking: NO_TRACKING,
+  health: { available: false, connected: false, status: "idle", attached: null },
+};
 let gps: SensorStatus = "off";
 let motion: SensorStatus = "off";
 let totals: TrackTotals = emptyTotals();
 let stepTotal = 0;
 let trackingPending = false;
 let metrics: WorkoutMetric[] | null = null;
+let healthStatus: HealthSnapshot["status"] = "idle";
+let attached: AttachedEvidence | null = null;
+
+const healthKey = () => `squadsix.health.apple.${userId}`;
+const healthConnected = () => userId !== null && Storage.getItemSync(healthKey()) === "on";
+const healthSnapshot = (): HealthSnapshot => ({
+  available: appleHealthAvailable(),
+  connected: healthConnected(),
+  status: healthStatus,
+  attached,
+});
 let syncing = false;
 let notice: string | null = null;
 const listeners = new Set<() => void>();
@@ -98,6 +140,7 @@ function publish(save = true) {
           metrics,
         }
       : NO_TRACKING,
+    health: healthSnapshot(),
   };
   listeners.forEach((fn) => fn());
 }
@@ -128,6 +171,68 @@ export async function hydrateWorkout(forUser: string) {
   if (!data.workout) await adoptServerWorkout();
   if (data.workout && stateOf(data.workout.events) === "active") void beginTracking();
   void syncWorkout();
+  void recheckRecentEvidence();
+}
+
+// Apple Health evidence ----------------------------------------------------------------------------
+// After the finish, look in Apple Health for a workout recorded by a watch or another app at the same
+// time and attach its summary. Only when the athlete has turned the integration on.
+
+/** Look for a matching Apple Health workout for the finished workout on screen. */
+export async function checkHealthEvidence() {
+  const w = data.workout;
+  const server = w ? data.context.sessions[w.clientSessionId] : null;
+  if (!w || !server?.ended_at || stateOf(w.events) !== "finished") return;
+  if (!appleHealthAvailable() || !healthConnected() || healthStatus === "checking" || healthStatus === "attached") return;
+  const id = w.clientSessionId;
+  healthStatus = "checking";
+  publish(false);
+  let next: HealthSnapshot["status"] = "none";
+  try {
+    const span = { start: Date.parse(server.started_at), end: Date.parse(server.ended_at) };
+    const outcome = await matchAndAttach(span, appleHealth, (evidence) => attachEvidence(server.id, evidence));
+    next = outcome.status === "retry" ? "none" : outcome.status;
+    if (outcome.status === "attached") {
+      const [rows, fresh] = await Promise.all([fetchEvidence(server.id), fetchWorkoutMetrics(server.id)]);
+      if (data.workout?.clientSessionId !== id) return;
+      attached = rows.find((r) => r.provider === "healthkit") ?? null;
+      metrics = fresh;
+    }
+  } catch {
+    next = "none"; // couldn't confirm: the next check tries again
+  } finally {
+    if (data.workout?.clientSessionId === id) {
+      healthStatus = next;
+      publish(false);
+    }
+  }
+}
+
+/** Turn the Apple Health integration on (shows Apple's permission sheet once), then look for a match. */
+export async function connectAppleHealth() {
+  if (!userId || !appleHealthAvailable()) return;
+  if (!(await requestAppleHealth())) return;
+  Storage.setItemSync(healthKey(), "on");
+  healthStatus = "idle";
+  publish(false);
+  await checkHealthEvidence();
+}
+
+let rechecking = false;
+
+/** Watches can take hours to sync: when the app opens, re-check workouts from the last 24 hours. */
+async function recheckRecentEvidence() {
+  if (rechecking || !appleHealthAvailable() || !healthConnected()) return;
+  rechecking = true;
+  try {
+    for (const s of await fetchWorkoutsAwaitingEvidence()) {
+      await matchAndAttach({ start: s.start, end: s.end }, appleHealth, (evidence) => attachEvidence(s.id, evidence));
+    }
+  } catch {
+    // Offline or Apple Health unavailable: the next app open tries again.
+  } finally {
+    rechecking = false;
+  }
 }
 
 // Tracking (GPS and steps) -------------------------------------------------------------------------
@@ -143,6 +248,8 @@ function resetTracking() {
   stepTotal = 0;
   trackingPending = false;
   metrics = null;
+  healthStatus = "idle";
+  attached = null;
 }
 
 /** After an app restart: rebuild the live totals from what is buffered on the phone. */
@@ -233,6 +340,7 @@ async function flushTracking() {
     if (state === "finished" && result.complete && data.queue.length === 0) {
       metrics = await fetchWorkoutMetrics(server.id).catch(() => metrics);
       if (metrics) stopFlushTimer();
+      if (healthStatus === "idle") void checkHealthEvidence();
     }
   } catch {
     // Unexpected failure: keep the measurements and try again on the next round.

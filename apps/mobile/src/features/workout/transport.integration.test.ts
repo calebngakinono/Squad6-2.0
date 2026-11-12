@@ -1,6 +1,8 @@
 import type { Database } from "@squad-six/shared";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { matchAndAttach, type EvidenceProvider } from "./evidence/attach";
+import type { PlatformWorkout } from "./evidence/match";
 import { drain, type Command } from "./queue";
 import { createMemoryStore } from "./tracking/local-store";
 import { activeIntervals, summarizeTrack, type TrackPoint } from "./tracking/track";
@@ -154,6 +156,56 @@ describe.skipIf(!isLocal)("workout transport against local Supabase", () => {
     await stranger.auth.signUp({ email: `wk-other-${Date.now()}@example.com`, password: "test-password-123" });
     const theirs = await stranger.from("workout_route_points").select("recorded_at", { count: "exact", head: true }).eq("session_id", serverId);
     expect(theirs.count).toBe(0);
+  });
+
+  it("attaches a matching Apple Health workout once, labeled as synced, and never a hand-typed one", async () => {
+    const t = transport.createTransport("test-device");
+    const start = Date.now() - 30 * 60_000;
+    const end = Date.now() - 60_000;
+    const finishWorkout = async () => {
+      const cid = uuid();
+      const r = await drain(
+        [
+          { type: "start", id: cid, clientSessionId: cid, activity: "strength", at: start },
+          { type: "transition", id: uuid(), clientSessionId: cid, kind: "finish", at: end },
+        ],
+        { sessions: {}, sets: {} },
+        t,
+      );
+      expect(r.context.sessions[cid].state).toBe("submitted");
+      return r.context.sessions[cid].id;
+    };
+    const serverId = await finishWorkout();
+    expect((await transport.fetchWorkoutsAwaitingEvidence()).map((s) => s.id)).toContain(serverId);
+
+    const watch: PlatformWorkout = {
+      provider: "healthkit", id: `HK-${uuid()}`, sourceName: "Test Watch", bundleId: "com.apple.health.test", deviceName: "Apple Watch",
+      activity: "traditionalStrengthTraining", start: start + 60_000, end: end - 60_000, userEntered: false, distanceM: null, energyKcal: 240.5,
+    };
+    const typed: PlatformWorkout = { ...watch, id: `HK-${uuid()}`, start, end, userEntered: true };
+    const health = (workouts: PlatformWorkout[]): EvidenceProvider => ({
+      findWorkouts: async () => workouts,
+      heartRate: async (span) => Array.from({ length: 20 }, (_, i) => ({ t: span.start + i * 60_000, bpm: 110 + i })),
+    });
+    const span = { start, end };
+    const attach = (id: string) => (e: Parameters<typeof transport.attachEvidence>[1]) => transport.attachEvidence(id, e);
+
+    expect(await matchAndAttach(span, health([typed]), attach(serverId))).toEqual({ status: "none" });
+    expect(await matchAndAttach(span, health([typed, watch]), attach(serverId))).toEqual({ status: "attached" });
+    expect(await matchAndAttach(span, health([typed, watch]), attach(serverId))).toEqual({ status: "attached" }); // retry
+
+    const [evidence] = await transport.fetchEvidence(serverId);
+    expect(evidence).toMatchObject({ provider: "healthkit", source_name: "Test Watch", hr_avg: 119.5 });
+    expect(evidence.overlap).toBeGreaterThan(0.9);
+    const synced = (await transport.fetchWorkoutMetrics(serverId)).filter((m) => m.source === "healthkit");
+    expect(synced.map((m) => m.metric).sort()).toEqual(["active_energy_kcal", "avg_heart_rate", "hr_coverage", "max_heart_rate", "platform_overlap"]);
+    expect(synced.every((m) => m.provenance === "synced")).toBe(true);
+    expect((await transport.fetchWorkoutsAwaitingEvidence()).map((s) => s.id)).not.toContain(serverId);
+
+    // The same watch workout cannot back a second Squad Six workout.
+    const second = await finishWorkout();
+    expect(await matchAndAttach(span, health([watch]), attach(second))).toEqual({ status: "none" });
+    expect(await transport.fetchEvidence(second)).toEqual([]);
   });
 
   it("classifies a server refusal as rejected", async () => {

@@ -6,7 +6,7 @@ import { Card } from "@/components/card";
 import { T } from "@/components/screen-text";
 import { activityInfo, formatDuration, stateOf } from "@/features/workout/machine";
 import { SetLogger } from "@/features/workout/set-logger";
-import { clearFinishedWorkout, liveSeconds, transitionWorkout } from "@/features/workout/store";
+import { checkHealthEvidence, clearFinishedWorkout, connectAppleHealth, liveSeconds, transitionWorkout } from "@/features/workout/store";
 import { formatDistance, formatPace, formatSpeed, usesMiles } from "@/features/workout/tracking/track";
 import { useNow, useWorkout } from "@/features/workout/use-workout";
 import { space } from "@/theme/tokens";
@@ -14,7 +14,7 @@ import { usePalette } from "@/theme/use-palette";
 
 export default function WorkoutScreen() {
   const c = usePalette();
-  const { workout, server, pending, syncing, notice, tracking } = useWorkout();
+  const { workout, server, pending, syncing, notice, tracking, health } = useWorkout();
   const state = workout ? stateOf(workout.events) : null;
   const now = useNow(state === "active");
 
@@ -45,7 +45,10 @@ export default function WorkoutScreen() {
           : "Measurements saved on this phone, will upload when online";
 
   // Official numbers come from the server after the finish; until then, what this phone measured.
-  const official = Object.fromEntries((tracking.metrics ?? []).map((m) => [m.metric, m.value]));
+  // Numbers synced from Apple Health are shown separately, never mixed into the phone's own.
+  const official = Object.fromEntries(
+    (tracking.metrics ?? []).filter((m) => m.source === "gps" || m.source === "pedometer").map((m) => [m.metric, m.value]),
+  );
   const confirmed = tracking.metrics !== null;
   const distance = official.distance_m ?? tracking.distanceM;
   const steps = official.steps ?? tracking.steps;
@@ -126,6 +129,40 @@ export default function WorkoutScreen() {
               <Button label="Open Settings" variant="secondary" onPress={() => void Linking.openSettings()} />
             )}
           </View>
+        )}
+
+        {!open && state === "finished" && synced && health.available && (
+          <Card>
+            <T variant="label">Apple Health</T>
+            {!health.connected ? (
+              <>
+                <T tone="textMuted">
+                  Wore a watch or used another fitness app? Connect Apple Health and Squad Six will attach that workout
+                  as evidence. It reads workouts and heart rate only, and never writes anything.
+                </T>
+                <Button label="Connect Apple Health" variant="secondary" onPress={() => void connectAppleHealth()} />
+              </>
+            ) : health.status === "attached" ? (
+              <T tone="textMuted" accessibilityLiveRegion="polite">
+                {`Matched a workout from ${health.attached?.source_name ?? "another app"}`}
+                {health.attached ? `, covering ${Math.round(health.attached.overlap * 100)}% of this one` : ""}
+                {health.attached?.hr_avg != null ? `. Average heart rate ${Math.round(health.attached.hr_avg)} bpm` : ""}
+                {". Synced from Apple Health after the workout."}
+              </T>
+            ) : health.status === "closed" ? (
+              <T tone="textMuted">Apple Health evidence can no longer be added to this workout.</T>
+            ) : health.status === "none" ? (
+              <>
+                <T tone="textMuted" accessibilityLiveRegion="polite">
+                  No matching Apple Health workout found yet. Watches can take a while to sync, so Squad Six looks again
+                  each time you open the app for the next 24 hours.
+                </T>
+                <Button label="Check again" variant="secondary" onPress={() => void checkHealthEvidence()} />
+              </>
+            ) : (
+              <T tone="textMuted">Looking in Apple Health…</T>
+            )}
+          </Card>
         )}
 
         {!open && state === "finished" && (

@@ -49,3 +49,20 @@ development build installed:
 | Offline finish uploads later and the server number appears | pending |
 | Distance versus a known route | pending |
 | Steps appear (iPhone: within about a minute) | pending |
+
+## Apple Health matching check (after part 4)
+
+1. Start a workout on your Apple Watch (or another fitness app) and a Squad Six workout at about the same time.
+   Finish both after 5 minutes or more.
+2. On the finished screen tap **Connect Apple Health** and allow workouts and heart rate.
+3. Expect "Matched a workout from ..." with the overlap and average heart rate. If the watch hasn't synced yet,
+   expect "No matching Apple Health workout found yet"; tap **Check again** after a minute.
+4. Add a workout by hand in the Health app for the same time, then finish another Squad Six workout: it must
+   **not** be matched.
+
+| Check | Result |
+|---|---|
+| Permission sheet asks only for workouts and heart rate | pending |
+| Watch workout is matched; source, overlap and heart rate look right | pending |
+| Hand-typed Health entry is not matched | pending |
+| Time from finishing on the watch to a successful match | pending |
