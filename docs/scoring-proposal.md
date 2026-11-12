@@ -269,7 +269,7 @@ days in §3 exactly.
 | No watch motion category (only phone steps count as motion) | A watch-only workout gets heart rate + platform record = 25, not 30. Scenario 11 scores 220, not 225 | A watch app, or reading watch step data from Apple Health |
 | No elevation gain | Hikes are scored on flat distance; scenario 10 scores lower | Computing climb from GPS altitude after the device check |
 | No Bluetooth heart-rate strap | Scenario 4b cannot happen yet | The BLE stretch item |
-| No review tool | A `needs_review` workout stays at 0 points | An admin review flow |
+| No admin screen or alert for reviews | A `needs_review` workout stays at 0 points until an operator decides it in the SQL editor (`docs/deployment.md`); **never auto-accepted** (Caleb, 2026-11-11). Nobody is notified when one is flagged | An in-app admin screen and a notification |
 
 **Values I chose where the proposal gave none (in the v1 config, easy to change before launch):**
 
