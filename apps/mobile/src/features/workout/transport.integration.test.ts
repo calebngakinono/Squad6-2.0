@@ -210,6 +210,15 @@ describe.skipIf(!isLocal)("workout transport against local Supabase", () => {
     expect(await transport.fetchEvidence(second)).toEqual([]);
   });
 
+  it("reads season standings through the app's API (empty while scoring is off, never an error)", async () => {
+    const standings = await import("@/features/standings/api");
+    const season = new Date().getFullYear();
+    expect(await standings.loadAthleteStandings(season, null)).toEqual([]);
+    expect(await standings.loadAthleteStandings(season, "Denver")).toEqual([]);
+    expect(await standings.loadSquadStandings(season, null)).toEqual([]);
+    expect(await standings.loadMySeason(season)).toBeNull();
+  });
+
   it("classifies a server refusal as rejected", async () => {
     const t = transport.createTransport("test-device");
     const cid = uuid();

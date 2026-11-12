@@ -293,3 +293,21 @@ days in §3 exactly.
   `merged`) and the breakdown live in `workout_scores`.
 - **Scoring is off until switched on per environment:** `select public.set_scoring_active('v1', now());` (database
   owner or service role only). Workouts that started before that moment are never scored.
+
+### Standings (built 2026-11-11)
+
+`athlete_standings()` and `squad_standings()` implement §5 as approved, overall or within a city, per season.
+Not built: the season archive and champions (14-day review after December 31), and a ranking of cities
+against each other.
+
+**One consequence of the approved squad formula to decide on before launch.** A member's seat is their days in
+the squad ÷ days elapsed in the season, so a squad that forms late is scored as if its first days were its whole
+season. Example: three people form a squad on day 315 of the season and each logs one 214-point workout that
+day. Their seats total 3 × 1/315 = 0.0095, so the squad's score is 642 ÷ 0.0095 ≈ 67,400: above a squad that
+averaged 40,000 per member all year. The effect fades as the squad ages and does not exist for squads that
+start on January 1. Possible fixes (each is a one-function change and a new decision): count every member as at
+least 30 days; or list a squad as "provisional" until it is 14 days old; or divide by days elapsed since the
+squad's first member joined instead of since January 1 only when ranking squads created this season.
+
+City names are still free text (the filter ignores case and surrounding spaces, nothing more), so "St George"
+and "St. George" are different cities until cities are normalized.

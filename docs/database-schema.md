@@ -26,8 +26,8 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `challenge_participants` | 📝 | Athlete or squad enrollment and progress | Owner / squad members |
 | `challenge_awards` | 📝 | Tier awarded; unique per challenge + participant + tier; mirrored as ledger rows | Owner / squad members |
 | `season_champions` | 📝 | Archived top squads per city per season | Read: signed in |
-| `seasons` | 📝 | Year, start, end, status (active / archived) | Read: signed in |
-| `season_standings` | 📝 | Derived athlete / squad / city totals per season. Squads rank by average per member (seats weighted by days in squad; 3 members minimum to rank) | Read: signed in |
+| `seasons` | — | Not a table: a season is a calendar year (the athlete's home-timezone year, stored on each ledger row). `season_window(year)` gives the part that has elapsed | — |
+| `season_standings` | ✅ (functions) | Not stored: `athlete_standings(season, city, max_rows)` and `squad_standings(season, city, max_rows)` derive standings from the ledger on request. Athletes rank by total points. Squads rank by points ÷ member-seasons (each member's days in the squad ÷ days elapsed), need 3 current members to be ranked, and keep the points earned in them. Both always include the caller's own row. Materialize per season if this gets slow | Signed-in users (totals, names and cities only; the ledger stays owner-only) |
 | `squad_messages` | 📝 | Basic squad chat | Squad members |
 | `entitlements` | 📝 | Pro status from RevenueCat webhook | Owner reads; server writes |
 | `onboarding_flows` | ✅ | Versioned onboarding config (steps, types, branches, profile-field mapping); one active. v1 = core questions, placeholder copy. Structure validated by `onboardingFlowSchema` (packages/shared), which a unit test runs against the migration | Read: signed in; changed by migrations only |

@@ -445,6 +445,11 @@ isOneToOne: true
 "add_route_points":
 { Args: { "points": Json,"session_id": string }; Returns: number
                            },
+"athlete_standings":
+{ Args: { "in_city"?: string,"max_rows"?: number,"season": number }; Returns: {
+              "city": string,"display_name": string,"is_me": boolean,"points": number,"rank": number,"user_id": string
+            }[]
+                           },
 "attach_workout_evidence":
 { Args: { "evidence": Json,"session_id": string }; Returns: {
               "activity": string | null,
@@ -709,11 +714,19 @@ isOneToOne: true
 "scoring_ramp":
 { Args: { "full_at": number,"x": number,"zero": number }; Returns: number
                            },
+"season_window":
+{ Args: { "season": number }; Returns: Record<string, unknown>
+                           },
 "set_home_timezone":
 { Args: { "tz": string }; Returns: undefined
                            },
 "set_scoring_active":
 { Args: { "starting": string,"target_version": string }; Returns: undefined
+                           },
+"squad_standings":
+{ Args: { "in_city"?: string,"max_rows"?: number,"season": number }; Returns: {
+              "city": string,"is_mine": boolean,"is_ranked": boolean,"members": number,"name": string,"points": number,"rank": number,"score": number,"squad_id": string
+            }[]
                            },
 "start_workout":
 { Args: { "activity": string,"client_session_id": string,"client_started_at"?: string,"device_id"?: string }; Returns: {

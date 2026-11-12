@@ -141,8 +141,9 @@ The exact capabilities are confirmed by a device spike in phase 1 before being r
 - `points_ledger`: append-only. Every row references a session (or other source) and a rule version, and a
   unique key `(source_type, source_id, rule_version, kind, revision)` makes double-awarding impossible (one
   `award` per source and version; each correction is a numbered `adjustment` row, never an edit).
-- Athlete, squad and city totals are derived from the ledger (materialized per season), never stored as an
-  editable number on a profile.
+- Athlete, squad and city totals are derived from the ledger, never stored as an editable number on a profile.
+  Today they are computed on request by `athlete_standings()` / `squad_standings()`; materialize per season when
+  volume requires it.
 - Seasons run January 1 – December 31 **in the user's home timezone, locked at the moment a session starts**.
   Daily caps use the same rule.
 - Approved formula (rule v1, 2026-11-10, see scoring-proposal.md): `Base 170 (eligible only) + Verification 0–30 + Performance 0–50`, maximum
