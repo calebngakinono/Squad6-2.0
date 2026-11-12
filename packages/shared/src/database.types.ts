@@ -37,6 +37,38 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"points_ledger": {
+                  Row: {
+                    "created_at": string,"id": number,"kind": string,"local_date": string,"points": number,"reason": string,"revision": number,"rule_version": string,"season": number,"source_id": string,"source_type": string,"squad_id": string | null,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: never,"kind": string,"local_date": string,"points": number,"reason": string,"revision"?: number,"rule_version": string,"season": number,"source_id": string,"source_type": string,"squad_id"?: string | null,"user_id"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: never,"kind"?: string,"local_date"?: string,"points"?: number,"reason"?: string,"revision"?: number,"rule_version"?: string,"season"?: number,"source_id"?: string,"source_type"?: string,"squad_id"?: string | null,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "points_ledger_rule_version_fkey"
+      columns: ["rule_version"]
+isOneToOne: false
+      referencedRelation: "scoring_rule_versions"
+      referencedColumns: ["version"]
+    },{
+      foreignKeyName: "points_ledger_squad_id_fkey"
+      columns: ["squad_id"]
+isOneToOne: false
+      referencedRelation: "squads"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "points_ledger_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profile_private": {
                   Row: {
                     "created_at": string,"home_timezone": string | null,"home_timezone_changed_at": string | null,"onboarding_answers": NonNullable<Json>,"onboarding_completed_at": string | null,"onboarding_flow_version": number | null,"onboarding_step": string | null,"updated_at": string,"user_id": string,"weekly_commitment": number | null
@@ -73,6 +105,20 @@ isOneToOne: true
                   }
                   Update: {
                     "city"?: string | null,"created_at"?: string,"display_name"?: string | null,"id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"scoring_rule_versions": {
+                  Row: {
+                    "active_from": string | null,"config": NonNullable<Json>,"created_at": string,"version": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active_from"?: string | null,"config": NonNullable<Json>,"created_at"?: string,"version": string
+                  }
+                  Update: {
+                    "active_from"?: string | null,"config"?: NonNullable<Json>,"created_at"?: string,"version"?: string
                   }
                   Relationships: [
                     
@@ -255,6 +301,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"workout_reviews": {
+                  Row: {
+                    "decided_at": string,"decision": string,"id": number,"reason": string,"reviewer": string,"session_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "decided_at"?: string,"decision": string,"id"?: never,"reason": string,"reviewer": string,"session_id": string
+                  }
+                  Update: {
+                    "decided_at"?: string,"decision"?: string,"id"?: never,"reason"?: string,"reviewer"?: string,"session_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_reviews_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"workout_route_points": {
                   Row: {
                     "accuracy_m": number | null,"altitude_m": number | null,"latitude": number,"longitude": number,"mocked": boolean,"received_at": string,"recorded_at": string,"session_id": string,"speed_ms": number | null
@@ -271,6 +337,38 @@ isOneToOne: false
       foreignKeyName: "workout_route_points_session_id_fkey"
       columns: ["session_id"]
 isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workout_scores": {
+                  Row: {
+                    "base": number,"categories": (string)[],"detail": NonNullable<Json>,"factor": number,"merged_into": string | null,"performance": number,"rule_version": string,"scored_at": string,"session_id": string,"status": string,"total": number,"verification": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "base"?: number,"categories"?: (string)[],"detail"?: NonNullable<Json>,"factor"?: number,"merged_into"?: string | null,"performance"?: number,"rule_version": string,"scored_at"?: string,"session_id": string,"status": string,"total"?: number,"verification"?: number
+                  }
+                  Update: {
+                    "base"?: number,"categories"?: (string)[],"detail"?: NonNullable<Json>,"factor"?: number,"merged_into"?: string | null,"performance"?: number,"rule_version"?: string,"scored_at"?: string,"session_id"?: string,"status"?: string,"total"?: number,"verification"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_scores_merged_into_fkey"
+      columns: ["merged_into"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "workout_scores_rule_version_fkey"
+      columns: ["rule_version"]
+isOneToOne: false
+      referencedRelation: "scoring_rule_versions"
+      referencedColumns: ["version"]
+    },{
+      foreignKeyName: "workout_scores_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: true
       referencedRelation: "workout_sessions"
       referencedColumns: ["id"]
     }
@@ -324,7 +422,21 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "workouts_awaiting_review": {
+                  Row: {
+                    "active_minutes": number | null,"activity": string,"athlete": string | null,"flagged_at": string,"flagged_because": string | null,"gps_coverage": number | null,"gps_km": number | null,"gps_km_thrown_out": number | null,"health_app_source": string | null,"local_date": string,"session_id": string,"steps": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_scores_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: true
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
           }
           Functions: {
             "add_motion_samples":
@@ -561,11 +673,47 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"review_workout":
+{ Args: { "decision": string,"reason": string,"reviewer": string,"target": string }; Returns: {
+              "base": number,
+"categories": (string)[],
+"detail": NonNullable<Json>,
+"factor": number,
+"merged_into": string | null,
+"performance": number,
+"rule_version": string,
+"scored_at": string,
+"session_id": string,
+"status": string,
+"total": number,
+"verification": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_scores"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "save_onboarding_progress":
 { Args: { "answers": Json,"current_step": string,"flow_version": number }; Returns: undefined
                            },
+"score_day":
+{ Args: { "target_date": string,"target_user": string }; Returns: undefined
+                           },
+"score_workout_day":
+{ Args: { "target": string }; Returns: undefined
+                           },
+"scoring_performance":
+{ Args: { "active_seconds": number,"activity": string,"cfg": Json,"distance_m": number,"live_sets": number }; Returns: Record<string, unknown>
+                           },
+"scoring_ramp":
+{ Args: { "full_at": number,"x": number,"zero": number }; Returns: number
+                           },
 "set_home_timezone":
 { Args: { "tz": string }; Returns: undefined
+                           },
+"set_scoring_active":
+{ Args: { "starting": string,"target_version": string }; Returns: undefined
                            },
 "start_workout":
 { Args: { "activity": string,"client_session_id": string,"client_started_at"?: string,"device_id"?: string }; Returns: {
@@ -631,6 +779,9 @@ isOneToOne: false
       } },
 "workout_max_open":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"workout_scoring_facts":
+{ Args: { "cfg": Json,"target": string }; Returns: Json
                            },
 "workout_transition":
 { Args: { "client_at": string,"client_event_id": string,"device_id": string,"expected_version": number,"kind": string,"session_id": string }; Returns: {

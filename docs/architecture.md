@@ -136,10 +136,11 @@ The exact capabilities are confirmed by a device spike in phase 1 before being r
 
 - `scoring_rule_versions`: versioned JSON config (base, verification table, activity-specific performance
   ramps and caps, eligibility minimums, daily schedule, merge rule). Only one version is active; changing rules
-  means a new version. Proposed values are in [`scoring-proposal.md`](scoring-proposal.md) (not yet approved).
+  means a new version. Approved values are in [`scoring-proposal.md`](scoring-proposal.md); §9 there lists what the
+  engine covers today. Scoring is off until `set_scoring_active()` is run for an environment.
 - `points_ledger`: append-only. Every row references a session (or other source) and a rule version, and a
-  unique key `(source_type, source_id, rule_version, kind)` makes double-awarding impossible. Corrections are
-  new negative rows, never edits.
+  unique key `(source_type, source_id, rule_version, kind, revision)` makes double-awarding impossible (one
+  `award` per source and version; each correction is a numbered `adjustment` row, never an edit).
 - Athlete, squad and city totals are derived from the ledger (materialized per season), never stored as an
   editable number on a profile.
 - Seasons run January 1 – December 31 **in the user's home timezone, locked at the moment a session starts**.

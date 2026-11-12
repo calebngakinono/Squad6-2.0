@@ -57,3 +57,35 @@ The pipeline was built for Wrench AI and kept for Squad Six. These names live in
 | `db push` cannot connect | Use the **Session pooler** string (GitHub runners have no IPv6); password with special characters must be URL-encoded. |
 | `railway up` unauthorized | Token belongs to a different Railway environment or was revoked. |
 | Health check fails, build passed | Missing `NEXT_PUBLIC_*` variables in Railway, or the app crashed on start: check Railway logs. |
+
+## Switching competitive scoring on
+
+Deploying the scoring migration does **not** start scoring. Each environment's rule version stays off
+(`active_from` is empty) until someone runs this once in that environment's SQL editor:
+
+```sql
+select public.set_scoring_active('v1', now());
+```
+
+Workouts that start after that moment are scored; earlier ones never are. To pause scoring again, set the time
+far in the future. Staging can be switched on for testing at any time. **Production needs Caleb's explicit
+sign-off** (hard rule 10 in `CLAUDE.md`).
+
+## Reviewing flagged workouts
+
+A workout the automatic checks flag (for example a "run" at car speed) earns 0 points and waits for a person. It
+is never accepted automatically. Until there is an admin screen, review is done in the environment's SQL editor:
+
+```sql
+-- 1. What is waiting (summaries only, no routes):
+select * from public.workouts_awaiting_review;
+
+-- 2. Decide. The reason is shown to the athlete when you reject.
+select public.review_workout('<session_id>', 'accepted', 'Downhill race, checked with the athlete', 'Caleb');
+select public.review_workout('<session_id>', 'rejected', 'This was recorded in a car', 'Caleb');
+```
+
+The athlete's day is re-scored immediately and the points change through new ledger rows. A decision can be
+reversed by deciding again (the latest one wins). `review_workout` also works on a workout that was accepted
+automatically, for example after a report from a squad. Nothing notifies you when a workout is flagged yet, so
+check the list regularly once scoring is on.
