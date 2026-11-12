@@ -50,6 +50,11 @@ export const WORKOUT_METRICS = [
   "gps_excluded_m",
   "steps",
   "motion_coverage",
+  "avg_heart_rate",
+  "max_heart_rate",
+  "hr_coverage",
+  "active_energy_kcal",
+  "platform_overlap",
 ] as const;
 
 /** A server-computed measurement, as read back from workout_metrics. */

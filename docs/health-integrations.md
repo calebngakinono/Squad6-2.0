@@ -88,6 +88,25 @@ Each provider implements the same small interface: `isAvailable()`, `requestPerm
 `findOverlappingWorkouts(interval)`, `getSummary(interval)` and, for live sources, `subscribe()`. Adding Garmin,
 Polar or a camera check later means one new provider and no change to the session engine or scoring.
 
+## What is built (2026-11-11)
+
+Apple Health matching, phone side in `apps/mobile/src/features/workout/evidence/`:
+
+- **Opt-in.** The finished-workout screen offers "Connect Apple Health". Apple's permission sheet is shown only
+  then, and only for workouts and heart rate (read-only; nothing is written to Apple Health).
+- **Matching.** After the finish the app reads Apple Health workouts around the session, drops hand-typed ones and
+  Squad Six's own, picks the one that overlaps most, summarizes heart rate for the shared time, and calls
+  `attach_workout_evidence`. The server re-checks everything it can and computes the overlap itself.
+- **Late syncs.** Each time the app opens it re-checks workouts finished in the last 24 hours that have no Apple
+  Health evidence. Background delivery (`HKObserverQuery`) is not built.
+- **Honest labels.** The screen says "Synced from Apple Health after the workout" and, when nothing is found, "No
+  matching Apple Health workout found yet" (never "denied": iOS does not tell us).
+- **Known limit.** The phone reports what Apple Health says; the server cannot verify HealthKit itself. A modified
+  app could send a made-up summary, which is why evidence is a small bonus with plausibility checks, not proof.
+- **Not verified on a real iPhone yet** (needs the Apple Developer membership and a development build with the
+  HealthKit entitlement): see the checklist in [`device-spike.md`](device-spike.md).
+- Health Connect (Android) is not built; it will be a second provider behind the same interface.
+
 ## Future Apple Watch app (not started)
 
 The session engine is already device-neutral, so a watch app is another client:
