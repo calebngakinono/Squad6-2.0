@@ -49,6 +49,10 @@ describe("summarizeScore", () => {
     const zero = { ...accepted, categories: [], base: 0, verification: 0, performance: 0, factor: 0, total: 0 };
     expect(summarizeScore({ ...zero, status: "needs_review", detail: { reason: "Average speed of 38 km/h is too fast for this activity." } }).headline).toBe("In review: no points for now");
     expect(summarizeScore({ ...zero, status: "merged", detail: {} }).headline).toBe("Counted with your previous workout");
+    expect(summarizeScore({ ...zero, status: "rejected", detail: { reason: "Reviewed by Squad Six and not counted: This was recorded in a car" } })).toMatchObject({
+      headline: "Not counted: 0 points",
+      notes: ["Reviewed by Squad Six and not counted: This was recorded in a car"],
+    });
   });
 
   it("accepts the row shape the database returns", () => {

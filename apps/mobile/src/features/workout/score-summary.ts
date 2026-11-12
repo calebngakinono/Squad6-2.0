@@ -34,7 +34,9 @@ export function summarizeScore(score: WorkoutScore): ScoreSummary {
         ? "In review: no points for now"
         : score.status === "merged"
           ? "Counted with your previous workout"
-          : "Saved: 0 points";
+          : score.status === "rejected"
+            ? "Not counted: 0 points"
+            : "Saved: 0 points";
     return { headline, lines: [], notes: reason ? [reason, ...notes] : notes };
   }
 
