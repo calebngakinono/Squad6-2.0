@@ -57,3 +57,16 @@ The pipeline was built for Wrench AI and kept for Squad Six. These names live in
 | `db push` cannot connect | Use the **Session pooler** string (GitHub runners have no IPv6); password with special characters must be URL-encoded. |
 | `railway up` unauthorized | Token belongs to a different Railway environment or was revoked. |
 | Health check fails, build passed | Missing `NEXT_PUBLIC_*` variables in Railway, or the app crashed on start: check Railway logs. |
+
+## Switching competitive scoring on
+
+Deploying the scoring migration does **not** start scoring. Each environment's rule version stays off
+(`active_from` is empty) until someone runs this once in that environment's SQL editor:
+
+```sql
+select public.set_scoring_active('v1', now());
+```
+
+Workouts that start after that moment are scored; earlier ones never are. To pause scoring again, set the time
+far in the future. Staging can be switched on for testing at any time. **Production needs Caleb's explicit
+sign-off** (hard rule 10 in `CLAUDE.md`).

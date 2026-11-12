@@ -17,8 +17,9 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `workout_motion_samples` | ✅ | Phone steps per clock minute (`seconds` measured, `steps` 0–400). Re-sending a minute keeps the larger count | Owner reads; written by `add_motion_samples()` only |
 | `workout_metrics` | ✅ | **Server-computed** measurements per workout with `source` and `provenance`: `distance_m`, `gps_coverage`, `gps_points`, `gps_mocked_points`, `gps_excluded_m` (source `gps`), `steps`, `motion_coverage` (source `pedometer`). Recomputed at finish and when late measurements arrive | Owner reads; written by the server only |
 | `strength_sets` | ✅ | Exercise, reps (1–100), optional weight (manual, never scored); clamped time, `offline`, `after_finish` (logged ≤ 1 h after finishing: kept, not live evidence); soft delete while open | Owner reads; writes via functions only |
-| `scoring_rule_versions` | 📝 | Versioned scoring config | Read: signed in. Write: migrations only |
-| `points_ledger` | 📝 | Append-only point awards and reversals; unique per source + rule version | Owner reads own; squad/leaderboards via views |
+| `scoring_rule_versions` | ✅ | Versioned scoring config as JSON (v1 = approved rules). `active_from` null = scoring off; set per environment by `set_scoring_active()` (operators only) | Read: signed in. Write: migrations and operators only |
+| `workout_scores` | ✅ | Scoring outcome per finished workout: status (`accepted`, `recorded`, `needs_review`, `merged`), evidence categories, base / verification / performance, daily factor, total, and a `detail` JSON with the facts and reasons shown to the athlete | Owner reads; written by the scorer only |
+| `points_ledger` | ✅ | Append-only awards and adjustments: user, squad (locked at workout start), season, scoring day, source, rule version, kind (`award` / `adjustment`), revision, points, reason. Unique per source + rule version + kind + revision, so a workout is awarded once and each correction is its own row. `user_id` becomes null on account deletion (the row still counts for the squad) | Owner reads own; squad/leaderboards via views (later) |
 | `workout_evidence` | ✅ | Summary of a health-platform workout attached as evidence: provider (`healthkit`, later `health_connect`), platform record id, source app and device, times, server-computed `overlap`, optional distance, energy and heart-rate summary. A platform record backs one workout only (unique); one record per provider per workout. Summaries only: no raw samples, no routes | Owner reads; written by `attach_workout_evidence()` only |
 | `challenges` | 📝 | Official challenge definition: type, tiers, evidence requirement, window, rule version (locked once started) | Read: signed in |
 | `challenge_participants` | 📝 | Athlete or squad enrollment and progress | Owner / squad members |
@@ -73,6 +74,14 @@ workout, start to finish, that the record covers) and adds the summary to `worko
 as `source` and provenance `synced` (`platform_overlap`, `distance_m`, `active_energy_kcal`, `avg_heart_rate`,
 `max_heart_rate`, `hr_coverage`). Other errors: `workout_not_finished`, `evidence_window_closed`, `invalid_evidence`.
 Whether evidence earns anything (the 80 % overlap rule and so on) is decided by the scoring engine, not here.
+
+## Scoring functions (internal)
+
+None are callable by app users. `score_day(user, date)` re-scores one athlete's day and is idempotent; it is run
+by deferred triggers when a workout is finished and when its metrics or evidence change. `workout_scoring_facts()`
+decides which evidence categories pass; `scoring_performance()` computes effort and intensity from the rule
+config. `set_scoring_active(version, from)` switches a rule version on. Details and known gaps:
+[`scoring-proposal.md` §9](scoring-proposal.md).
 
 ## Rules for every migration
 

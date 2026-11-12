@@ -1,7 +1,8 @@
 # Scoring proposal
 
 Status: **APPROVED by Caleb on 2026-11-10** (all decisions in §8). This is rule version `v1` for the scoring
-engine. Nothing is implemented yet. Production competitive scoring still needs Caleb's sign-off at release.
+engine. The engine core is built (see §9 for what it covers and where it differs from the tables below).
+Production competitive scoring still needs Caleb's sign-off at release; scoring is switched off by default.
 Every number below comes from `node scripts/scoring-simulation.mjs`; any later change becomes a new rule version.
 
 ## 1. Formula
@@ -253,3 +254,42 @@ values. Nothing is advertised until a campaign is funded.
 5. ✅ **Approved:** 24-hour late-evidence window.
 6. ✅ **Approved:** challenge values in §5 (tiers 40/80/120 etc.) and the 250-per-week challenge cap.
 7. ✅ **Approved:** average per member, minimum 3 members to be ranked, seats weighted by time in squad.
+
+## 9. What the engine implements today (2026-11-11)
+
+Built in `supabase/migrations/20261112030000_scoring_engine.sql`; the scenario tests are
+`supabase/tests/scoring.test.sql`. The engine reproduces scenarios 1, 1b, 2, 4, 5, 6, 8, 9, 13, 14, 15 and the three
+days in §3 exactly.
+
+**Differences from the tables above, because the data does not exist yet:**
+
+| Gap | Effect | What closes it |
+|---|---|---|
+| No "vigorous minutes" (needs per-minute heart rate plus age, or accelerometer intensity) | HIIT, yoga, indoor cardio and "other" earn effort points only (performance 0–30 instead of 0–50). Scenarios 3, 7, 7b, 12, 12b score lower than published | Collecting per-minute heart rate or motion intensity |
+| No watch motion category (only phone steps count as motion) | A watch-only workout gets heart rate + platform record = 25, not 30. Scenario 11 scores 220, not 225 | A watch app, or reading watch step data from Apple Health |
+| No elevation gain | Hikes are scored on flat distance; scenario 10 scores lower | Computing climb from GPS altitude after the device check |
+| No Bluetooth heart-rate strap | Scenario 4b cannot happen yet | The BLE stretch item |
+| No review tool | A `needs_review` workout stays at 0 points | An admin review flow |
+
+**Values I chose where the proposal gave none (in the v1 config, easy to change before launch):**
+
+- Average-speed limits that send a workout to review: run 25 km/h, walk and hike 12 km/h, ride 60 km/h.
+- A GPS track goes to review if more than 20 % of its distance was thrown out as jumps.
+- Heart rate counts only if the readings span at least 5 bpm (a constant value is not a heartbeat).
+
+**How the daily rules are applied:**
+
+- Only workouts with evidence are merged, and only into the last such workout of the day (same activity, starting
+  less than 2 hours after it ended). An empty session can neither wipe out a real workout nor be slipped between
+  two halves to avoid merging. A merged workout keeps an evidence category only if every part has it.
+- Workouts that are too short, have no evidence or are in review do not use up one of the day's two paid slots.
+- Merging does not cross midnight (each calendar day in the home time zone is scored on its own).
+
+**Mechanics:**
+
+- Scoring runs when a workout is finished and again whenever its measurements or evidence change (late uploads,
+  Apple Health sync, both limited to 24 hours). A change produces an `adjustment` ledger row for the difference.
+- A workout's lifecycle state stays `submitted`; the scoring outcome (`accepted`, `recorded`, `needs_review`,
+  `merged`) and the breakdown live in `workout_scores`.
+- **Scoring is off until switched on per environment:** `select public.set_scoring_active('v1', now());` (database
+  owner or service role only). Workouts that started before that moment are never scored.
