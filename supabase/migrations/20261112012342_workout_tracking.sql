@@ -120,7 +120,8 @@ begin
 end;
 $$;
 
--- Recompute a workout's GPS and step metrics from the stored measurements.
+-- Recompute a workout's GPS and step metrics from the stored measurements (measurements are never
+-- removed, so each metric row is simply replaced with the new value).
 --
 -- Distance (mirrored on the phone for the live display, apps/mobile/src/features/workout/tracking/track.ts):
 --   * only fixes taken while the timer was running, not mocked, with accuracy of 30 m or better;
@@ -159,8 +160,6 @@ begin
   if s.id is null then
     return;
   end if;
-
-  delete from public.workout_metrics where session_id = target and source in ('gps', 'pedometer');
 
   select array_agg(i.from_at order by i.from_at), array_agg(i.to_at order by i.from_at),
          coalesce(sum(extract(epoch from i.to_at - i.from_at)), 0)
@@ -226,7 +225,8 @@ begin
       (target, 'gps_points', good, 'gps', 'live'),
       (target, 'gps_excluded_m', round(excluded, 1), 'gps', 'live'),
       (target, 'gps_mocked_points',
-        (select count(*) from public.workout_route_points where session_id = target and mocked), 'gps', 'live');
+        (select count(*) from public.workout_route_points where session_id = target and mocked), 'gps', 'live')
+    on conflict on constraint workout_metrics_pkey do update set value = excluded.value, computed_at = now();
   end if;
 
   if exists (select 1 from public.workout_motion_samples where session_id = target) then
@@ -243,7 +243,8 @@ begin
     cross join lateral (values
       ('steps', t.steps::numeric),
       ('motion_coverage', round(least(1, t.moving_s / active_s), 3))
-    ) as x (metric, value);
+    ) as x (metric, value)
+    on conflict on constraint workout_metrics_pkey do update set value = excluded.value, computed_at = now();
   end if;
 end;
 $$;
