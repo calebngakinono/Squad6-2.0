@@ -13,7 +13,9 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `squad_join_requests` | ✅ | pending → approved / declined / cancelled / expired. Max 3 pending per athlete; joining a squad cancels the others | Requester and captain read; writes via functions only |
 | `workout_sessions` | ✅ | Live session state machine (see architecture.md): activity, state, version, server `started_at`/`ended_at`, server-computed `active_seconds`, home time zone + scoring day + squad locked at start, `started_offline`. One open workout per athlete (partial unique index, race-tested); idempotent start on `client_session_id`; open > 12 h → `expired` | Owner reads; writes via functions only. Squad summary view comes with the feed |
 | `workout_session_events` | ✅ | Append-only start/pause/resume/finish/cancel/expire log: server time, client time, clamped `effective_at`, `offline` flag; unique per client event id | Owner reads; written by functions only |
-| `workout_metrics` | 📝 | Measurement with `source` and `provenance` | Owner only (location never shared) |
+| `workout_route_points` | ✅ | Phone GPS fixes for a workout: time, latitude, longitude, accuracy, altitude, speed, `mocked` flag. One row per instant (re-sent batches add nothing). Only for run / walk / hike / ride | **Owner reads only** (precise location is never visible to anyone else); written by `add_route_points()` only |
+| `workout_motion_samples` | ✅ | Phone steps per clock minute (`seconds` measured, `steps` 0–400). Re-sending a minute keeps the larger count | Owner reads; written by `add_motion_samples()` only |
+| `workout_metrics` | ✅ | **Server-computed** measurements per workout with `source` and `provenance`: `distance_m`, `gps_coverage`, `gps_points`, `gps_mocked_points`, `gps_excluded_m` (source `gps`), `steps`, `motion_coverage` (source `pedometer`). Recomputed at finish and when late measurements arrive | Owner reads; written by the server only |
 | `strength_sets` | ✅ | Exercise, reps (1–100), optional weight (manual, never scored); clamped time, `offline`, `after_finish` (logged ≤ 1 h after finishing: kept, not live evidence); soft delete while open | Owner reads; writes via functions only |
 | `scoring_rule_versions` | 📝 | Versioned scoring config | Read: signed in. Write: migrations only |
 | `points_ledger` | 📝 | Append-only point awards and reversals; unique per source + rule version | Owner reads own; squad/leaderboards via views |
@@ -45,6 +47,21 @@ id and version-checked. Client times are clamped to `[previous event, now]` (sta
 flagged `offline` when more than 60 s from server time. Errors: `active_workout_exists`, `version_conflict`,
 `invalid_transition`, `workout_not_found`, `timezone_required`, `invalid_activity`, `set_window_closed`.
 Open workouts past 12 h are expired lazily (on the athlete's next call); a scheduled job can be added later.
+
+## Tracking functions
+
+`add_route_points(session_id, points)` (≤ 500 per call, ≤ 60 000 per workout) · `add_motion_samples(session_id, samples)`
+(≤ 750 per call). Both accept measurements while the workout is open and up to 24 h after the finish (the
+late-evidence window); cancelled and expired workouts accept nothing. Readings outside the workout's time span
+are ignored. Errors: `workout_not_found`, `tracking_window_closed`, `location_not_used`, `invalid_points`,
+`too_many_points`, `invalid_samples`.
+
+The phone never uploads a distance. `refresh_workout_metrics()` (internal) computes it: only fixes taken while the
+timer was running, not mocked, accuracy ≤ 30 m; a fix counts once it is ≥ 5 m from the last counted one; a jump
+faster than 12.5 m/s (25 m/s for rides) is left out and recorded in `gps_excluded_m`; nothing is measured across
+a pause. Coverage is the share of active time with good fixes ≤ 30 s apart. The same rules run on the phone for
+the live number (`apps/mobile/src/features/workout/tracking/track.ts`); an integration test checks that both
+agree. Thresholds are provisional until the device check results are in.
 
 ## Rules for every migration
 

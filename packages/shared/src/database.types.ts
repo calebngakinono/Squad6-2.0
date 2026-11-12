@@ -195,6 +195,66 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"workout_metrics": {
+                  Row: {
+                    "computed_at": string,"metric": string,"provenance": string,"session_id": string,"source": string,"value": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "computed_at"?: string,"metric": string,"provenance": string,"session_id": string,"source": string,"value": number
+                  }
+                  Update: {
+                    "computed_at"?: string,"metric"?: string,"provenance"?: string,"session_id"?: string,"source"?: string,"value"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_metrics_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workout_motion_samples": {
+                  Row: {
+                    "bucket_start": string,"received_at": string,"seconds": number,"session_id": string,"steps": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bucket_start": string,"received_at"?: string,"seconds": number,"session_id": string,"steps": number
+                  }
+                  Update: {
+                    "bucket_start"?: string,"received_at"?: string,"seconds"?: number,"session_id"?: string,"steps"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_motion_samples_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workout_route_points": {
+                  Row: {
+                    "accuracy_m": number | null,"altitude_m": number | null,"latitude": number,"longitude": number,"mocked": boolean,"received_at": string,"recorded_at": string,"session_id": string,"speed_ms": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "accuracy_m"?: number | null,"altitude_m"?: number | null,"latitude": number,"longitude": number,"mocked"?: boolean,"received_at"?: string,"recorded_at": string,"session_id": string,"speed_ms"?: number | null
+                  }
+                  Update: {
+                    "accuracy_m"?: number | null,"altitude_m"?: number | null,"latitude"?: number,"longitude"?: number,"mocked"?: boolean,"received_at"?: string,"recorded_at"?: string,"session_id"?: string,"speed_ms"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_route_points_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"workout_session_events": {
                   Row: {
                     "client_at": string | null,"client_event_id": string,"device_id": string | null,"effective_at": string,"id": number,"kind": string,"offline": boolean,"server_at": string,"session_id": string
@@ -247,7 +307,13 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "cancel_join_request":
+            "add_motion_samples":
+{ Args: { "samples": Json,"session_id": string }; Returns: number
+                           },
+"add_route_points":
+{ Args: { "points": Json,"session_id": string }; Returns: number
+                           },
+"cancel_join_request":
 { Args: { "request_id": string }; Returns: undefined
                            },
 "cancel_workout":
@@ -318,6 +384,9 @@ isOneToOne: false
       } },
 "generate_invite_code":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"geo_distance_m":
+{ Args: { "lat1": number,"lat2": number,"lng1": number,"lng2": number }; Returns: number
                            },
 "get_open_workout":
 { Args: Record<PropertyKey, never>; Returns: {
@@ -402,6 +471,9 @@ isOneToOne: false
               "city": string,"is_full": boolean,"member_count": number,"name": string,"squad_id": string
             }[]
                            },
+"refresh_workout_metrics":
+{ Args: { "target": string }; Returns: undefined
+                           },
 "regenerate_invite_code":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -474,12 +546,41 @@ isOneToOne: false
 "transfer_captaincy":
 { Args: { "new_captain": string }; Returns: undefined
                            },
+"workout_active_intervals":
+{ Args: { "target": string }; Returns: {
+              "from_at": string,"to_at": string
+            }[]
+                           },
 "workout_active_seconds":
 { Args: { "target": string,"until"?: string }; Returns: number
                            },
 "workout_clamp":
 { Args: { "client_at": string,"lower_bound": string }; Returns: Record<string, unknown>
                            },
+"workout_for_tracking":
+{ Args: { "target": string }; Returns: {
+              "active_seconds": number | null,
+"activity": string,
+"client_session_id": string,
+"created_at": string,
+"device_id": string | null,
+"ended_at": string | null,
+"home_timezone": string,
+"id": string,
+"local_date": string,
+"squad_id": string | null,
+"started_at": string,
+"started_offline": boolean,
+"state": string,
+"user_id": string,
+"version": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "workout_max_open":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
