@@ -1,7 +1,7 @@
 import * as Crypto from "expo-crypto";
 import Storage from "expo-sqlite/kv-store";
 import { AppState } from "react-native";
-import type { AttachedEvidence, WorkoutMetric } from "@squad-six/shared";
+import type { AttachedEvidence, WorkoutMetric, WorkoutScore } from "@squad-six/shared";
 import { matchAndAttach } from "./evidence/attach";
 import { appleHealth, appleHealthAvailable, requestAppleHealth } from "./evidence/healthkit";
 import { activeSeconds, activityInfo, canApply, nextEventTime, stateOf, type Activity, type EventKind, type LocalEvent } from "./machine";
@@ -24,6 +24,7 @@ import {
   fetchEvidence,
   fetchOpenWorkout,
   fetchWorkoutMetrics,
+  fetchWorkoutScore,
   fetchWorkoutsAwaitingEvidence,
   trackingApi,
 } from "./transport";
@@ -46,6 +47,8 @@ export type WorkoutSnapshot = {
   server: SyncContext["sessions"][string] | null;
   tracking: TrackingSnapshot;
   health: HealthSnapshot;
+  /** The server's scoring outcome after the finish; null while scoring is off or not available yet. */
+  score: WorkoutScore | null;
 };
 
 /** Apple Health evidence for the finished workout. */
@@ -87,6 +90,7 @@ let snapshot: WorkoutSnapshot = {
   server: null,
   tracking: NO_TRACKING,
   health: { available: false, connected: false, status: "idle", attached: null },
+  score: null,
 };
 let gps: SensorStatus = "off";
 let motion: SensorStatus = "off";
@@ -94,6 +98,7 @@ let totals: TrackTotals = emptyTotals();
 let stepTotal = 0;
 let trackingPending = false;
 let metrics: WorkoutMetric[] | null = null;
+let score: WorkoutScore | null = null;
 let healthStatus: HealthSnapshot["status"] = "idle";
 let attached: AttachedEvidence | null = null;
 
@@ -141,6 +146,7 @@ function publish(save = true) {
         }
       : NO_TRACKING,
     health: healthSnapshot(),
+    score: w ? score : null,
   };
   listeners.forEach((fn) => fn());
 }
@@ -193,10 +199,12 @@ export async function checkHealthEvidence() {
     const outcome = await matchAndAttach(span, appleHealth, (evidence) => attachEvidence(server.id, evidence));
     next = outcome.status === "retry" ? "none" : outcome.status;
     if (outcome.status === "attached") {
-      const [rows, fresh] = await Promise.all([fetchEvidence(server.id), fetchWorkoutMetrics(server.id)]);
+      // New evidence can raise the score, so read that back too.
+      const [rows, fresh, rescored] = await Promise.all([fetchEvidence(server.id), fetchWorkoutMetrics(server.id), fetchWorkoutScore(server.id)]);
       if (data.workout?.clientSessionId !== id) return;
       attached = rows.find((r) => r.provider === "healthkit") ?? null;
       metrics = fresh;
+      score = rescored;
     }
   } catch {
     next = "none"; // couldn't confirm: the next check tries again
@@ -248,6 +256,7 @@ function resetTracking() {
   stepTotal = 0;
   trackingPending = false;
   metrics = null;
+  score = null;
   healthStatus = "idle";
   attached = null;
 }
@@ -339,6 +348,7 @@ async function flushTracking() {
     // The finish itself must have reached the server before its metrics mean anything.
     if (state === "finished" && result.complete && data.queue.length === 0) {
       metrics = await fetchWorkoutMetrics(server.id).catch(() => metrics);
+      score = await fetchWorkoutScore(server.id).catch(() => score);
       if (metrics) stopFlushTimer();
       if (healthStatus === "idle") void checkHealthEvidence();
     }
