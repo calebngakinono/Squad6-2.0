@@ -195,6 +195,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"workout_evidence": {
+                  Row: {
+                    "activity": string | null,"device_name": string | null,"distance_m": number | null,"ended_at": string,"energy_kcal": number | null,"external_record_id": string,"hr_avg": number | null,"hr_max": number | null,"hr_min": number | null,"hr_minutes": number | null,"hr_samples": number | null,"id": string,"overlap": number,"provider": string,"received_at": string,"session_id": string,"source_bundle_id": string,"source_name": string | null,"started_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "activity"?: string | null,"device_name"?: string | null,"distance_m"?: number | null,"ended_at": string,"energy_kcal"?: number | null,"external_record_id": string,"hr_avg"?: number | null,"hr_max"?: number | null,"hr_min"?: number | null,"hr_minutes"?: number | null,"hr_samples"?: number | null,"id"?: string,"overlap": number,"provider": string,"received_at"?: string,"session_id": string,"source_bundle_id": string,"source_name"?: string | null,"started_at": string
+                  }
+                  Update: {
+                    "activity"?: string | null,"device_name"?: string | null,"distance_m"?: number | null,"ended_at"?: string,"energy_kcal"?: number | null,"external_record_id"?: string,"hr_avg"?: number | null,"hr_max"?: number | null,"hr_min"?: number | null,"hr_minutes"?: number | null,"hr_samples"?: number | null,"id"?: string,"overlap"?: number,"provider"?: string,"received_at"?: string,"session_id"?: string,"source_bundle_id"?: string,"source_name"?: string | null,"started_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_evidence_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"workout_metrics": {
                   Row: {
                     "computed_at": string,"metric": string,"provenance": string,"session_id": string,"source": string,"value": number
@@ -313,6 +333,34 @@ isOneToOne: false
 "add_route_points":
 { Args: { "points": Json,"session_id": string }; Returns: number
                            },
+"attach_workout_evidence":
+{ Args: { "evidence": Json,"session_id": string }; Returns: {
+              "activity": string | null,
+"device_name": string | null,
+"distance_m": number | null,
+"ended_at": string,
+"energy_kcal": number | null,
+"external_record_id": string,
+"hr_avg": number | null,
+"hr_max": number | null,
+"hr_min": number | null,
+"hr_minutes": number | null,
+"hr_samples": number | null,
+"id": string,
+"overlap": number,
+"provider": string,
+"received_at": string,
+"session_id": string,
+"source_bundle_id": string,
+"source_name": string | null,
+"started_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_evidence"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "cancel_join_request":
 { Args: { "request_id": string }; Returns: undefined
                            },

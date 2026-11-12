@@ -19,7 +19,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `strength_sets` | ✅ | Exercise, reps (1–100), optional weight (manual, never scored); clamped time, `offline`, `after_finish` (logged ≤ 1 h after finishing: kept, not live evidence); soft delete while open | Owner reads; writes via functions only |
 | `scoring_rule_versions` | 📝 | Versioned scoring config | Read: signed in. Write: migrations only |
 | `points_ledger` | 📝 | Append-only point awards and reversals; unique per source + rule version | Owner reads own; squad/leaderboards via views |
-| `workout_evidence` | 📝 | Normalized evidence per session: provider, category, coverage, provenance, `external_record_id` (unique: one platform workout can back only one session) | Owner only; server validates |
+| `workout_evidence` | ✅ | Summary of a health-platform workout attached as evidence: provider (`healthkit`, later `health_connect`), platform record id, source app and device, times, server-computed `overlap`, optional distance, energy and heart-rate summary. A platform record backs one workout only (unique); one record per provider per workout. Summaries only: no raw samples, no routes | Owner reads; written by `attach_workout_evidence()` only |
 | `challenges` | 📝 | Official challenge definition: type, tiers, evidence requirement, window, rule version (locked once started) | Read: signed in |
 | `challenge_participants` | 📝 | Athlete or squad enrollment and progress | Owner / squad members |
 | `challenge_awards` | 📝 | Tier awarded; unique per challenge + participant + tier; mirrored as ledger rows | Owner / squad members |
@@ -62,6 +62,17 @@ faster than 12.5 m/s (25 m/s for rides) is left out and recorded in `gps_exclude
 a pause. Coverage is the share of active time with good fixes ≤ 30 s apart. The same rules run on the phone for
 the live number (`apps/mobile/src/features/workout/tracking/track.ts`); an integration test checks that both
 agree. Thresholds are provisional until the device check results are in.
+
+## Evidence function
+
+`attach_workout_evidence(session_id, evidence)`: only after the finish and within 24 h. Refuses hand-typed records
+(`manual_record`), Squad Six's own records (`own_record`), records that don't overlap (`no_overlap`), a record
+already backing another workout (`evidence_already_used`) and a second record for the same workout
+(`evidence_already_attached`); a retry returns the stored row. The server computes `overlap` (share of the
+workout, start to finish, that the record covers) and adds the summary to `workout_metrics` with the provider
+as `source` and provenance `synced` (`platform_overlap`, `distance_m`, `active_energy_kcal`, `avg_heart_rate`,
+`max_heart_rate`, `hr_coverage`). Other errors: `workout_not_finished`, `evidence_window_closed`, `invalid_evidence`.
+Whether evidence earns anything (the 80 % overlap rule and so on) is decided by the scoring engine, not here.
 
 ## Rules for every migration
 
