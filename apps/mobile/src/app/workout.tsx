@@ -5,6 +5,7 @@ import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { T } from "@/components/screen-text";
 import { activityInfo, formatDuration, stateOf } from "@/features/workout/machine";
+import { summarizeScore } from "@/features/workout/score-summary";
 import { SetLogger } from "@/features/workout/set-logger";
 import { checkHealthEvidence, clearFinishedWorkout, connectAppleHealth, liveSeconds, transitionWorkout } from "@/features/workout/store";
 import { formatDistance, formatPace, formatSpeed, usesMiles } from "@/features/workout/tracking/track";
@@ -14,7 +15,7 @@ import { usePalette } from "@/theme/use-palette";
 
 export default function WorkoutScreen() {
   const c = usePalette();
-  const { workout, server, pending, syncing, notice, tracking, health } = useWorkout();
+  const { workout, server, pending, syncing, notice, tracking, health, score } = useWorkout();
   const state = workout ? stateOf(workout.events) : null;
   const now = useNow(state === "active");
 
@@ -60,6 +61,8 @@ export default function WorkoutScreen() {
     steps != null && { label: "Steps", value: steps.toLocaleString() },
   ].filter((x) => x !== false);
   const sources = [distance != null && "phone GPS", steps != null && "phone step counter"].filter((x) => x !== false).join(" and ");
+
+  const summary = synced && score ? summarizeScore(score) : null;
 
   const gpsNote = !info.gps || !open
     ? null
@@ -165,13 +168,37 @@ export default function WorkoutScreen() {
           </Card>
         )}
 
-        {!open && state === "finished" && (
+        {!open && state === "finished" && !summary && (
           <Card>
             <T variant="label">Workout submitted</T>
             <T tone="textMuted">
               {synced
                 ? "Points are calculated by the server once scoring launches. Nothing is estimated on your phone."
                 : "It will be submitted as soon as you're back online."}
+            </T>
+          </Card>
+        )}
+
+        {!open && state === "finished" && summary && (
+          <Card>
+            <T variant="metric" accessibilityRole="header">
+              {summary.headline}
+            </T>
+            {summary.lines.map((line) => (
+              <View key={line.label} style={styles.scoreLine} accessible accessibilityLabel={`${line.label}: ${line.value}`}>
+                <T tone="textMuted" style={styles.scoreLabel}>
+                  {line.label}
+                </T>
+                <T style={styles.statValue}>{line.value}</T>
+              </View>
+            ))}
+            {summary.notes.map((note) => (
+              <T key={note} variant="small" tone="textMuted">
+                {note}
+              </T>
+            ))}
+            <T variant="small" tone="textMuted">
+              Calculated by Squad Six from what was measured. It can still change for 24 hours if more evidence arrives.
             </T>
           </Card>
         )}
@@ -230,5 +257,7 @@ const styles = StyleSheet.create({
   statValue: { fontVariant: ["tabular-nums"] },
   statSource: { textAlign: "center" },
   note: { gap: space.sm },
+  scoreLine: { flexDirection: "row", justifyContent: "space-between", gap: space.md },
+  scoreLabel: { flexShrink: 1 },
   footer: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: space.sm },
 });

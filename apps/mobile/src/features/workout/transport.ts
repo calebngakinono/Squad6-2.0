@@ -1,4 +1,12 @@
-import { attachedEvidenceSchema, workoutMetricSchema, type AttachedEvidence, type PlatformEvidence, type WorkoutMetric } from "@squad-six/shared";
+import {
+  attachedEvidenceSchema,
+  workoutMetricSchema,
+  workoutScoreSchema,
+  type AttachedEvidence,
+  type PlatformEvidence,
+  type WorkoutMetric,
+  type WorkoutScore,
+} from "@squad-six/shared";
 import { supabase } from "@/lib/supabase";
 import { TransportError, type ServerSession, type Transport } from "./queue";
 import type { TrackingApi } from "./tracking/upload";
@@ -128,4 +136,16 @@ export async function fetchWorkoutsAwaitingEvidence(): Promise<{ id: string; sta
   return data
     .filter((s) => s.ended_at !== null && !s.workout_evidence.some((e) => e.provider === "healthkit"))
     .map((s) => ({ id: s.id, start: Date.parse(s.started_at), end: Date.parse(s.ended_at!) }));
+}
+
+/** The server's scoring outcome for a workout; null while scoring is switched off or not done yet. */
+export async function fetchWorkoutScore(serverSessionId: string): Promise<WorkoutScore | null> {
+  const { data, error } = await supabase
+    .from("workout_scores")
+    .select("status, categories, base, verification, performance, factor, total, detail")
+    .eq("session_id", serverSessionId)
+    .maybeSingle();
+  if (error) throw classify(error);
+  const parsed = workoutScoreSchema.safeParse(data);
+  return parsed.success ? parsed.data : null;
 }

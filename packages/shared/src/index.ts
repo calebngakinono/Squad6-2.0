@@ -4,3 +4,4 @@ export type { Database } from "./database.types";
 export * from "./onboarding";
 export * from "./tracking";
 export * from "./evidence";
+export * from "./scoring";

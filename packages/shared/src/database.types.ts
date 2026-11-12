@@ -301,6 +301,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"workout_reviews": {
+                  Row: {
+                    "decided_at": string,"decision": string,"id": number,"reason": string,"reviewer": string,"session_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "decided_at"?: string,"decision": string,"id"?: never,"reason": string,"reviewer": string,"session_id": string
+                  }
+                  Update: {
+                    "decided_at"?: string,"decision"?: string,"id"?: never,"reason"?: string,"reviewer"?: string,"session_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_reviews_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"workout_route_points": {
                   Row: {
                     "accuracy_m": number | null,"altitude_m": number | null,"latitude": number,"longitude": number,"mocked": boolean,"received_at": string,"recorded_at": string,"session_id": string,"speed_ms": number | null
@@ -402,7 +422,21 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "workouts_awaiting_review": {
+                  Row: {
+                    "active_minutes": number | null,"activity": string,"athlete": string | null,"flagged_at": string,"flagged_because": string | null,"gps_coverage": number | null,"gps_km": number | null,"gps_km_thrown_out": number | null,"health_app_source": string | null,"local_date": string,"session_id": string,"steps": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "workout_scores_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: true
+      referencedRelation: "workout_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
           }
           Functions: {
             "add_motion_samples":
@@ -636,6 +670,27 @@ isOneToOne: false
                           SetofOptions: {
         from: "*"
         to: "workout_sessions"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"review_workout":
+{ Args: { "decision": string,"reason": string,"reviewer": string,"target": string }; Returns: {
+              "base": number,
+"categories": (string)[],
+"detail": NonNullable<Json>,
+"factor": number,
+"merged_into": string | null,
+"performance": number,
+"rule_version": string,
+"scored_at": string,
+"session_id": string,
+"status": string,
+"total": number,
+"verification": number
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workout_scores"
         isOneToOne: true
         isSetofReturn: false
       } },

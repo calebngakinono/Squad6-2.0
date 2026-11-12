@@ -82,6 +82,8 @@ describe.skipIf(!isLocal)("workout transport against local Supabase", () => {
     expect(r.context.sessions[cid].active_seconds).toBeGreaterThanOrEqual(899);
     expect(r.context.sessions[cid].active_seconds).toBeLessThanOrEqual(905);
     expect(await transport.fetchOpenWorkout()).toBeNull();
+    // Scoring is switched off by default, so there is no score to show (never a made-up one).
+    expect(await transport.fetchWorkoutScore(r.context.sessions[cid].id)).toBeNull();
   });
 
   it("uploads a GPS track and steps, and the server's distance matches the phone's live number", async () => {
