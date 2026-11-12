@@ -9,6 +9,9 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
+import { activityInfo, stateOf } from "@/features/workout/machine";
+import { hydrateWorkout } from "@/features/workout/store";
+import { useWorkout } from "@/features/workout/use-workout";
 import { SquadPanel } from "@/features/squads/squad-panel";
 import { space } from "@/theme/tokens";
 import { usePalette } from "@/theme/use-palette";
@@ -21,6 +24,8 @@ export default function HomeScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { workout } = useWorkout();
+  const workoutState = workout ? stateOf(workout.events) : null;
 
   const load = useCallback(async () => {
     try {
@@ -34,7 +39,9 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [load]),
+      // Brings back a workout that was running when the app was closed (saved on the phone or open on the server).
+      hydrateWorkout(userId);
+    }, [load, userId]),
   );
 
   // Runs a squad action, shows a friendly error if the server refuses, then reloads.
@@ -63,6 +70,17 @@ export default function HomeScreen() {
           />
         }
       >
+        {workout && (workoutState === "active" || workoutState === "paused") ? (
+          <Card>
+            <T variant="label">{activityInfo(workout.activity).label} in progress{workoutState === "paused" ? " (paused)" : ""}</T>
+            <Button label="Back to workout" onPress={() => router.push("/workout")} />
+          </Card>
+        ) : workout ? (
+          <Button label="View finished workout" variant="secondary" onPress={() => router.push("/workout")} />
+        ) : (
+          <Button label="Start a workout" onPress={() => router.push("/start-workout")} />
+        )}
+
         {loadError && <T tone="danger">{loadError}</T>}
         {home === null && !loadError && <ActivityIndicator accessibilityLabel="Loading" />}
 

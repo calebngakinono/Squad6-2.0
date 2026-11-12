@@ -86,7 +86,7 @@ or out-of-order request is refused instead of corrupting the session.
 | Situation | Behavior |
 |---|---|
 | App killed or phone restarts | On launch the app asks for the user's active session and resumes the screen. |
-| No network mid-workout | Events queue on the phone with client timestamps; on reconnect they are sent in order. The server clamps their times to `[started_at, now]` and marks them `offline`. |
+| No network mid-workout | Every action becomes a command with its own id in an on-device queue (`expo-sqlite` key-value store, `apps/mobile/src/features/workout/queue.ts`), sent in order when online. The server clamps times to `[previous event, now]` and marks them `offline`. A version conflict refreshes and retries once; a refusal drops the command and rebuilds the local timeline from the server's event log. |
 | Duplicate request (retry, double tap) | Same `client_session_id` / event id → same result, no second row. |
 | Session forgotten | `pg_cron` moves sessions with no activity for N hours to `expired` (not scored, or scored with capped duration — a scoring-rules decision). |
 

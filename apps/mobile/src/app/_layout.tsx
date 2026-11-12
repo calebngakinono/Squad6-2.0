@@ -31,6 +31,8 @@ function RootNavigator() {
         <Stack.Screen name="index" />
         <Stack.Screen name="create-squad" />
         <Stack.Screen name="join" />
+        <Stack.Screen name="start-workout" />
+        <Stack.Screen name="workout" />
         <Stack.Protected guard={__DEV__}>
           <Stack.Screen name="device-check" />
         </Stack.Protected>
