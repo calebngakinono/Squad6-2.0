@@ -2,3 +2,4 @@ export { parseSupabasePublicConfig, supabasePublicConfigSchema } from "./supabas
 export type { SupabasePublicConfig } from "./supabase-config";
 export type { Database } from "./database.types";
 export * from "./onboarding";
+export * from "./tracking";

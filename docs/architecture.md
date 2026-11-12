@@ -114,6 +114,24 @@ camera), never device brands, so phone-only users can reach most of it. Details 
 
 The exact capabilities are confirmed by a device spike in phase 1 before being relied on.
 
+### Phone GPS and steps (built)
+
+- **Only while the timer runs.** Location and the step counter start with the workout, stop on pause and at
+  the end. Location is requested as "While Using the App" only; because the athlete starts the workout in the
+  foreground it keeps recording with the screen locked (iOS background location mode, Android foreground-service
+  notification). No "Always" permission is requested.
+- **Buffered on the phone, uploaded in batches.** Readings go into a small on-device SQLite file first, then to
+  `add_route_points` / `add_motion_samples` every 30 s and at the finish. No signal means they wait; re-sending is
+  harmless. The buffer is deleted when the workout is closed on the phone.
+- **The server does the maths.** The phone uploads raw fixes and steps per minute, never a distance. The server
+  computes `workout_metrics` (distance, coverage, steps) at finish and again when late readings arrive. The live
+  screen shows the phone's own running number, labeled as live, and switches to the server's once it is in.
+- **Steps:** iPhone reads finished minutes from the phone's step history (covers a locked screen). Android only
+  reports steps while the app is running, which is the case for GPS workouts (foreground service) but not
+  guaranteed for indoor ones. Motion intensity from the accelerometer (yoga, strength) is not built yet.
+- **Not verified on a real device yet**: see [`device-spike.md`](device-spike.md). Accuracy and jitter thresholds
+  are provisional until those results are in.
+
 ## Scoring engine
 
 - `scoring_rule_versions`: versioned JSON config (base, verification table, activity-specific performance

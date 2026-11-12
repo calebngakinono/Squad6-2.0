@@ -30,6 +30,7 @@ export const radius = { md: 12, lg: 16 } as const;
 export const type = {
   title: { fontSize: 32, lineHeight: 38, fontWeight: "700" },
   body: { fontSize: 17, lineHeight: 24, fontWeight: "400" },
+  metric: { fontSize: 24, lineHeight: 30, fontWeight: "600" },
   label: { fontSize: 15, lineHeight: 20, fontWeight: "600" },
   small: { fontSize: 14, lineHeight: 20, fontWeight: "400" },
 } as const;

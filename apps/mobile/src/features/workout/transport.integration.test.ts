@@ -2,6 +2,9 @@ import type { Database } from "@squad-six/shared";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { drain, type Command } from "./queue";
+import { createMemoryStore } from "./tracking/local-store";
+import { activeIntervals, summarizeTrack, type TrackPoint } from "./tracking/track";
+import { uploadTracking } from "./tracking/upload";
 
 // The real transport + queue against a LOCAL Supabase only (see squads/api.integration.test.ts).
 const url = process.env.SQUADS_IT_URL;
@@ -77,6 +80,80 @@ describe.skipIf(!isLocal)("workout transport against local Supabase", () => {
     expect(r.context.sessions[cid].active_seconds).toBeGreaterThanOrEqual(899);
     expect(r.context.sessions[cid].active_seconds).toBeLessThanOrEqual(905);
     expect(await transport.fetchOpenWorkout()).toBeNull();
+  });
+
+  it("uploads a GPS track and steps, and the server's distance matches the phone's live number", async () => {
+    const t = transport.createTransport("test-device");
+    const cid = uuid();
+    const minute = 60_000;
+    const start = Math.floor(Date.now() / minute) * minute - 20 * minute;
+    const pauseAt = start + 8 * minute;
+    const resumeAt = start + 12 * minute;
+    const finishAt = start + 18 * minute;
+    const events = [
+      { id: cid, kind: "start" as const, at: start },
+      { id: uuid(), kind: "pause" as const, at: pauseAt },
+      { id: uuid(), kind: "resume" as const, at: resumeAt },
+      { id: uuid(), kind: "finish" as const, at: finishAt },
+    ];
+    let r = await drain(
+      [
+        { type: "start", id: cid, clientSessionId: cid, activity: "run", at: start },
+        { type: "transition", id: events[1].id, clientSessionId: cid, kind: "pause", at: pauseAt },
+        { type: "transition", id: events[2].id, clientSessionId: cid, kind: "resume", at: resumeAt },
+      ],
+      { sessions: {}, sets: {} },
+      t,
+    );
+    expect(r.rejected).toEqual([]);
+    const serverId = r.context.sessions[cid].id;
+
+    // A wobbly 7-minute jog, a walk around during the pause, a mocked stretch, a GPS jump, then 5 more minutes.
+    const fix = (at: number, lat: number, lng: number, extra: Partial<TrackPoint> = {}): TrackPoint => ({ t: at, lat, lng, acc: 6, alt: 800, spd: 3, mock: false, ...extra });
+    const points: TrackPoint[] = [];
+    for (let i = 0; i < 420; i++) points.push(fix(start + 30_000 + i * 1000, 37.1 + i * 0.00003, -113.5 + Math.sin(i / 9) * 0.00002));
+    for (let i = 0; i < 120; i++) points.push(fix(pauseAt + 30_000 + i * 1000, 37.2 + i * 0.00002, -113.5));
+    for (let i = 0; i < 30; i++) points.push(fix(resumeAt + 5000 + i * 1000, 37.3 + i * 0.00003, -113.5, { mock: true }));
+    points.push(fix(resumeAt + 40_000, 37.1126, -113.5), fix(resumeAt + 41_000, 38.5, -113.5));
+    for (let i = 0; i < 300; i++) points.push(fix(resumeAt + 45_000 + i * 1000, 37.1126 + i * 0.000028, -113.5 + Math.cos(i / 7) * 0.00002));
+
+    const local = createMemoryStore();
+    local.addPoints(cid, points);
+    for (let m = 0; m < 18; m++) local.addSteps(cid, start + m * minute, 150);
+
+    // Upload while the workout is still open: stored, but nothing official yet.
+    const open = activeIntervals(events.slice(0, 3), finishAt);
+    expect(await uploadTracking(local, cid, serverId, open, finishAt, transport.trackingApi)).toEqual({ complete: true, rejected: null });
+    expect(await transport.fetchWorkoutMetrics(serverId)).toEqual([]);
+    // Two fixes that only reach the server after the finish (the phone was offline at the end).
+    const late = [fix(finishAt - 3000, 37.1211, -113.5), fix(finishAt - 1000, 37.12116, -113.5)];
+    points.push(...late);
+    local.addPoints(cid, late);
+
+    r = await drain([{ type: "transition", id: events[3].id, clientSessionId: cid, kind: "finish", at: finishAt }], r.context, t);
+    expect(r.context.sessions[cid]).toMatchObject({ state: "submitted", active_seconds: 14 * 60 });
+    const closed = activeIntervals(events, Date.now());
+    expect(await uploadTracking(local, cid, serverId, closed, Date.now(), transport.trackingApi)).toEqual({ complete: true, rejected: null });
+
+    const metrics = Object.fromEntries((await transport.fetchWorkoutMetrics(serverId)).map((m) => [m.metric, m]));
+    const phone = summarizeTrack(points, closed, "run");
+    expect(phone.distanceM).toBeGreaterThan(2000);
+    expect(Math.abs(metrics.distance_m.value - phone.distanceM)).toBeLessThan(0.5);
+    expect(metrics.distance_m).toMatchObject({ source: "gps", provenance: "live" });
+    expect(metrics.gps_points.value).toBe(phone.goodPoints);
+    expect(metrics.gps_mocked_points.value).toBe(30);
+    expect(Math.abs(metrics.gps_excluded_m.value - phone.excludedM)).toBeLessThan(1);
+    expect(metrics.gps_coverage.value).toBeCloseTo(phone.coveredSeconds / (14 * 60), 2);
+    // 18 clock minutes sent; the 4 fully inside the pause don't count.
+    expect(metrics.steps).toMatchObject({ value: 14 * 150, source: "pedometer", provenance: "live" });
+
+    // Only the owner can read the route back.
+    const mine = await current.client!.from("workout_route_points").select("recorded_at", { count: "exact", head: true }).eq("session_id", serverId);
+    expect(mine.count).toBe(points.length);
+    const stranger = createClient<Database>(url!, key!, { auth: { persistSession: false } });
+    await stranger.auth.signUp({ email: `wk-other-${Date.now()}@example.com`, password: "test-password-123" });
+    const theirs = await stranger.from("workout_route_points").select("recorded_at", { count: "exact", head: true }).eq("session_id", serverId);
+    expect(theirs.count).toBe(0);
   });
 
   it("classifies a server refusal as rejected", async () => {
