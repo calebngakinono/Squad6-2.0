@@ -1,9 +1,22 @@
 import * as Crypto from "expo-crypto";
 import Storage from "expo-sqlite/kv-store";
 import { AppState } from "react-native";
-import { activeSeconds, canApply, nextEventTime, stateOf, type Activity, type EventKind, type LocalEvent } from "./machine";
+import type { WorkoutMetric } from "@squad-six/shared";
+import { activeSeconds, activityInfo, canApply, nextEventTime, stateOf, type Activity, type EventKind, type LocalEvent } from "./machine";
 import { drain, type Command, type SyncContext } from "./queue";
-import { createTransport, fetchOpenWorkout } from "./transport";
+import {
+  collectSteps,
+  onTrackPoints,
+  startLocation,
+  startSteps,
+  stopLocation,
+  stopSteps,
+  trackingStore,
+  type SensorStatus,
+} from "./tracking/device";
+import { activeIntervals, addPoint, emptyTotals, maxSpeedFor, summarizeTrack, type TrackTotals } from "./tracking/track";
+import { hasPendingTracking, uploadTracking } from "./tracking/upload";
+import { createTransport, fetchOpenWorkout, fetchWorkoutMetrics, trackingApi } from "./transport";
 
 // The live workout as the phone knows it, saved to on-device storage after every change so a killed
 // app comes back exactly where it was. Commands sync to the server through the queue.
@@ -21,13 +34,35 @@ export type WorkoutSnapshot = {
   notice: string | null;
   /** The server's copy, once synced: its times and active_seconds are the official ones. */
   server: SyncContext["sessions"][string] | null;
+  tracking: TrackingSnapshot;
+};
+
+/** What the phone's sensors have measured so far. Live values only: the official ones are `metrics`. */
+export type TrackingSnapshot = {
+  gps: SensorStatus;
+  motion: SensorStatus;
+  /** Measured by this phone's GPS during this workout; null when GPS isn't recording anything. */
+  distanceM: number | null;
+  /** Counted by this phone; null when the step counter isn't available. */
+  steps: number | null;
+  /** Measurements are still waiting on the phone to be uploaded. */
+  pending: boolean;
+  /** Computed by the server after the finish, once every measurement has arrived. */
+  metrics: WorkoutMetric[] | null;
 };
 
 const EMPTY: Persisted = { workout: null, queue: [], context: { sessions: {}, sets: {} } };
 
 let userId: string | null = null;
 let data: Persisted = EMPTY;
-let snapshot: WorkoutSnapshot = { ready: false, workout: null, pending: 0, syncing: false, notice: null, server: null };
+const NO_TRACKING: TrackingSnapshot = { gps: "off", motion: "off", distanceM: null, steps: null, pending: false, metrics: null };
+let snapshot: WorkoutSnapshot = { ready: false, workout: null, pending: 0, syncing: false, notice: null, server: null, tracking: NO_TRACKING };
+let gps: SensorStatus = "off";
+let motion: SensorStatus = "off";
+let totals: TrackTotals = emptyTotals();
+let stepTotal = 0;
+let trackingPending = false;
+let metrics: WorkoutMetric[] | null = null;
 let syncing = false;
 let notice: string | null = null;
 const listeners = new Set<() => void>();
@@ -53,6 +88,16 @@ function publish(save = true) {
     syncing,
     notice,
     server: w ? (data.context.sessions[w.clientSessionId] ?? null) : null,
+    tracking: w
+      ? {
+          gps,
+          motion,
+          distanceM: activityInfo(w.activity).gps && (gps === "on" || totals.goodPoints > 0) ? totals.distanceM : null,
+          steps: activityInfo(w.activity).steps && (motion === "on" || stepTotal > 0) ? stepTotal : null,
+          pending: trackingPending,
+          metrics,
+        }
+      : NO_TRACKING,
   };
   listeners.forEach((fn) => fn());
 }
@@ -70,14 +115,131 @@ export const workoutStore = {
 /** Load this account's saved workout; if there is none, ask the server for an open one (recovery). */
 export async function hydrateWorkout(forUser: string) {
   if (userId !== forUser) {
+    if (userId !== null) void stopTracking(); // another account was signed in: its sensors go off
     userId = forUser;
     const raw = Storage.getItemSync(key());
     data = raw ? { ...EMPTY, ...(JSON.parse(raw) as Persisted) } : EMPTY;
     notice = null;
+    resetTracking();
+    trackingStore().purgeOlderThan(Date.now() - 48 * 60 * 60 * 1000);
+    restoreTracking();
     publish(false);
   }
   if (!data.workout) await adoptServerWorkout();
+  if (data.workout && stateOf(data.workout.events) === "active") void beginTracking();
   void syncWorkout();
+}
+
+// Tracking (GPS and steps) -------------------------------------------------------------------------
+// Sensors run only while the timer is running. Readings are buffered on the phone (tracking/device.ts)
+// and uploaded in batches; the totals here are for the live screen only.
+
+const intervalsNow = (w: LocalWorkout) => activeIntervals(w.events, Date.now());
+
+function resetTracking() {
+  gps = "off";
+  motion = "off";
+  totals = emptyTotals();
+  stepTotal = 0;
+  trackingPending = false;
+  metrics = null;
+}
+
+/** After an app restart: rebuild the live totals from what is buffered on the phone. */
+function restoreTracking() {
+  const w = data.workout;
+  if (!w) return;
+  const local = trackingStore();
+  totals = summarizeTrack(local.allPoints(w.clientSessionId), intervalsNow(w), w.activity);
+  stepTotal = local.stepRows(w.clientSessionId).reduce((sum, r) => sum + r.steps, 0);
+  trackingPending = hasPendingTracking(local, w.clientSessionId, intervalsNow(w), Date.now());
+}
+
+function refreshStepTotal() {
+  const w = data.workout;
+  if (!w) return;
+  stepTotal = trackingStore().stepRows(w.clientSessionId).reduce((sum, r) => sum + r.steps, 0);
+  trackingPending = true;
+  publish(false);
+}
+
+async function beginTracking() {
+  const w = data.workout;
+  if (!w || stateOf(w.events) !== "active") return;
+  const info = activityInfo(w.activity);
+  const id = w.clientSessionId;
+  // Ask for motion first, then location, so the two permission prompts never overlap.
+  if (info.steps) motion = await startSteps(id, refreshStepTotal);
+  if (info.gps) gps = await startLocation(id, w.events[0].at);
+  // The athlete may have paused or finished while a permission prompt was open.
+  if (data.workout?.clientSessionId !== id || stateOf(data.workout.events) !== "active") await stopTracking();
+  publish(false);
+  startFlushTimer();
+}
+
+async function stopTracking() {
+  stopSteps();
+  await stopLocation();
+}
+
+onTrackPoints((session, points) => {
+  const w = data.workout;
+  if (!w || w.clientSessionId !== session) return;
+  const intervals = intervalsNow(w);
+  const speed = maxSpeedFor(w.activity);
+  for (const p of points) totals = addPoint(totals, p, intervals, speed);
+  trackingPending = true;
+  publish(false);
+  // Timers don't run reliably with the screen locked, but location updates keep arriving: upload from here too.
+  if (Date.now() - lastFlushAt > FLUSH_EVERY_MS) void flushTracking();
+});
+
+const FLUSH_EVERY_MS = 30_000;
+let lastFlushAt = 0;
+let flushing = false;
+let flushTimer: ReturnType<typeof setInterval> | null = null;
+
+function startFlushTimer() {
+  flushTimer ??= setInterval(() => void flushTracking(), FLUSH_EVERY_MS);
+}
+
+function stopFlushTimer() {
+  if (flushTimer) clearInterval(flushTimer);
+  flushTimer = null;
+}
+
+/** Upload buffered measurements; after the finish, read back the server's official metrics. */
+async function flushTracking() {
+  const w = data.workout;
+  const server = w ? data.context.sessions[w.clientSessionId] : null;
+  if (!w || !server || flushing) return;
+  flushing = true;
+  lastFlushAt = Date.now();
+  try {
+    const id = w.clientSessionId;
+    const state = stateOf(w.events);
+    if (state === "cancelled") {
+      trackingStore().clear(id);
+      trackingPending = false;
+      return;
+    }
+    if (activityInfo(w.activity).steps && (await collectSteps(id, intervalsNow(w), Date.now()))) {
+      stepTotal = trackingStore().stepRows(id).reduce((sum, r) => sum + r.steps, 0);
+    }
+    const result = await uploadTracking(trackingStore(), id, server.id, intervalsNow(w), Date.now(), trackingApi);
+    if (data.workout?.clientSessionId !== id) return;
+    trackingPending = !result.complete;
+    // The finish itself must have reached the server before its metrics mean anything.
+    if (state === "finished" && result.complete && data.queue.length === 0) {
+      metrics = await fetchWorkoutMetrics(server.id).catch(() => metrics);
+      if (metrics) stopFlushTimer();
+    }
+  } catch {
+    // Unexpected failure: keep the measurements and try again on the next round.
+  } finally {
+    flushing = false;
+    publish(false);
+  }
 }
 
 async function adoptServerWorkout() {
@@ -122,8 +284,10 @@ export function startWorkout(activity: Activity): boolean {
   const id = Crypto.randomUUID();
   const at = Date.now();
   notice = null;
+  resetTracking();
   data = { ...data, workout: { clientSessionId: id, activity, events: [{ id, kind: "start", at }], sets: [] } };
   enqueue({ type: "start", id, clientSessionId: id, activity, at });
+  void beginTracking();
   return true;
 }
 
@@ -133,6 +297,9 @@ export function transitionWorkout(kind: Exclude<EventKind, "start">) {
   const event: LocalEvent = { id: Crypto.randomUUID(), kind, at: nextEventTime(w.events, Date.now()) };
   data = { ...data, workout: { ...w, events: [...w.events, event] } };
   enqueue({ type: "transition", id: event.id, clientSessionId: w.clientSessionId, kind, at: event.at });
+  // Sensors follow the timer: off while paused and after the end.
+  if (kind === "resume") void beginTracking();
+  else void stopTracking().then(flushTracking);
 }
 
 export function logSet(exercise: string, reps: number, weightKg: number | null) {
@@ -153,7 +320,10 @@ export function deleteSet(setId: string) {
 /** Forget a finished or cancelled workout once its commands have reached the server. */
 export function clearFinishedWorkout() {
   const w = data.workout;
-  if (!w || data.queue.length > 0 || !["finished", "cancelled"].includes(stateOf(w.events))) return;
+  if (!w || data.queue.length > 0 || trackingPending || !["finished", "cancelled"].includes(stateOf(w.events))) return;
+  trackingStore().clear(w.clientSessionId); // the route now lives only on the server, visible to its owner
+  stopFlushTimer();
+  resetTracking();
   data = EMPTY;
   notice = null;
   publish();
@@ -168,7 +338,12 @@ const MESSAGES: Record<string, string> = {
 };
 
 export async function syncWorkout() {
-  if (syncing || !userId || data.queue.length === 0) return;
+  if (syncing || !userId) return;
+  if (data.queue.length === 0) {
+    const finished = data.workout !== null && stateOf(data.workout.events) === "finished";
+    if (trackingPending || (finished && metrics === null)) void flushTracking();
+    return;
+  }
   syncing = true;
   publish(false);
   const sent = data.queue;
@@ -181,8 +356,12 @@ export async function syncWorkout() {
       notice = MESSAGES[code] ?? "Some changes couldn't be saved.";
       if (code === "active_workout_exists" || code === "workout_not_found") {
         // Our local workout never existed on the server: replace it with the server's truth.
+        await stopTracking();
+        if (data.workout) trackingStore().clear(data.workout.clientSessionId);
+        resetTracking();
         data = { ...EMPTY, context: data.context };
         await adoptServerWorkout();
+        if (data.workout && stateOf(data.workout.events) === "active") void beginTracking();
       } else {
         await reloadEventsFromServer();
       }
@@ -192,6 +371,7 @@ export async function syncWorkout() {
     publish();
   }
   if (data.queue.length > 0) scheduleRetry();
+  else void flushTracking();
 }
 
 // After a refusal, rebuild the local timeline from the server's event log (the authority).

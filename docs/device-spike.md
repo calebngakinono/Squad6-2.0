@@ -28,3 +28,24 @@ measured on a device; nothing here is estimated.
 | How long until a watch workout appears in Apple Health | Confirms the 24-hour evidence window is enough | pending |
 
 Android (Health Connect, foreground service) runs the same screen once the Android device arrives.
+
+## Real workout check (after part 3: GPS and steps)
+
+The live workout now records GPS and steps itself. None of this has run on a real phone yet. With a new
+development build installed:
+
+1. Start a **Walk**, allow motion and location ("While Using the App"). Walk for 5 minutes; lock the phone for
+   2 of them. Distance should keep growing while locked (a blue location indicator shows on iPhone).
+2. Pause, walk 50 metres, resume. The distance must not include the paused stretch.
+3. Turn on airplane mode, walk another 2 minutes, tap Finish, then turn airplane mode off. The screen should go
+   from "will upload when online" to "Saved", and the distance should switch to "calculated by Squad Six".
+4. Compare the final distance with a known route or another app, and note the difference here.
+5. Start a Walk with location denied: the screen should say it is recording time only and offer Settings.
+
+| Check | Result |
+|---|---|
+| Distance keeps recording with the phone locked ("While Using" permission only) | pending |
+| Paused stretch excluded | pending |
+| Offline finish uploads later and the server number appears | pending |
+| Distance versus a known route | pending |
+| Steps appear (iPhone: within about a minute) | pending |

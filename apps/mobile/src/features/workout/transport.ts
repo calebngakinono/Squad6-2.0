@@ -1,5 +1,7 @@
+import { workoutMetricSchema, type WorkoutMetric } from "@squad-six/shared";
 import { supabase } from "@/lib/supabase";
 import { TransportError, type ServerSession, type Transport } from "./queue";
+import type { TrackingApi } from "./tracking/upload";
 
 // Turns Supabase responses into the queue's two outcomes: the server refused (a database error code),
 // or we couldn't reach it / the session token needs refreshing (try again later).
@@ -70,4 +72,27 @@ export async function fetchOpenWorkout() {
   if (events.error) throw classify(events.error);
   if (sets.error) throw classify(sets.error);
   return { session, events: events.data, sets: sets.data };
+}
+
+/** Uploads of GPS fixes and steps (see tracking/upload.ts). */
+export const trackingApi: TrackingApi = {
+  sendPoints: async (serverSessionId, points) => {
+    await rpc("add_route_points", { session_id: serverSessionId, points });
+  },
+  sendSteps: async (serverSessionId, samples) => {
+    await rpc("add_motion_samples", { session_id: serverSessionId, samples });
+  },
+};
+
+/** The server-computed measurements for a workout (distance, steps, coverage), each with its source. */
+export async function fetchWorkoutMetrics(serverSessionId: string): Promise<WorkoutMetric[]> {
+  const { data, error } = await supabase
+    .from("workout_metrics")
+    .select("metric, value, source, provenance")
+    .eq("session_id", serverSessionId);
+  if (error) throw classify(error);
+  return data.flatMap((row) => {
+    const parsed = workoutMetricSchema.safeParse(row);
+    return parsed.success ? [parsed.data] : [];
+  });
 }

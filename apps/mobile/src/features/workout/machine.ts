@@ -2,17 +2,18 @@
 // Used for the live screen while requests may still be queued offline. The server stays the authority:
 // its times and active_seconds replace these once synced.
 
+// gps: records location (outdoors). sets: logs strength sets. steps: counts phone steps as motion evidence.
 export const ACTIVITIES = [
-  { value: "run", label: "Run", gps: true, sets: false },
-  { value: "walk", label: "Walk", gps: true, sets: false },
-  { value: "hike", label: "Hike", gps: true, sets: false },
-  { value: "cycle", label: "Ride", gps: true, sets: false },
-  { value: "swim", label: "Swim", gps: false, sets: false },
-  { value: "strength", label: "Strength", gps: false, sets: true },
-  { value: "hiit", label: "HIIT", gps: false, sets: false },
-  { value: "yoga", label: "Yoga", gps: false, sets: false },
-  { value: "indoor_cardio", label: "Indoor cardio", gps: false, sets: false },
-  { value: "other", label: "Other", gps: false, sets: false },
+  { value: "run", label: "Run", gps: true, sets: false, steps: true },
+  { value: "walk", label: "Walk", gps: true, sets: false, steps: true },
+  { value: "hike", label: "Hike", gps: true, sets: false, steps: true },
+  { value: "cycle", label: "Ride", gps: true, sets: false, steps: false },
+  { value: "swim", label: "Swim", gps: false, sets: false, steps: false },
+  { value: "strength", label: "Strength", gps: false, sets: true, steps: false },
+  { value: "hiit", label: "HIIT", gps: false, sets: false, steps: true },
+  { value: "yoga", label: "Yoga", gps: false, sets: false, steps: false },
+  { value: "indoor_cardio", label: "Indoor cardio", gps: false, sets: false, steps: true },
+  { value: "other", label: "Other", gps: false, sets: false, steps: true },
 ] as const;
 
 export type Activity = (typeof ACTIVITIES)[number]["value"];

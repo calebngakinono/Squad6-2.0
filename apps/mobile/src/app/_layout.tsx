@@ -4,7 +4,8 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { OnboardingStatusProvider, useOnboardingStatus } from "@/features/onboarding/status";
 import { SessionProvider, useSession } from "@/lib/session";
-// Registers the background location task at startup (required by expo-task-manager).
+// Register the background location tasks at startup (required by expo-task-manager).
+import "@/features/workout/tracking/device";
 import "@/spike/location-task";
 
 SplashScreen.preventAutoHideAsync();
