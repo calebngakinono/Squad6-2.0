@@ -1,6 +1,7 @@
 import type { AnswerValue, OnboardingStep } from "@squad-six/shared";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Button } from "@/components/button";
+import { CityPicker } from "@/components/city-picker";
 import { T } from "@/components/screen-text";
 import { TextField } from "@/components/text-field";
 import { minTouch, radius, space } from "@/theme/tokens";
@@ -21,8 +22,8 @@ export function StepInput({ step, value, onChange }: Props) {
           value={typeof value === "string" ? value : ""}
           onChangeText={onChange}
           maxLength={step.maxLength}
-          autoCapitalize={step.field === "display_name" || step.field === "city" ? "words" : "sentences"}
-          textContentType={step.field === "city" ? "addressCity" : step.field === "display_name" ? "name" : "none"}
+          autoCapitalize={step.field === "display_name" ? "words" : "sentences"}
+          textContentType={step.field === "display_name" ? "name" : "none"}
         />
       );
     case "number": {
@@ -72,6 +73,8 @@ export function StepInput({ step, value, onChange }: Props) {
         </View>
       );
     }
+    case "city":
+      return <CityPicker label={step.title} value={typeof value === "number" ? value : null} onChange={(id) => onChange(id ?? undefined)} />;
     case "timezone":
       return <TimeZoneInput value={typeof value === "string" ? value : undefined} onChange={onChange} />;
   }

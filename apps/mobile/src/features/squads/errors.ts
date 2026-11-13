@@ -12,6 +12,7 @@ const MESSAGES: Record<string, string> = {
   not_captain: "Only the captain can do that.",
   not_in_squad: "You're not in a squad.",
   not_signed_in: "Please sign in again.",
+  city_required: "Choose the squad's city from the list.",
 };
 
 export function squadErrorMessage(error: { message?: string } | null | undefined): string {

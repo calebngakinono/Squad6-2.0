@@ -20,7 +20,7 @@ set local role authenticated;
 
 -- User A is in a squad, so the workout records it.
 select pg_temp.act_as('a');
-insert into ctx values ('squad', public.create_squad('Testers', 'Denver'));
+insert into ctx values ('squad', public.create_squad('Testers', 5419384));
 
 -- Start -------------------------------------------------------------------------------------------
 select pg_temp.act_as('c');

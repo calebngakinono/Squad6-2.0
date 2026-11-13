@@ -5,9 +5,10 @@ migration for the feature that needs it). The migration is the source of truth; 
 
 | Table | Status | Purpose | Access |
 |---|---|---|---|
-| `profiles` | ✅ | **Public** profile, 1:1 with `auth.users`, created by the signup trigger: display name, city (avatar later). Wrench `experience_level` removed 2026-11-11 (approved). | Signed-in users read; owner updates `display_name`, `city` only (column grants) |
+| `profiles` | ✅ | **Public** profile, 1:1 with `auth.users`, created by the signup trigger: display name, `city_id` (a city from `cities`) and `city`, its label such as "Denver, Colorado", written by the database (avatar later). Wrench `experience_level` removed 2026-11-11 (approved). | Signed-in users read; owner updates `display_name`, `city_id` only (column grants); a city can no longer be typed |
+| `cities` | ✅ | Fixed list of 34,215 cities: every city over 15,000 people plus smaller capitals (GeoNames `cities15000`, CC BY 4.0, built by `scripts/build-cities-seed.py`). Name, accent-free search name, region, country code and name, population. `search_cities(query, max_rows)` finds cities by the start of the name, biggest first (ignores case, accents and dots; "St" finds "Saint") | Read: signed in. Changed by migrations only |
 | `profile_private` | ✅ | Home timezone (set only via `set_home_timezone()`: valid IANA name, at most one change per 7 days), personal weekly commitment (not scored), onboarding progress (`onboarding_flow_version`, `onboarding_step`, `onboarding_answers` ≤ 16 KB: goal, experience, activities, wearables) and completion | Owner only; owner updates `weekly_commitment`; progress via `save_onboarding_progress()`, completion via `complete_onboarding()` |
-| `squads` | ✅ | Name, city, description, created_by, archived_at (set when the last member leaves) | Signed-in read; writes via functions only |
+| `squads` | ✅ | Name, `city_id` (from `cities`, required when created) and its label `city`, description, created_by, archived_at (set when the last member leaves) | Signed-in read; writes via functions only |
 | `squad_members` | ✅ | Membership **history**: squad, user, role, joined_at, left_at, left_reason. One active squad per athlete, one captain per squad (unique indexes). Max six, enforced by locking the squad row on approval (race-tested) | Squadmates and self read; writes via functions only |
 | `squad_invite_codes` | ✅ | One 8-character code per squad (no look-alike characters); captain can regenerate | Active members read |
 | `squad_join_requests` | ✅ | pending → approved / declined / cancelled / expired. Max 3 pending per athlete; joining a squad cancels the others | Requester and captain read; writes via functions only |
@@ -30,11 +31,11 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `season_standings` | 📝 | Derived athlete / squad / city totals per season. Squads rank by average per member (seats weighted by days in squad; 3 members minimum to rank) | Read: signed in |
 | `squad_messages` | 📝 | Basic squad chat | Squad members |
 | `entitlements` | 📝 | Pro status from RevenueCat webhook | Owner reads; server writes |
-| `onboarding_flows` | ✅ | Versioned onboarding config (steps, types, branches, profile-field mapping); one active. v1 = core questions, placeholder copy. Structure validated by `onboardingFlowSchema` (packages/shared), which a unit test runs against the migration | Read: signed in; changed by migrations only |
+| `onboarding_flows` | ✅ | Versioned onboarding config (steps, types, branches, profile-field mapping); one active. v2 (active) = core questions with the city chosen from the list; v1 kept for history. Placeholder copy. Structure validated by `onboardingFlowSchema` (packages/shared), which a unit test runs against the migration | Read: signed in; changed by migrations only |
 
 ## Squad functions (the app's API)
 
-`create_squad(name, city, description)` (max 3 per 30 days) · `preview_squad(code)` · `request_to_join(code)` ·
+`create_squad(name, city_id, description)` (max 3 per 30 days) · `preview_squad(code)` · `request_to_join(code)` ·
 `cancel_join_request(id)` · `decide_join_request(id, approve)` (captain) · `leave_squad()` ·
 `remove_squad_member(user)` (captain) · `transfer_captaincy(user)` (captain) · `regenerate_invite_code()` (captain).
 When a captain leaves, the longest-standing member becomes captain; when the last member leaves, the squad is

@@ -37,7 +37,7 @@ describe.skipIf(!isLocal)("squad API against local Supabase", () => {
 
     current.client = captain.client;
     await api.squadApi.setDisplayName(captain.id, "Cap");
-    await api.squadApi.create("Integration Squad", "Denver", "");
+    await api.squadApi.create("Integration Squad", 5419384, "");
     const capHome = await api.loadSquadHome(captain.id);
     expect(capHome.kind).toBe("in-squad");
     const code = capHome.kind === "in-squad" ? capHome.squad.inviteCode! : "";
@@ -48,7 +48,7 @@ describe.skipIf(!isLocal)("squad API against local Supabase", () => {
     expect(await api.squadApi.preview(code.toLowerCase())).toMatchObject({ name: "Integration Squad", member_count: 1 });
     await api.squadApi.requestToJoin(code);
     const waiting = await api.loadSquadHome(athlete.id);
-    expect(waiting).toMatchObject({ kind: "no-squad", pending: [{ squadName: "Integration Squad", city: "Denver" }] });
+    expect(waiting).toMatchObject({ kind: "no-squad", pending: [{ squadName: "Integration Squad", city: "Denver, Colorado" }] });
 
     current.client = captain.client;
     const withRequest = await api.loadSquadHome(captain.id);
@@ -70,7 +70,14 @@ describe.skipIf(!isLocal)("squad API against local Supabase", () => {
     const u = await newUser("solo");
     current.client = u.client;
     await expect(api.squadApi.requestToJoin("ZZZZZZZZ")).rejects.toMatchObject({ message: "invalid_invite_code" });
-    await api.squadApi.create("Solo", "Boulder", "");
-    await expect(api.squadApi.create("Again", "Boulder", "")).rejects.toMatchObject({ message: "already_in_squad" });
+    await api.squadApi.create("Solo", 5574991, "");
+    await expect(api.squadApi.create("Again", 5574991, "")).rejects.toMatchObject({ message: "already_in_squad" });
+
+    // The city picker's search and lookup, against the real list.
+    const cities = await import("@/features/cities/api");
+    const found = await cities.searchCities("st. george");
+    expect(found[0]).toMatchObject({ name: "Saint George", region: "Utah", country_code: "US" });
+    expect(await cities.searchCities("s")).toEqual([]);
+    expect(await cities.loadCity(found[0].id)).toMatchObject({ name: "Saint George", country: "United States" });
   });
 });
