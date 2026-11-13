@@ -15,7 +15,7 @@ squad's standing on the season leaderboard. Teammates see the activity. Nothing 
 | Priority | Feature | By Dec 9 |
 |---|---|---|
 | 1 | **Live workout sessions**: server state machine, timer, GPS for outdoor activities, set/rep logging, pause/resume, recovery, offline queue, device-neutral events (watch-ready) | ✅ |
-| 2 | **Scoring, ledger, seasons, leaderboards**: Base + Verification + Performance ([proposal](scoring-proposal.md)), daily rules, no double awards, transparent workout summary, athlete/squad/city standings, year selector | ✅ (rules approved; production switch-on needs sign-off) |
+| 2 | **Scoring, ledger, seasons, leaderboards**: Base + Verification + Performance ([proposal](scoring-proposal.md)), daily rules, no double awards, transparent workout summary, squad standings by city / country / world (no individual ranking; each athlete sees their own season total), year selector | ✅ (rules approved; production switch-on needs sign-off) |
 | 3 | **HealthKit evidence** (post-workout matching, provider-independent design) | ✅ high priority |
 | 3 | **Health Connect evidence** | ✅ once the Android device arrives; otherwise first item after Dec 9 |
 | 4 | **Squads**: create, invite link, join request + approval, max six, roles, member activity | ✅ |
