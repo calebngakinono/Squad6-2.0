@@ -89,3 +89,12 @@ The athlete's day is re-scored immediately and the points change through new led
 reversed by deciding again (the latest one wins). `review_workout` also works on a workout that was accepted
 automatically, for example after a report from a squad. Nothing notifies you when a workout is flagged yet, so
 check the list regularly once scoring is on.
+
+## City list
+
+Cities come from GeoNames (`cities15000`, licensed CC BY 4.0), loaded by the `*_cities.sql` migration. The
+licence requires credit: show "City data © GeoNames (geonames.org), CC BY 4.0" somewhere users can find it (an
+About or Settings screen, and the marketing site footer) **before release**. To refresh the list later, run
+`scripts/build-cities-seed.py` on a new download and ship the difference as a new migration (never edit the
+merged one). Profiles and squads created before the list existed keep their old typed city as a label but have
+no `city_id`, so they do not appear in city or country standings until a city is chosen.

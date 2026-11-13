@@ -23,7 +23,21 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "onboarding_flows": {
+            "cities": {
+                  Row: {
+                    "country": string,"country_code": string,"id": number,"name": string,"population": number,"region": string | null,"search_name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "country": string,"country_code": string,"id": number,"name": string,"population": number,"region"?: string | null,"search_name": string
+                  }
+                  Update: {
+                    "country"?: string,"country_code"?: string,"id"?: number,"name"?: string,"population"?: number,"region"?: string | null,"search_name"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"onboarding_flows": {
                   Row: {
                     "active": boolean,"created_at": string,"definition": NonNullable<Json>,"version": number
                   }
@@ -97,17 +111,23 @@ isOneToOne: true
                   ]
                 },"profiles": {
                   Row: {
-                    "city": string | null,"created_at": string,"display_name": string | null,"id": string,"updated_at": string
+                    "city": string | null,"city_id": number | null,"created_at": string,"display_name": string | null,"id": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "city"?: string | null,"created_at"?: string,"display_name"?: string | null,"id": string,"updated_at"?: string
+                    "city"?: string | null,"city_id"?: number | null,"created_at"?: string,"display_name"?: string | null,"id": string,"updated_at"?: string
                   }
                   Update: {
-                    "city"?: string | null,"created_at"?: string,"display_name"?: string | null,"id"?: string,"updated_at"?: string
+                    "city"?: string | null,"city_id"?: number | null,"created_at"?: string,"display_name"?: string | null,"id"?: string,"updated_at"?: string
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "profiles_city_id_fkey"
+      columns: ["city_id"]
+isOneToOne: false
+      referencedRelation: "cities"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"scoring_rule_versions": {
                   Row: {
@@ -203,17 +223,23 @@ isOneToOne: false
                   ]
                 },"squads": {
                   Row: {
-                    "archived_at": string | null,"city": string,"created_at": string,"created_by": string | null,"description": string | null,"id": string,"name": string
+                    "archived_at": string | null,"city": string,"city_id": number | null,"created_at": string,"created_by": string | null,"description": string | null,"id": string,"name": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "archived_at"?: string | null,"city": string,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"name": string
+                    "archived_at"?: string | null,"city": string,"city_id"?: number | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"name": string
                   }
                   Update: {
-                    "archived_at"?: string | null,"city"?: string,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"name"?: string
+                    "archived_at"?: string | null,"city"?: string,"city_id"?: number | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"id"?: string,"name"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "squads_city_id_fkey"
+      columns: ["city_id"]
+isOneToOne: false
+      referencedRelation: "cities"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "squads_created_by_fkey"
       columns: ["created_by"]
 isOneToOne: false
@@ -500,11 +526,14 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"city_label":
+{ Args: { "target": number }; Returns: string
+                           },
 "complete_onboarding":
-{ Args: { "answers": Json,"city": string,"display_name": string,"flow_version": number,"home_timezone": string,"weekly_commitment": number }; Returns: undefined
+{ Args: { "answers": Json,"city_id": number,"display_name": string,"flow_version": number,"home_timezone": string,"weekly_commitment": number }; Returns: undefined
                            },
 "create_squad":
-{ Args: { "squad_city": string,"squad_description"?: string,"squad_name": string }; Returns: string
+{ Args: { "squad_city_id": number,"squad_description"?: string,"squad_name": string }; Returns: string
                            },
 "decide_join_request":
 { Args: { "approve": boolean,"request_id": string }; Returns: undefined
@@ -708,6 +737,11 @@ isOneToOne: true
                            },
 "scoring_ramp":
 { Args: { "full_at": number,"x": number,"zero": number }; Returns: number
+                           },
+"search_cities":
+{ Args: { "max_rows"?: number,"query": string }; Returns: {
+              "country": string,"country_code": string,"id": number,"name": string,"population": number,"region": string
+            }[]
                            },
 "set_home_timezone":
 { Args: { "tz": string }; Returns: undefined

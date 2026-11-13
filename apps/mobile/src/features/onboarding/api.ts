@@ -38,7 +38,7 @@ export async function completeOnboarding(flow: OnboardingFlow, answers: Answers)
     answers: kept,
     display_name: String(p.display_name ?? ""),
     // Optional in the database function; generated types don't mark SQL arguments as nullable.
-    city: (typeof p.city === "string" ? p.city : null) as unknown as string,
+    city_id: (typeof p.city === "number" ? p.city : null) as unknown as number,
     home_timezone: String(p.home_timezone ?? ""),
     weekly_commitment: (typeof p.weekly_commitment === "number" ? p.weekly_commitment : null) as unknown as number,
   });
@@ -47,7 +47,7 @@ export async function completeOnboarding(flow: OnboardingFlow, answers: Answers)
 
 const MESSAGES: Record<string, string> = {
   invalid_display_name: "Add a name your squad will see.",
-  invalid_city: "Check the city name.",
+  invalid_city: "Choose your city from the list.",
   invalid_weekly_commitment: "Choose between 1 and 14 days.",
   timezone_required: "Confirm your time zone.",
   "home timezone can change once every 7 days": "Your time zone was changed recently. You can change it again in a week.",

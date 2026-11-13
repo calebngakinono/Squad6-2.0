@@ -25,21 +25,21 @@ select throws_ok(format($$select public.save_onboarding_progress(1, 'x', %L)$$, 
   'P0001', 'invalid_answers', 'oversized answers are refused');
 
 -- Completion validation
-select throws_ok($$select public.complete_onboarding(1, '{}', '  ', 'Denver', 'America/Denver', 3)$$, 'P0001', 'invalid_display_name',
+select throws_ok($$select public.complete_onboarding(1, '{}', '  ', 5419384, 'America/Denver', 3)$$, 'P0001', 'invalid_display_name',
   'a name is required');
-select throws_ok($$select public.complete_onboarding(1, '{}', 'A', 'Denver', 'America/Denver', 20)$$, 'P0001', 'invalid_weekly_commitment',
+select throws_ok($$select public.complete_onboarding(1, '{}', 'A', 5419384, 'America/Denver', 20)$$, 'P0001', 'invalid_weekly_commitment',
   'weekly commitment must be 1 to 14');
-select throws_ok($$select public.complete_onboarding(1, '{}', 'A', 'Denver', 'Mars/Base', 3)$$, '22023', null,
+select throws_ok($$select public.complete_onboarding(1, '{}', 'A', 5419384, 'Mars/Base', 3)$$, '22023', null,
   'time zone is validated');
 
 -- Completion
-select lives_ok($$select public.complete_onboarding(1, '{"goal":"strength"}', ' Ana ', ' Denver ', 'America/Denver', 4)$$,
+select lives_ok($$select public.complete_onboarding(1, '{"goal":"strength"}', ' Ana ', 5419384, 'America/Denver', 4)$$,
   'onboarding completes');
 select is(
   (select p.display_name || '|' || p.city || '|' || pp.home_timezone || '|' || pp.weekly_commitment || '|' || (pp.onboarding_completed_at is not null)
    from public.profiles p join public.profile_private pp on pp.user_id = p.id),
-  'Ana|Denver|America/Denver|4|true',
-  'profile fields are applied and trimmed');
+  'Ana|Denver, Colorado|America/Denver|4|true',
+  'profile fields are applied (the city label comes from the list)');
 
 -- Someone else's data is untouched.
 reset role;
@@ -47,7 +47,7 @@ select is((select display_name from public.profiles where id = '00000000-0000-00
   'other users are not affected');
 
 set local role anon;
-select throws_ok($$select public.complete_onboarding(1, '{}', 'A', 'Denver', 'UTC', 3)$$, '42501', null,
+select throws_ok($$select public.complete_onboarding(1, '{}', 'A', 5419384, 'UTC', 3)$$, '42501', null,
   'anonymous visitors cannot complete onboarding');
 
 select * from finish();

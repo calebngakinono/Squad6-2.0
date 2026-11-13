@@ -50,6 +50,8 @@ export const onboardingStepSchema = z.discriminatedUnion("type", [
     maxSelections: z.number().int().min(1).optional(),
   }),
   z.object({ ...base, type: z.literal("timezone") }),
+  /** A city chosen from the server's list; the answer is the city's id. */
+  z.object({ ...base, type: z.literal("city") }),
 ]);
 
 export type OnboardingStep = z.infer<typeof onboardingStepSchema>;
@@ -103,6 +105,8 @@ export function validateAnswer(step: OnboardingStep, value: AnswerValue | undefi
     }
     case "timezone":
       return typeof value === "string" && /^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)*$/.test(value) ? null : "Choose a time zone.";
+    case "city":
+      return typeof value === "number" && Number.isInteger(value) && value > 0 ? null : "Choose your city from the list.";
   }
 }
 

@@ -27,7 +27,7 @@ describe.skipIf(!isLocal)("onboarding API against local Supabase", () => {
     current.client = client;
 
     const first = await api.loadOnboarding(userId);
-    expect(first.flow.version).toBe(1);
+    expect(first.flow.version).toBe(2);
     expect(first.step).toBeNull();
 
     const answers = { display_name: "Ana", experience: "new", goal: "strength" };
@@ -39,7 +39,7 @@ describe.skipIf(!isLocal)("onboarding API against local Supabase", () => {
     await api.completeOnboarding(first.flow, {
       ...answers,
       weekly_commitment: 3,
-      city: " Denver ",
+      city: 5419384,
       home_timezone: "America/Denver",
     });
     const profile = await client.from("profiles").select("display_name, city").eq("id", userId).single();
@@ -48,7 +48,7 @@ describe.skipIf(!isLocal)("onboarding API against local Supabase", () => {
       .select("home_timezone, weekly_commitment, onboarding_completed_at, onboarding_answers")
       .eq("user_id", userId)
       .single();
-    expect(profile.data).toEqual({ display_name: "Ana", city: "Denver" });
+    expect(profile.data).toEqual({ display_name: "Ana", city: "Denver, Colorado" });
     expect(priv.data).toMatchObject({ home_timezone: "America/Denver", weekly_commitment: 3 });
     expect(priv.data!.onboarding_completed_at).not.toBeNull();
     expect(priv.data!.onboarding_answers).toMatchObject({ goal: "strength", experience: "new" });
@@ -60,7 +60,7 @@ describe.skipIf(!isLocal)("onboarding API against local Supabase", () => {
     current.client = client;
     const { flow } = await api.loadOnboarding((await client.auth.getUser()).data.user!.id);
     const err = await api
-      .completeOnboarding(flow, { display_name: "B", weekly_commitment: 2, city: "Denver", home_timezone: "Mars/Base" })
+      .completeOnboarding(flow, { display_name: "B", weekly_commitment: 2, city: 5419384, home_timezone: "Mars/Base" })
       .catch((e) => e);
     expect(api.onboardingErrorMessage(err)).toMatch(/isn't recognised/);
   });
