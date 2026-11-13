@@ -16,11 +16,11 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000
 
 select is((select count(*)::int from public.profiles), 2, 'signed-in users can read public profiles');
 
-update public.profiles set display_name = 'A', city = 'Denver' where id = '00000000-0000-0000-0000-00000000000a';
+update public.profiles set display_name = 'A', city_id = 5419384 where id = '00000000-0000-0000-0000-00000000000a';
 select is(
   (select display_name || '/' || city from public.profiles where id = '00000000-0000-0000-0000-00000000000a'),
-  'A/Denver',
-  'a user can update their own name and city'
+  'A/Denver, Colorado',
+  'a user can update their own name and choose a city from the list'
 );
 
 update public.profiles set display_name = 'hacked' where id = '00000000-0000-0000-0000-00000000000b';

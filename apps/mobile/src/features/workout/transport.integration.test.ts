@@ -30,10 +30,10 @@ describe.skipIf(!isLocal)("workout transport against local Supabase", () => {
     const { data } = await client.auth.signUp({ email: `wk-${Date.now()}@example.com`, password: "test-password-123" });
     current.client = client;
     await client.rpc("complete_onboarding", {
-      flow_version: 1,
+      flow_version: 2,
       answers: {},
       display_name: "W",
-      city: "Denver",
+      city_id: 5419384,
       home_timezone: "America/Denver",
       weekly_commitment: 3,
     });

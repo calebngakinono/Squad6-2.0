@@ -23,13 +23,13 @@ set local role authenticated;
 
 -- Create ----------------------------------------------------------------------------------------
 select pg_temp.act_as(1);
-insert into ctx values ('squad', public.create_squad('  Dawn Patrol ', 'Denver', 'Early runs'));
+insert into ctx values ('squad', public.create_squad('  Dawn Patrol ', 5419384, 'Early runs'));
 select is((select name from public.squads where id = pg_temp.get('squad')::uuid), 'Dawn Patrol', 'squad name is trimmed');
 select is((select role from public.squad_members where user_id = pg_temp.uid(1) and left_at is null), 'captain',
   'creator becomes captain');
 insert into ctx values ('code', (select code from public.squad_invite_codes where squad_id = pg_temp.get('squad')::uuid));
 select matches(pg_temp.get('code'), '^[A-HJ-NP-Z2-9]{8}$', 'members can read the invite code');
-select throws_ok($$select public.create_squad('Second', 'Denver')$$, 'P0001', 'already_in_squad',
+select throws_ok($$select public.create_squad('Second', 5419384)$$, 'P0001', 'already_in_squad',
   'an athlete in a squad cannot create another');
 
 -- Direct writes are refused ---------------------------------------------------------------------
@@ -54,7 +54,7 @@ select is((select count(*)::int from public.squad_join_requests), 1, 'requester 
 
 -- u8 creates a second squad; u3 asks to join both.
 select pg_temp.act_as(8);
-insert into ctx values ('squad8', public.create_squad('Night Owls', 'Boulder'));
+insert into ctx values ('squad8', public.create_squad('Night Owls', 5574991));
 insert into ctx values ('code8', (select code from public.squad_invite_codes where squad_id = pg_temp.get('squad8')::uuid));
 
 select pg_temp.act_as(3);
@@ -158,7 +158,7 @@ select is((select left_reason from public.squad_members where user_id = pg_temp.
 -- Anonymous ---------------------------------------------------------------------------------------
 set local role anon;
 select throws_ok('select count(*) from public.squads', '42501', null, 'anonymous visitors cannot read squads');
-select throws_ok($$select public.create_squad('x', 'y')$$, '42501', null, 'anonymous visitors cannot create squads');
+select throws_ok($$select public.create_squad('x', 5419384)$$, '42501', null, 'anonymous visitors cannot create squads');
 
 select * from finish();
 rollback;

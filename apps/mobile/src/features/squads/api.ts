@@ -113,8 +113,8 @@ async function call<T>(promise: PromiseLike<{ data: T; error: { message: string 
 }
 
 export const squadApi = {
-  create: (name: string, city: string, description: string) =>
-    call(supabase.rpc("create_squad", { squad_name: name, squad_city: city, squad_description: description })),
+  create: (name: string, cityId: number, description: string) =>
+    call(supabase.rpc("create_squad", { squad_name: name, squad_city_id: cityId, squad_description: description })),
   preview: async (code: string) => (await call(supabase.rpc("preview_squad", { invite_code: code })))?.[0] ?? null,
   requestToJoin: (code: string) => call(supabase.rpc("request_to_join", { invite_code: code })),
   cancelRequest: (id: string) => call(supabase.rpc("cancel_join_request", { request_id: id })),
