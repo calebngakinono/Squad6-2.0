@@ -213,10 +213,12 @@ describe.skipIf(!isLocal)("workout transport against local Supabase", () => {
   it("reads season standings through the app's API (empty while scoring is off, never an error)", async () => {
     const standings = await import("@/features/standings/api");
     const season = new Date().getFullYear();
-    expect(await standings.loadAthleteStandings(season, null)).toEqual([]);
-    expect(await standings.loadAthleteStandings(season, "Denver")).toEqual([]);
-    expect(await standings.loadSquadStandings(season, null)).toEqual([]);
-    expect(await standings.loadMySeason(season)).toBeNull();
+    expect(await standings.loadMySeasonPoints(season)).toBe(0);
+    // This athlete chose Denver during onboarding and has no squad.
+    expect(await standings.loadMyStandingsPlace()).toMatchObject({ city: "Denver", country_code: "US", country: "United States" });
+    for (const scope of ["city", "country", "world"] as const) {
+      expect(await standings.loadSquadStandings(season, scope)).toEqual([]);
+    }
   });
 
   it("classifies a server refusal as rejected", async () => {

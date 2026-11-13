@@ -1,4 +1,4 @@
-import { athleteStandingSchema, squadStandingSchema } from "@squad-six/shared";
+import { squadStandingSchema, standingsPlaceSchema } from "@squad-six/shared";
 import { describe, expect, it } from "vitest";
 import { formatPoints, seasonYears, squadSubtitle } from "./view";
 
@@ -19,16 +19,16 @@ describe("display", () => {
     expect(formatPoints(0)).toBe("0");
   });
 
-  it("explains why a small squad is not ranked", () => {
-    expect(squadSubtitle({ city: "Denver", members: 4, is_ranked: true })).toBe("Denver · 4 members");
-    expect(squadSubtitle({ city: "Denver", members: 2, is_ranked: false })).toBe("Denver · 2 members · needs 1 more to be ranked");
-    expect(squadSubtitle({ city: "Denver", members: 1, is_ranked: false })).toBe("Denver · 1 member · needs 2 more to be ranked");
+  it("says how many more members a squad needs to be ranked (four in total)", () => {
+    expect(squadSubtitle({ city: "Denver, Colorado", members: 4, is_ranked: true })).toBe("Denver, Colorado · 4 members");
+    expect(squadSubtitle({ city: "Denver, Colorado", members: 3, is_ranked: false })).toBe("Denver, Colorado · 3 members · ranked with 1 more");
+    expect(squadSubtitle({ city: "Denver, Colorado", members: 1, is_ranked: false })).toBe("Denver, Colorado · 1 member · ranked with 3 more");
   });
 });
 
 describe("row schemas", () => {
   it("accept what the database returns", () => {
-    expect(athleteStandingSchema.safeParse({ rank: 1, user_id: "u", display_name: null, city: null, points: 214, is_me: true }).success).toBe(true);
-    expect(squadStandingSchema.safeParse({ rank: null, squad_id: "s", name: "Duo", city: "Denver", score: 9000, points: 18000, members: 2, is_ranked: false, is_mine: false }).success).toBe(true);
+    expect(squadStandingSchema.safeParse({ rank: null, squad_id: "s", name: "Trio", city: "Denver, Colorado", country: "United States", points: 27000, members: 3, is_ranked: false, is_mine: false }).success).toBe(true);
+    expect(standingsPlaceSchema.safeParse({ city_id: 5419384, city: "Denver", country_code: "US", country: "United States" }).success).toBe(true);
   });
 });
