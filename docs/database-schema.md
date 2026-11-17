@@ -86,6 +86,13 @@ decides which evidence categories pass; `scoring_performance()` computes effort 
 config. `set_scoring_active(version, from)` switches a rule version on. Details and known gaps:
 [`scoring-proposal.md` §9](scoring-proposal.md).
 
+## Account functions
+
+`delete_my_account()`: deletes the caller's auth user and, by cascade, profile, private settings, squad memberships,
+join requests, workouts and everything attached to them. Leaves the squad first (captaincy passes on, an empty
+squad is archived). Ledger rows stay for the squad with `user_id` set to null. Settings also use the existing
+grants (`profiles.display_name`, `profiles.city_id`, `profile_private.weekly_commitment`) and `set_home_timezone()`.
+
 ## Rules for every migration
 
 1. Create the table, enable RLS and add policies **in the same migration**.

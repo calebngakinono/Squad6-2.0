@@ -6,7 +6,6 @@ import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { T } from "@/components/screen-text";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
 import { loadMySeasonPoints } from "@/features/standings/api";
@@ -155,7 +154,7 @@ export default function HomeScreen() {
         {__DEV__ && (
           <Button variant="secondary" label="Device check (dev only)" onPress={() => router.push("/device-check")} />
         )}
-        <Button variant="secondary" label="Sign out" onPress={() => supabase.auth.signOut()} />
+        <Button variant="secondary" label="Settings" onPress={() => router.push("/settings")} />
       </View>
     </SafeAreaView>
   );

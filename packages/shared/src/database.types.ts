@@ -552,6 +552,9 @@ isOneToOne: true
 "decide_join_request":
 { Args: { "approve": boolean,"request_id": string }; Returns: undefined
                            },
+"delete_my_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "delete_strength_set":
 { Args: { "session_id": string,"set_id": string }; Returns: undefined
                            },

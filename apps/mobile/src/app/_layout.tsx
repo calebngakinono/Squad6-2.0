@@ -64,6 +64,7 @@ function RootNavigator({ fontsSettled }: { fontsSettled: boolean }) {
         <Stack.Screen name="start-workout" />
         <Stack.Screen name="workout" />
         <Stack.Screen name="standings" />
+        <Stack.Screen name="settings" />
         <Stack.Protected guard={__DEV__}>
           <Stack.Screen name="device-check" />
         </Stack.Protected>
