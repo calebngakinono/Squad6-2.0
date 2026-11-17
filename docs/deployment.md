@@ -3,8 +3,8 @@
 `.github/workflows/deploy.yml` runs when a PR is merged into `staging` or `main`.
 
 ```
-merge to staging ─► CI ─► migrate wrench-staging ─► railway up (staging) ─► health check
-merge to main    ─► CI ─► ⏸ Caleb approves ─► migrate wrench-prod ─► railway up (production) ─► health check
+merge to staging ─► CI ─► migrate staging DB ─► railway up (staging) ─► health check
+merge to main    ─► CI ─► ⏸ Caleb approves ─► migrate production DB ─► railway up (production) ─► health check
 ```
 
 ## Where configuration lives
@@ -39,6 +39,16 @@ through this workflow and, for production, through your approval.
   normal flow. Before a risky production migration, take a manual backup first:
   `pnpm exec supabase db dump --remote="<prod session pooler url>" -f backup.sql` (keep it out of the repo).
 
+## Leftover Wrench AI names outside the repo
+
+The pipeline was built for Wrench AI and kept for Squad Six. These names live in dashboards, not code:
+
+| Name | Where | Safe to rename? |
+|---|---|---|
+| Railway project `WrenchAi` | Railway dashboard | Yes. Display name only; tokens keep working. |
+| Supabase projects `wrench-staging`, `wrench-prod` | Supabase dashboard | Yes. Display names only; the project refs in `SUPABASE_PROJECT_REF` never change. |
+| `wrenchaistaging.up.railway.app`, `wrenchaiprod.up.railway.app` | Railway service domains | Yes, but change `APP_URL` in the matching GitHub Environment at the same time, or the post-deploy health check fails. |
+
 ## Troubleshooting
 
 | Symptom | Likely cause |
@@ -47,3 +57,44 @@ through this workflow and, for production, through your approval.
 | `db push` cannot connect | Use the **Session pooler** string (GitHub runners have no IPv6); password with special characters must be URL-encoded. |
 | `railway up` unauthorized | Token belongs to a different Railway environment or was revoked. |
 | Health check fails, build passed | Missing `NEXT_PUBLIC_*` variables in Railway, or the app crashed on start: check Railway logs. |
+
+## Switching competitive scoring on
+
+Deploying the scoring migration does **not** start scoring. Each environment's rule version stays off
+(`active_from` is empty) until someone runs this once in that environment's SQL editor:
+
+```sql
+select public.set_scoring_active('v1', now());
+```
+
+Workouts that start after that moment are scored; earlier ones never are. To pause scoring again, set the time
+far in the future. Staging can be switched on for testing at any time. **Production needs Caleb's explicit
+sign-off** (hard rule 10 in `CLAUDE.md`).
+
+## Reviewing flagged workouts
+
+A workout the automatic checks flag (for example a "run" at car speed) earns 0 points and waits for a person. It
+is never accepted automatically. Until there is an admin screen, review is done in the environment's SQL editor:
+
+```sql
+-- 1. What is waiting (summaries only, no routes):
+select * from public.workouts_awaiting_review;
+
+-- 2. Decide. The reason is shown to the athlete when you reject.
+select public.review_workout('<session_id>', 'accepted', 'Downhill race, checked with the athlete', 'Caleb');
+select public.review_workout('<session_id>', 'rejected', 'This was recorded in a car', 'Caleb');
+```
+
+The athlete's day is re-scored immediately and the points change through new ledger rows. A decision can be
+reversed by deciding again (the latest one wins). `review_workout` also works on a workout that was accepted
+automatically, for example after a report from a squad. Nothing notifies you when a workout is flagged yet, so
+check the list regularly once scoring is on.
+
+## City list
+
+Cities come from GeoNames (`cities15000`, licensed CC BY 4.0), loaded by the `*_cities.sql` migration. The
+licence requires credit: show "City data © GeoNames (geonames.org), CC BY 4.0" somewhere users can find it (an
+About or Settings screen, and the marketing site footer) **before release**. To refresh the list later, run
+`scripts/build-cities-seed.py` on a new download and ship the difference as a new migration (never edit the
+merged one). Profiles and squads created before the list existed keep their old typed city as a label but have
+no `city_id`, so they do not appear in city or country standings until a city is chosen.

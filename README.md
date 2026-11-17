@@ -1,18 +1,26 @@
-# Wrench AI
+# Squad Six
 
-Your AI copilot for DIY car repairs. YouTube shows you how to fix it; Wrench AI helps you understand
-what you're watching.
+Fitness consistency is easier when five people are counting on you. Squad Six puts you in a squad of up to
+six, turns every workout into a live session, and keeps an honest, auditable score across a season that runs
+from January 1 to December 31.
 
-## Quick start
+Status: early development. The mobile app is being built; this repo contains the mobile app (sign-in so far),
+the web app, database and deploy pipeline. See [the MVP plan](docs/mvp-plan.md).
+
+## Quick start (web)
 
 Requires Node 24, pnpm and Docker.
 
 ```bash
 pnpm install
 pnpm db:start                 # local Supabase in Docker; prints the local publishable key
-cp .env.example .env.local    # paste the PUBLISHABLE_KEY from db:start
+cp apps/web/.env.example apps/web/.env.local   # paste the PUBLISHABLE_KEY from db:start
 pnpm dev                      # http://localhost:3000
 ```
+
+## Quick start (mobile)
+
+See [mobile setup](docs/mobile-setup.md). Expo Go is not supported; the app runs as a development build.
 
 ## Checks
 
@@ -25,9 +33,13 @@ pnpm db:test
 
 - [Architecture](docs/architecture.md)
 - [Database schema](docs/database-schema.md)
-- [AI honesty and safety rules](docs/ai-rules.md)
-- [Testing strategy](docs/testing-strategy.md)
+- [Data integrity and privacy rules](docs/data-integrity.md)
 - [MVP plan](docs/mvp-plan.md)
+- [Scoring proposal](docs/scoring-proposal.md)
+- [Health integrations](docs/health-integrations.md)
+- [Mobile setup](docs/mobile-setup.md)
+- [Device spike](docs/device-spike.md)
+- [Testing strategy](docs/testing-strategy.md)
 - [Branches, PRs and releases](docs/workflow.md)
 - [Deployment and rollback](docs/deployment.md)
 - [Engineering instructions for AI assistants](CLAUDE.md)

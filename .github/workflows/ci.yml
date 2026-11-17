@@ -68,7 +68,7 @@ jobs:
         run: pnpm build
 
       - name: Install Playwright browser
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter @squad-six/web exec playwright install --with-deps chromium
       - name: E2E tests
         run: pnpm test:e2e
       - name: Upload Playwright report
@@ -76,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: playwright-report/
+          path: apps/web/playwright-report/
           retention-days: 7
 
   database:
