@@ -1,72 +1,54 @@
-# MVP plan: Wrench AI, your AI copilot for DIY car repairs
+# MVP plan: Squad Six
 
-Revised 2026-11-04 (product pivot). Idea presentation: **Friday 2026-11-06**. Deadline: **2026-11-23**.
+Revised 2026-11-10 (pivot from Wrench AI). Target: **2026-12-09**. Status: **proposed**.
 
-> YouTube shows you how to fix it. Wrench AI helps you understand what you're watching.
+> Fitness consistency is easier when five people are counting on you.
 
-## Problem and hypothesis
+## What must work on December 9
 
-People can find repair tutorials, but when a moment is confusing they leave the video and describe what
-they saw to another tool, which never saw the video. **Hypothesis:** a video-aware assistant that knows the
-repair being shown, the playback moment and the user's vehicle reduces that friction. This is a hypothesis
-to validate, not a proven market claim.
-
-## The one demo that matters
-
-Pause a real repair video, ask "what did he just do?", and get an accurate answer grounded in the actual
-video, with the timestamp. Real model output, not a script.
+One real person on a real iPhone can: sign up → go through onboarding → create or join a squad → start a live
+workout → pause, resume, finish (surviving an app restart) → see a transparent point breakdown → see their
+squad's standing on the season leaderboard. Teammates see the activity. Nothing on screen is fabricated.
 
 ## Scope
 
-| Priority | Feature | MVP |
+| Priority | Feature | By Dec 9 |
 |---|---|---|
-| 1 | **Prove video understanding** on authorized, public, embeddable videos | Experiment first (below) |
-| 2 | **Repair workspace**: YouTube IFrame player, current timestamp, AI chat, honest status per video | ✅ |
-| 3 | **Auth and digital garage**: dark, game-inspired; vPIC year/make/model picker; active vehicle; generic (labelled) vehicle art | ✅ |
-| 4 | **Repair missions**: video, questions, timestamp bookmarks, notes, status planned / in progress / completed | ✅ |
-| 5 | **Maintenance log** (date, mileage, parts, cost) and light gamification (mission count, milestones) | ✅ lightweight |
-| 5 | **General automotive assistant** (no video needed), vehicle-aware, safety rules | ✅ |
-| 6 | Polish, tests, production deploy, demo script | ✅ |
-| Later | Chrome extension side panel, verified maintenance schedules, photo questions | ❌ |
-
-**Removed from the MVP:** knowledge ingestion, guide authoring and review, component-location database,
-hotspot diagrams, guided diagnostics, marketplaces, large analytics dashboards, predictive maintenance,
-universal coverage. The previous strategy is kept for reference in `source-strategy.md` (superseded).
+| 1 | **Live workout sessions**: server state machine, timer, GPS for outdoor activities, set/rep logging, pause/resume, recovery, offline queue, device-neutral events (watch-ready) | ✅ |
+| 2 | **Scoring, ledger, seasons, leaderboards**: Base + Verification + Performance ([proposal](scoring-proposal.md)), daily rules, no double awards, transparent workout summary, squad standings by city / country / world (no individual ranking; each athlete sees their own season total), year selector | ✅ (rules approved; production switch-on needs sign-off) |
+| 3 | **HealthKit evidence** (post-workout matching, provider-independent design) | ✅ high priority |
+| 3 | **Health Connect evidence** | ✅ once the Android device arrives; otherwise first item after Dec 9 |
+| 4 | **Squads**: create, invite link, join request + approval, max six, roles, member activity | ✅ |
+| 5 | **Challenges (official)**: individual tiered and squad participation challenges, evidence requirements, awards in the ledger, history | ✅ core types; ranked city events and seasonal events are stretch |
+| 6 | **Auth and profiles**: email, Sign in with Apple, Google; public/private profile split; account deletion | ✅ |
+| 7 | **Onboarding**: configurable, resumable, branching flow; placeholder screens until the storyboard designs arrive; demo content labeled | ✅ engine + core questions |
+| 8 | Squad chat (basic) | stretch; activity feed is the fallback |
+| 9 | Marketing site (one page) | ✅ small |
+| 10 | Pro: entitlements table, server checks, RevenueCat sandbox | stretch; no live purchases |
+| Later | Progress Intelligence, Squad Leadership, Athlete Legacy, achievements beyond streaks, BLE heart-rate, watchOS app, cloud wearable APIs, camera verification, season prizes and monthly drawings (need funding and legal review), organization accounts, sponsored challenges | ❌ documented, not built |
 
 ## Schedule
 
-| Date | Work | Done when |
+| Week | Work | Done when |
 |---|---|---|
-| **Nov 4** | Plan approved; Gemini key; **video-understanding experiment** | Go/no-go with scored answers, latency and cost per question |
-| **Nov 5** | Proof-of-concept workspace: paste URL → embedded player → pause → ask → grounded answer with timestamp (staging) | Works live on 2 chosen videos |
-| **Nov 6** | **Idea presentation** (live PoC demo plus slides) | — |
-| Nov 7–9 | Workspace for real: video status states, cached video index, chat persistence, provider interface, rate limits and quotas, tests | Analyzed vs not-analyzed vs not-embeddable handled honestly |
-| Nov 10–12 | Auth, onboarding (18+ confirmation), garage with vPIC picker, visual identity | Vehicle saved, persists, RLS-tested |
-| Nov 13–15 | Missions, bookmarks, notes, mission history | Full mission flow E2E-tested |
-| Nov 16–17 | Maintenance log, light gamification, general assistant mode with safety handling | — |
-| **Nov 18** | **Feature freeze checkpoint**: cut anything not solid | — |
-| Nov 19–21 | Polish, mobile, accessibility, E2E suite, approved production release | Prod live |
-| Nov 22–23 | Demo script, README, honest completion report, buffer | Submitted |
+| **Nov 10–16** | Phase 1: pivot docs; monorepo (`apps/web`, `apps/mobile`, `packages/shared`); Expo dev build with Supabase auth; schema foundation (profiles split); **device spike** | Staging still deploys; app runs on Caleb's iPhone; spike findings written |
+| **Nov 17–23** | Squads (create, invite, join/approve, roles, limit of six), onboarding engine; (scoring rules approved Nov 10) | Two test accounts form a squad on staging |
+| **Nov 24–30** | Live workout engine end-to-end: state machine, GPS, set logging, recovery, offline queue; evidence providers + HealthKit matching | Kill-the-app and airplane-mode tests pass on device; an Apple Health workout attaches as evidence |
+| **Dec 1–5** | Scoring engine from approved rules, ledger, workout summary, season standings, leaderboards; official challenges (core types); marketing page | Every point on the summary traces to ledger rows; simulation scenarios pass as tests |
+| **Dec 6** | **Feature freeze**: cut anything not solid | — |
+| Dec 7–9 | Hardening, E2E and pgTAP coverage, production release (approved), TestFlight build, demo script, honest completion report | Prod live; TestFlight build installed |
 
-**If time runs short, cut in this order:** gamification → maintenance log → general assistant polish. The
-video workspace and garage stay.
+**If time runs short, cut in this order:** chat → Pro sandbox → ranked/seasonal events → marketing polish →
+squad challenges. The workout session, scoring, HealthKit evidence, squads and individual challenges stay.
 
-## First experiment (Priority 1)
+## External blockers to track
 
-Goal: find out whether Gemini can answer timestamp questions about real repair videos accurately enough.
-
-1. **Videos:** 2 public, embeddable repair tutorials, one short (air or cabin filter, about 5–10 min) and one
-   longer (front brake pads, about 15–20 min). Prefer videos marked Creative Commons on YouTube.
-2. **Script** (`scripts/experiments/`, not app code). For each video:
-   - one call to build a video index (summary plus timestamped step list, as JSON);
-   - 5 timestamp questions ("What is he doing at 04:32, and why?"), each run both against the whole video and
-     against a clip around the timestamp;
-   - 2 honesty probes: a question about something not in the video, and one about a moment that isn't there.
-3. **Models:** the cheapest capable model against one stronger Flash model. Record latency and token usage.
-4. **Scoring:** Caleb watches each moment and marks each answer correct / partial / wrong / hallucinated.
-5. **Pass:** ≥ 8 of 10 timestamp answers correct or partial with honest hedging; **zero** confident answers
-   on the honesty probes; p50 latency under about 15 s per question; cost per question measured.
-
-**If it fails:** report why, then fall back to (a) clip-only analysis with a narrower window, or (b) a
-Creative-Commons video from a source that permits download (e.g. Wikimedia Commons), uploaded through the
-Gemini File API and played in our own player. Never by downloading from YouTube.
+| Blocker | Needed for | Status |
+|---|---|---|
+| Apple Developer Program membership | EAS iOS builds on device, TestFlight, Sign in with Apple, HealthKit entitlement | Caleb enrolling |
+| Android test device | Health Connect, Android GPS foreground service | Caleb getting one |
+| Onboarding storyboard designs (Fiverr designer) | Final onboarding screens and visual design | Placeholders until delivered |
+| App Store / Play subscription products | Live Pro purchases | Not before release |
+| Scoring-rules approval | Building the scoring engine (week 3) | ✅ Approved 2026-11-10: [scoring-proposal.md](scoring-proposal.md) |
+| Google Play health-permissions review | Health Connect in a Play release | Not needed for internal testing |
+| Legal review, funding, official rules | Any prize or drawing | Not before launch |
