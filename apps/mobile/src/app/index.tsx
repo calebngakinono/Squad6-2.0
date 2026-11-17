@@ -9,6 +9,8 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
+import { loadMySeasonPoints } from "@/features/standings/api";
+import { formatPoints, seasonYears } from "@/features/standings/view";
 import { activityInfo, stateOf } from "@/features/workout/machine";
 import { hydrateWorkout } from "@/features/workout/store";
 import { useWorkout } from "@/features/workout/use-workout";
@@ -24,6 +26,9 @@ export default function HomeScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const season = seasonYears(new Date())[0];
+  // The athlete's own season total; undefined until loaded (or if it couldn't be loaded).
+  const [myPoints, setMyPoints] = useState<number | undefined>(undefined);
   const { workout } = useWorkout();
   const workoutState = workout ? stateOf(workout.events) : null;
 
@@ -31,10 +36,11 @@ export default function HomeScreen() {
     try {
       setHome(await loadSquadHome(userId));
       setLoadError(null);
+      setMyPoints(await loadMySeasonPoints(season).catch(() => undefined));
     } catch {
       setLoadError("Couldn't load your squad. Pull down to try again.");
     }
-  }, [userId]);
+  }, [userId, season]);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,6 +86,16 @@ export default function HomeScreen() {
         ) : (
           <Button label="Start a workout" onPress={() => router.push("/start-workout")} />
         )}
+
+        <Card>
+          <T variant="label">{season} season</T>
+          {myPoints !== undefined && myPoints > 0 ? (
+            <T>{`You've earned ${formatPoints(myPoints)} points`}</T>
+          ) : myPoints === 0 ? (
+            <T tone="textMuted">No points yet. They appear here once a workout has been scored.</T>
+          ) : null}
+          <Button label="Squad standings" variant="secondary" onPress={() => router.push("/standings")} />
+        </Card>
 
         {loadError && <T tone="danger">{loadError}</T>}
         {home === null && !loadError && <ActivityIndicator accessibilityLabel="Loading" />}

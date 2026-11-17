@@ -631,6 +631,14 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"my_season_points":
+{ Args: { "season": number }; Returns: number
+                           },
+"my_standings_place":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "city": string,"city_id": number,"country": string,"country_code": string
+            }[]
+                           },
 "pause_workout":
 { Args: { "client_at"?: string,"client_event_id": string,"device_id"?: string,"expected_version": number,"session_id": string }; Returns: {
               "active_seconds": number | null,
@@ -748,6 +756,11 @@ isOneToOne: true
                            },
 "set_scoring_active":
 { Args: { "starting": string,"target_version": string }; Returns: undefined
+                           },
+"squad_standings":
+{ Args: { "max_rows"?: number,"scope"?: string,"season": number }; Returns: {
+              "city": string,"country": string,"is_mine": boolean,"is_ranked": boolean,"members": number,"name": string,"points": number,"rank": number,"squad_id": string
+            }[]
                            },
 "start_workout":
 { Args: { "activity": string,"client_session_id": string,"client_started_at"?: string,"device_id"?: string }; Returns: {

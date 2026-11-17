@@ -5,4 +5,5 @@ export * from "./onboarding";
 export * from "./tracking";
 export * from "./evidence";
 export * from "./scoring";
+export * from "./standings";
 export * from "./cities";

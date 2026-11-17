@@ -208,20 +208,20 @@ Rules:
 10 %). That is meaningful separation for high performers without bronze being out of reach. To make challenges
 matter more, raise the tier values; the simulation script is the place to test it.
 
-**Squad standing (approved: average per member, minimum 3):** a squad is ranked by its average points per
-member, so an active squad of four competes evenly with an active squad of six.
+**Squad standing (decided by Caleb on 2026-11-12; replaces the earlier "average per member" rule):**
 
 ```
-Squad score = points members earned while in the squad ÷ member-seasons
-member-seasons = sum of each member's days in the squad ÷ days elapsed in the season
+Squad score = every point its members earned while in the squad (plain total)
 ```
 
-- A squad needs **at least 3 members** to appear in squad and city rankings. Smaller squads see their score
-  marked "unranked: needs 3 members".
-- Seats are counted by time in the squad, so removing a low scorer does **not** erase the days they were there.
-  This blocks kicking teammates to raise the average.
-- Points stay with the squad where they were earned. An athlete who switches squads does not take them along.
-- Example: six members averaging 50,000 and four members averaging 50,000 both score 50,000.
+- **Only squads are ranked**, on three boards: their city, their country, and the world. There is no ranking of
+  individual athletes; each athlete sees their own season total.
+- **Everyone counts.** Every workout by every member adds to the squad. Nothing is averaged, weighted or added
+  for empty seats, so a squad of four has to earn more per person to match a full squad of six.
+- **Ranked from 4 members.** A smaller squad earns points normally and is listed without a rank; when its
+  fourth member joins it is ranked with everything it already earned.
+- **Points stay with the squad where they were earned.** Removing a member does not remove their points, and an
+  athlete who switches squads does not take points along.
 - Squad challenge awards (§5) count toward the squad score the same way as workout points.
 
 ## 6. Rewards
@@ -253,7 +253,8 @@ values. Nothing is advertised until a campaign is funded.
 4. ✅ **Approved:** timer-only workouts earn 0 points until the camera check ships. No self-reported tier.
 5. ✅ **Approved:** 24-hour late-evidence window.
 6. ✅ **Approved:** challenge values in §5 (tiers 40/80/120 etc.) and the 250-per-week challenge cap.
-7. ✅ **Approved:** average per member, minimum 3 members to be ranked, seats weighted by time in squad.
+7. ~~Average per member, minimum 3 members, seats weighted by time in squad~~ **Replaced on 2026-11-12:** plain total,
+   squads ranked from 4 members, squad-only boards for city, country and world, no individual ranking.
 
 ## 9. What the engine implements today (2026-11-11)
 
@@ -293,3 +294,13 @@ days in §3 exactly.
   `merged`) and the breakdown live in `workout_scores`.
 - **Scoring is off until switched on per environment:** `select public.set_scoring_active('v1', now());` (database
   owner or service role only). Workouts that started before that moment are never scored.
+
+### Standings (built 2026-11-12)
+
+`squad_standings(season, scope)` implements the squad rule in §5 for `city`, `country` and `world`, centred on
+the caller's squad's city (or their own city if they have no squad). `my_season_points(season)` gives an athlete
+their own total. Cities come from the fixed list (`public.cities`), so a city or country board is exact.
+
+Not built: the season archive and champions (14-day review after December 31), and paging beyond the top 50
+(a squad always sees its own row). For past seasons, "ranked" uses the squad's size today, not its size when
+that season ended.
