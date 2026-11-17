@@ -6,6 +6,7 @@
     "dev": "pnpm --filter @squad-six/web dev",
     "build": "pnpm --filter @squad-six/web build",
     "start": "pnpm --filter @squad-six/web start",
+    "mobile": "pnpm --filter @squad-six/mobile start",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
