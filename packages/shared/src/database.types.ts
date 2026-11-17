@@ -774,6 +774,11 @@ isOneToOne: true
 "set_scoring_active":
 { Args: { "starting": string,"target_version": string }; Returns: undefined
                            },
+"squad_activity":
+{ Args: { "days"?: number,"max_rows"?: number }; Returns: {
+              "active_minutes": number,"activity": string,"display_name": string,"ended_at": string,"is_me": boolean,"local_date": string,"points": number,"session_id": string,"status": string,"user_id": string
+            }[]
+                           },
 "squad_standings":
 { Args: { "max_rows"?: number,"scope"?: string,"season": number }; Returns: {
               "city": string,"country": string,"is_mine": boolean,"is_ranked": boolean,"members": number,"name": string,"points": number,"rank": number,"squad_id": string

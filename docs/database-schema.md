@@ -93,6 +93,12 @@ join requests, workouts and everything attached to them. Leaves the squad first 
 squad is archived). Ledger rows stay for the squad with `user_id` set to null. Settings also use the existing
 grants (`profiles.display_name`, `profiles.city_id`, `profile_private.weekly_commitment`) and `set_home_timezone()`.
 
+## Squad activity
+
+`squad_activity(days, max_rows)`: the caller's current squad's finished workouts from the last `days` (default 14):
+member name, activity, day, end time, active minutes, scoring outcome and points. Current members only. Never any
+route, distance or health data. Workouts themselves stay owner-only; this function is the only way teammates see them.
+
 ## Rules for every migration
 
 1. Create the table, enable RLS and add policies **in the same migration**.
