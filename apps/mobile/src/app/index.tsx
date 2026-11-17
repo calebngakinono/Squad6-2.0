@@ -99,6 +99,12 @@ export default function HomeScreen() {
         {loadError && <T tone="danger">{loadError}</T>}
         {home === null && !loadError && <ActivityIndicator accessibilityLabel="Loading" />}
 
+        <Button label="My workouts" variant="secondary" onPress={() => router.push("/history")} />
+
+        {home?.kind === "in-squad" && (
+          <Button label="Squad activity" variant="secondary" onPress={() => router.push("/squad-activity")} />
+        )}
+
         {home?.kind === "in-squad" && (
           <SquadPanel
             squad={home.squad}
