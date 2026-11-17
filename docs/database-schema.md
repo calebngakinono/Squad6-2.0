@@ -31,6 +31,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `season_standings` | ✅ (functions) | Not stored: derived from the ledger on request. `squad_standings(season, scope, max_rows)` ranks **squads only** by the plain total of points earned in them, for scope `city`, `country` or `world` (centred on the caller's squad's city, or their own). Ranked from 4 current members; smaller squads are listed with points and no rank. Always includes the caller's squad. `my_season_points(season)` is the athlete's own total; `my_standings_place()` their city and country. No individual ranking exists. Materialize per season if this gets slow | Signed-in users (squad totals, names and cities only; the ledger stays owner-only) |
 | `squad_messages` | 📝 | Basic squad chat | Squad members |
 | `entitlements` | 📝 | Pro status from RevenueCat webhook | Owner reads; server writes |
+| `deployment_environment` | ✅ | One row naming the environment (`local`, `staging`, `production`), set once by an operator. Operator scripts check it, e.g. the staging demo data refuses to run elsewhere | No access for app users |
 | `onboarding_flows` | ✅ | Versioned onboarding config (steps, types, branches, profile-field mapping); one active. v2 (active) = core questions with the city chosen from the list; v1 kept for history. Placeholder copy. Structure validated by `onboardingFlowSchema` (packages/shared), which a unit test runs against the migration | Read: signed in; changed by migrations only |
 
 ## Squad functions (the app's API)

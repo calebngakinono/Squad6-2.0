@@ -37,6 +37,20 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"deployment_environment": {
+                  Row: {
+                    "name": string,"set_at": string,"singleton": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "name": string,"set_at"?: string,"singleton"?: boolean
+                  }
+                  Update: {
+                    "name"?: string,"set_at"?: string,"singleton"?: boolean
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"onboarding_flows": {
                   Row: {
                     "active": boolean,"created_at": string,"definition": NonNullable<Json>,"version": number
