@@ -1,3 +1,5 @@
+-- destructive-ok: defines delete_my_account(), which deletes only the CALLER's own auth user when they
+-- choose Delete account in the app (required by Apple). Running this migration deletes nothing.
 -- Account deletion from inside the app (required by Apple, and docs/data-integrity.md §6).
 --
 -- delete_my_account() removes the athlete's sign-in and everything personal: profile, private
