@@ -14,6 +14,14 @@ overrides:
 
 # The HealthKit library's Expo config plugin imports @expo/config-plugins without declaring it, which
 # pnpm's strict layout hides (expo config / EAS build then fail). Remove once upstream declares it.
+# Advisories we accept until a fix is published. Each needs a reason and is re-checked when a fix ships.
+auditConfig:
+  ignoreGhsas:
+    # picomatch ReDoS (2026-11-17). No patched release exists yet (latest is 4.0.7). picomatch is only
+    # used by build and test tooling to match fixed file patterns; it never runs on user input and is not
+    # shipped in the app or the website. Remove this line and add an override once 4.0.8 is published.
+    - GHSA-fc5q-39xc-vjpf
+
 packageExtensions:
   "@kingstinct/react-native-healthkit":
     dependencies:

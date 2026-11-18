@@ -31,6 +31,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `season_standings` | ✅ (functions) | Not stored: derived from the ledger on request. `squad_standings(season, scope, max_rows)` ranks **squads only** by the plain total of points earned in them, for scope `city`, `country` or `world` (centred on the caller's squad's city, or their own). Ranked from 4 current members; smaller squads are listed with points and no rank. Always includes the caller's squad. `my_season_points(season)` is the athlete's own total; `my_standings_place()` their city and country. No individual ranking exists. Materialize per season if this gets slow | Signed-in users (squad totals, names and cities only; the ledger stays owner-only) |
 | `squad_messages` | 📝 | Basic squad chat | Squad members |
 | `entitlements` | 📝 | Pro status from RevenueCat webhook | Owner reads; server writes |
+| `deployment_environment` | ✅ | One row naming the environment (`local`, `staging`, `production`), set once by an operator. Operator scripts check it, e.g. the staging demo data refuses to run elsewhere | No access for app users |
 | `onboarding_flows` | ✅ | Versioned onboarding config (steps, types, branches, profile-field mapping); one active. v2 (active) = core questions with the city chosen from the list; v1 kept for history. Placeholder copy. Structure validated by `onboardingFlowSchema` (packages/shared), which a unit test runs against the migration | Read: signed in; changed by migrations only |
 
 ## Squad functions (the app's API)
@@ -84,6 +85,19 @@ by deferred triggers when a workout is finished and when its metrics or evidence
 decides which evidence categories pass; `scoring_performance()` computes effort and intensity from the rule
 config. `set_scoring_active(version, from)` switches a rule version on. Details and known gaps:
 [`scoring-proposal.md` §9](scoring-proposal.md).
+
+## Account functions
+
+`delete_my_account()`: deletes the caller's auth user and, by cascade, profile, private settings, squad memberships,
+join requests, workouts and everything attached to them. Leaves the squad first (captaincy passes on, an empty
+squad is archived). Ledger rows stay for the squad with `user_id` set to null. Settings also use the existing
+grants (`profiles.display_name`, `profiles.city_id`, `profile_private.weekly_commitment`) and `set_home_timezone()`.
+
+## Squad activity
+
+`squad_activity(days, max_rows)`: the caller's current squad's finished workouts from the last `days` (default 14):
+member name, activity, day, end time, active minutes, scoring outcome and points. Current members only. Never any
+route, distance or health data. Workouts themselves stay owner-only; this function is the only way teammates see them.
 
 ## Rules for every migration
 

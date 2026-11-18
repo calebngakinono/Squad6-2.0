@@ -37,6 +37,20 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"deployment_environment": {
+                  Row: {
+                    "name": string,"set_at": string,"singleton": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "name": string,"set_at"?: string,"singleton"?: boolean
+                  }
+                  Update: {
+                    "name"?: string,"set_at"?: string,"singleton"?: boolean
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"onboarding_flows": {
                   Row: {
                     "active": boolean,"created_at": string,"definition": NonNullable<Json>,"version": number
@@ -538,6 +552,9 @@ isOneToOne: true
 "decide_join_request":
 { Args: { "approve": boolean,"request_id": string }; Returns: undefined
                            },
+"delete_my_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "delete_strength_set":
 { Args: { "session_id": string,"set_id": string }; Returns: undefined
                            },
@@ -756,6 +773,11 @@ isOneToOne: true
                            },
 "set_scoring_active":
 { Args: { "starting": string,"target_version": string }; Returns: undefined
+                           },
+"squad_activity":
+{ Args: { "days"?: number,"max_rows"?: number }; Returns: {
+              "active_minutes": number,"activity": string,"display_name": string,"ended_at": string,"is_me": boolean,"local_date": string,"points": number,"session_id": string,"status": string,"user_id": string
+            }[]
                            },
 "squad_standings":
 { Args: { "max_rows"?: number,"scope"?: string,"season": number }; Returns: {

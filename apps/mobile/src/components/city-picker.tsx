@@ -4,7 +4,7 @@ import { TextField } from "@/components/text-field";
 import { loadCity, searchCities } from "@/features/cities/api";
 import { cityDetail, cityLabel, type City } from "@squad-six/shared";
 import { useEffect, useRef, useState } from "react";
-import { minTouch, radius, space } from "@/theme/tokens";
+import { borderWidth, minTouch, radius, size, space } from "@/theme/tokens";
 import { usePalette } from "@/theme/use-palette";
 
 type Props = {
@@ -70,7 +70,7 @@ export function CityPicker({ label, value, onChange }: Props) {
     return (
       <View style={styles.stack}>
         <T variant="label">{label}</T>
-        <View style={[styles.chosen, { borderColor: c.accent, backgroundColor: c.surface }]}>
+        <View style={[styles.chosen, { borderColor: c.accent, backgroundColor: c.accentSoft }]}>
           <View style={styles.rowText}>
             <T>{cityLabel(chosen)}</T>
             <T variant="small" tone="textMuted">
@@ -129,7 +129,7 @@ export function CityPicker({ label, value, onChange }: Props) {
             setResults(null);
             onChange(city.id);
           }}
-          style={({ pressed }) => [styles.result, { borderColor: c.border, opacity: pressed ? 0.8 : 1 }]}
+          style={({ pressed }) => [styles.result, { borderColor: c.border, backgroundColor: pressed ? c.surfacePressed : c.surface }]}
         >
           <T>{city.name}</T>
           <T variant="small" tone="textMuted">
@@ -147,13 +147,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: space.md,
-    minHeight: minTouch + 4,
-    borderWidth: 2,
+    minHeight: size.control,
+    borderWidth: borderWidth.thick,
     borderRadius: radius.md,
+    borderCurve: "continuous",
     paddingLeft: space.md,
     paddingVertical: space.sm,
   },
-  rowText: { flex: 1, gap: 2 },
+  rowText: { flex: 1, gap: space.xxs },
   change: { minHeight: minTouch, minWidth: minTouch, justifyContent: "center", paddingHorizontal: space.md },
-  result: { minHeight: minTouch + 4, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.sm, justifyContent: "center" },
+  result: { minHeight: size.control, borderWidth: borderWidth.thin, borderRadius: radius.md, borderCurve: "continuous", paddingHorizontal: space.md, paddingVertical: space.sm, justifyContent: "center" },
 });
