@@ -18,6 +18,8 @@ implementation.
 - **Scoring changes come with scenario tests** and a new rule version.
 - E2E runs against the **production build** (`pnpm build && pnpm test:e2e`), like CI.
 - Test data uses clearly fake fixtures on a local database. Tests never touch staging or production.
+- Staging may hold **demo data** (`supabase/demo/staging-demo.sql`): labelled demo squads and athletes whose workouts
+  are scored by the real engine, for trying the app by hand. Automated tests never rely on it.
 - A bug fix starts with a failing test that reproduces it.
 
 ## In CI (`.github/workflows/ci.yml`)

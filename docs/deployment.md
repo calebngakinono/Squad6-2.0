@@ -98,3 +98,29 @@ About or Settings screen, and the marketing site footer) **before release**. To 
 `scripts/build-cities-seed.py` on a new download and ship the difference as a new migration (never edit the
 merged one). Profiles and squads created before the list existed keep their old typed city as a label but have
 no `city_id`, so they do not appear in city or country standings until a city is chosen.
+
+## Testing on staging
+
+Staging is the online copy of the whole system, with its own database, used with test accounts before
+production. To use it after a promotion:
+
+1. **Promote**: merge the `dev → qa` PR, then the `qa → staging` PR. The deploy applies every new migration to the
+   staging database (dry run first, then apply; it never resets) and deploys the web app.
+2. **Dashboard settings** (once): follow [Supabase dashboard setup](mobile-setup.md#supabase-dashboard-setup-staging-and-production)
+   for the staging project (passwords, email confirmation, redirect URLs, Apple and Google sign-in).
+3. **Mark the database as staging** (once), in the staging SQL editor:
+   ```sql
+   insert into public.deployment_environment (name) values ('staging');
+   ```
+   Never run this on production. On production, run `insert ... values ('production')` instead.
+4. **Load the demo data** (optional, repeatable): paste `supabase/demo/staging-demo.sql` into the staging SQL editor
+   and run it. It refuses to run unless step 3 was done. It switches scoring on for staging and adds 7 demo squads
+   with 34 demo athletes and about 330 scored workouts (details at the top of the file). Everything is labelled
+   "Demo", the accounts cannot sign in, and the points come from the real scoring engine. Removing the demo data
+   later is a delete on a shared database, so it is a separate, deliberate step: ask first.
+5. **Point the app at staging**: in `apps/mobile/.env.local`, set `EXPO_PUBLIC_SUPABASE_URL` and
+   `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the staging project's values (publishable key only, never the secret
+   key), restart Metro, sign up, choose a city, and start a squad or a workout.
+
+The same demo script works on a local database after
+`insert into public.deployment_environment (name) values ('local');`.

@@ -23,7 +23,7 @@ squad's standing on the season leaderboard. Teammates see the activity. Nothing 
 | 6 | **Auth and profiles**: email, Sign in with Apple, Google; public/private profile split; account deletion | ✅ |
 | 7 | **Onboarding**: configurable, resumable, branching flow; placeholder screens until the storyboard designs arrive; demo content labeled | ✅ engine + core questions |
 | 8 | Squad chat (basic) | stretch; activity feed is the fallback |
-| 9 | Marketing site (one page) | ✅ small |
+| 9 | Marketing site (one page) plus privacy policy, terms and support pages (App Store needs the privacy and support URLs) | ✅ built 2026-11-17 (`apps/web`) |
 | 10 | Pro: entitlements table, server checks, RevenueCat sandbox | stretch; no live purchases |
 | Later | Progress Intelligence, Squad Leadership, Athlete Legacy, achievements beyond streaks, BLE heart-rate, watchOS app, cloud wearable APIs, camera verification, season prizes and monthly drawings (need funding and legal review), organization accounts, sponsored challenges | ❌ documented, not built |
 
