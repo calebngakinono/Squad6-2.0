@@ -106,9 +106,8 @@ production. To use it after a promotion:
 
 1. **Promote**: merge the `dev → qa` PR, then the `qa → staging` PR. The deploy applies every new migration to the
    staging database (dry run first, then apply; it never resets) and deploys the web app.
-2. **Auth settings** in the staging Supabase dashboard (once): Authentication → Policies, minimum password length 8;
-   URL Configuration, add `squadsix://` as a redirect URL. These match local `supabase/config.toml`. If email
-   confirmation is on, new test accounts must confirm by email before signing in.
+2. **Dashboard settings** (once): follow [Supabase dashboard setup](mobile-setup.md#supabase-dashboard-setup-staging-and-production)
+   for the staging project (passwords, email confirmation, redirect URLs, Apple and Google sign-in).
 3. **Mark the database as staging** (once), in the staging SQL editor:
    ```sql
    insert into public.deployment_environment (name) values ('staging');
