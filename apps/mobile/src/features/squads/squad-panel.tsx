@@ -7,7 +7,7 @@ import { ListGroup } from "@/components/list-group";
 import { ListRow } from "@/components/list-row";
 import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
-import { space } from "@/theme/tokens";
+import { layout, space } from "@/theme/tokens";
 import type { Member, MySquad } from "./api";
 import { inviteLink } from "./errors";
 
@@ -182,7 +182,7 @@ export function SquadPanel({ squad, myUserId, busy, act, actions }: Props) {
 
 const styles = StyleSheet.create({
   stack: { gap: space.xl },
-  section: { gap: space.sm + space.xs },
+  section: { gap: layout.headingGap },
   request: { gap: space.sm },
   badges: { flexDirection: "row", gap: space.xs },
   code: { gap: space.xxs },

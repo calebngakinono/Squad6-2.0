@@ -1,10 +1,13 @@
 import type { SquadActivityRow } from "@squad-six/shared";
-import { Stack, useFocusEffect } from "expo-router";
+import { router, Stack, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, RefreshControl, View } from "react-native";
+import { RefreshControl, StyleSheet, View } from "react-native";
 import { Badge } from "@/components/badge";
 import { EmptyState } from "@/components/empty-state";
+import { ListGroup } from "@/components/list-group";
 import { ListRow } from "@/components/list-row";
+import { Loading } from "@/components/loading";
+import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
@@ -12,6 +15,7 @@ import { loadSquadActivity } from "@/features/history/api";
 import { activityLabel, dayLabel, memberWeek, outcomeLabel } from "@/features/history/view";
 import { loadSquadHome, type SquadHome } from "@/features/squads/api";
 import { useSession } from "@/lib/session";
+import { layout } from "@/theme/tokens";
 
 // Who in my squad trained this week, and what everyone did recently. Summaries only: no routes,
 // distances or health data are ever shown to teammates.
@@ -30,7 +34,7 @@ export default function SquadActivityScreen() {
       setRows(r);
       setError(null);
     } catch {
-      setError("Couldn't load your squad's activity. Pull down to try again.");
+      setError("Couldn't load your squad's activity. Check your connection, then try again.");
     }
   }, [userId]);
 
@@ -60,43 +64,58 @@ export default function SquadActivityScreen() {
       }
     >
       <Stack.Screen options={{ headerShown: true, title: squad?.name ?? "Squad activity" }} />
-      {error && <T tone="danger">{error}</T>}
-      {(home === null || rows === null) && !error && <ActivityIndicator accessibilityLabel="Loading activity" />}
-      {home?.kind === "no-squad" && <EmptyState title="Not in a squad yet" message="Join or start a squad to see what your teammates are doing." />}
+      {error && <Notice message={error} action={{ label: "Try again", onPress: () => void load() }} />}
+      {(home === null || rows === null) && !error && <Loading label="Loading activity" />}
+      {home?.kind === "no-squad" && (
+        <EmptyState
+          title="Not in a squad yet"
+          message="Join or start a squad to see what your teammates are doing."
+          action={{ label: "Back to home", onPress: () => router.back() }}
+        />
+      )}
 
       {week && (
-        <View>
+        <View style={styles.section}>
           <SectionHeader title="Last 7 days" subtitle={`${trained} of ${week.length} trained`} />
-          {week.map((m, i) => (
-            <ListRow
-              key={m.userId}
-              title={m.isMe ? `${m.name} (you)` : m.name}
-              subtitle={m.workouts === 0 ? "No workout yet this week" : `${m.workouts} workout${m.workouts === 1 ? "" : "s"}`}
-              trailing={m.workouts === 0 ? <Badge label="Not yet" tone="warning" /> : <Badge label={`${m.points.toLocaleString("en-US")} pts`} tone="accent" />}
-              highlighted={m.isMe}
-              divider={i < week.length - 1}
-            />
-          ))}
+          <ListGroup>
+            {week.map((m) => (
+              <ListRow
+                key={m.userId}
+                title={m.isMe ? `${m.name} (you)` : m.name}
+                subtitle={m.workouts === 0 ? "No workout yet this week" : `${m.workouts} workout${m.workouts === 1 ? "" : "s"}`}
+                trailing={
+                  m.workouts === 0 ? <Badge label="Not yet" tone="warning" /> : <Badge label={`${m.points.toLocaleString("en-US")} pts`} tone="accent" />
+                }
+                highlighted={m.isMe}
+              />
+            ))}
+          </ListGroup>
         </View>
       )}
 
       {squad && rows && (
-        <View>
-          <SectionHeader title="Recent workouts" />
-          {rows.length === 0 && (
+        <View style={styles.section}>
+          <SectionHeader title="Recent workouts" subtitle="The last two weeks" />
+          {rows.length === 0 ? (
             <T tone="textMuted">No workouts in the last two weeks. Be the first to get one in.</T>
+          ) : (
+            <ListGroup>
+              {rows.map((r) => (
+                <ListRow
+                  key={r.session_id}
+                  title={`${r.is_me ? "You" : (r.display_name ?? "Athlete")} · ${activityLabel(r.activity)}`}
+                  subtitle={`${dayLabel(r.local_date, now)} · ${r.active_minutes} min`}
+                  value={outcomeLabel(r.status, r.points)}
+                />
+              ))}
+            </ListGroup>
           )}
-          {rows.map((r, i) => (
-            <ListRow
-              key={r.session_id}
-              title={`${r.is_me ? "You" : (r.display_name ?? "Athlete")} · ${activityLabel(r.activity)}`}
-              subtitle={`${dayLabel(r.local_date, now)} · ${r.active_minutes} min`}
-              value={outcomeLabel(r.status, r.points)}
-              divider={i < rows.length - 1}
-            />
-          ))}
         </View>
       )}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  section: { gap: layout.headingGap },
+});

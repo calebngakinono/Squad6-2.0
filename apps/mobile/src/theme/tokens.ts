@@ -149,6 +149,8 @@ export const layout = {
   cardPadding: 20,
   /** Gap between items inside a card or group. */
   stackGap: space.md,
+  /** Gap between a SectionHeader and the list or card it introduces. */
+  headingGap: space.sm + space.xs,
 } as const;
 
 export const radius = { sm: 8, md: 12, lg: 16, xl: 24, pill: 999 } as const;

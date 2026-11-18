@@ -13,7 +13,7 @@ import { SectionHeader } from "@/components/section-header";
 import { Segmented } from "@/components/segmented";
 import { loadMyStandingsPlace, loadSquadStandings } from "@/features/standings/api";
 import { formatPoints, seasonYears, squadSubtitle } from "@/features/standings/view";
-import { space } from "@/theme/tokens";
+import { layout } from "@/theme/tokens";
 
 // `key` says which selection the rows belong to, so a stale list is never shown under new filters.
 type Loaded = { key: string; rows: SquadStanding[] };
@@ -157,6 +157,6 @@ function StandingRow({ rank, squad }: { rank: string; squad: SquadStanding }) {
 }
 
 const styles = StyleSheet.create({
-  controls: { gap: space.sm + space.xs },
-  section: { gap: space.sm + space.xs },
+  controls: { gap: layout.headingGap },
+  section: { gap: layout.headingGap },
 });
