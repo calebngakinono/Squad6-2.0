@@ -54,6 +54,8 @@ function RootNavigator({ fontsSettled }: { fontsSettled: boolean }) {
           fontWeight: t.text("button").fontWeight,
         },
         headerShadowVisible: false,
+        // Back arrow only: the previous screen's title next to it crowds the centered title.
+        headerBackButtonDisplayMode: "minimal",
         contentStyle: { backgroundColor: t.color.background },
       }}
     >
