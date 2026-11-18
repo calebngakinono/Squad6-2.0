@@ -29,7 +29,7 @@ before renaming anything outside the repo.
 | Part | Tech |
 |---|---|
 | Mobile app (`apps/mobile`) | Expo SDK 58 (React Native, TypeScript, Expo Router), development builds via EAS. Expo Go is not supported (HealthKit, Health Connect, background GPS need native code). |
-| Web (`apps/web`) | Next.js 16 App Router (React 19, Cache Components on), Tailwind v4, shadcn/ui. Public marketing site plus server-only endpoints (webhooks, account deletion). |
+| Web (`apps/web`) | Next.js 16 App Router (React 19, Cache Components on), Tailwind v4, shadcn/ui. Public marketing site plus server-only endpoints (webhooks). Account deletion is the `delete_my_account()` database function. |
 | Data and auth | Supabase (Auth, Postgres, RLS). Business rules live in Postgres functions. |
 | Subscriptions | RevenueCat (not live until store products and sandbox testing are set up). |
 | Validation, tests, tooling | Zod 4, Vitest, Playwright, pgTAP, pnpm, GitHub Actions, Railway. |

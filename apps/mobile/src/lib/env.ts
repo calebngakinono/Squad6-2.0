@@ -11,3 +11,9 @@ export function getSupabaseConfig(): SupabasePublicConfig {
     { url: "EXPO_PUBLIC_SUPABASE_URL", publishableKey: "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" },
   );
 }
+
+/** The public website (privacy policy, terms, support). Optional: links are hidden until it is set. */
+export function getWebsiteUrl(): string | null {
+  const url = process.env.EXPO_PUBLIC_WEBSITE_URL?.trim().replace(/\/+$/, "");
+  return url && /^https?:\/\//.test(url) ? url : null;
+}

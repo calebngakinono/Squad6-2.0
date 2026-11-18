@@ -38,6 +38,29 @@ Email and password sign-up and sign-in, staying signed in across restarts (sessi
 Android Keystore), and sign-out. Sign in with Apple and Google come later in phase 1 once the developer
 accounts are set up.
 
+## Sign in with Apple and Google
+
+Built natively: the phone gets a signed token from Apple or Google and Supabase checks it
+(`apps/mobile/src/features/auth/social.ts`). Both need a **new development build** the first time (native code).
+
+One-time setup:
+1. **Apple Developer portal** → Identifiers → `com.squadsix.app` → enable **Sign in with Apple**. (EAS may do this
+   itself during the next build when it asks you to log in to Apple.)
+2. **Google Cloud** → the iOS OAuth client for `com.squadsix.app` (ID in `apps/mobile/src/features/auth/config.ts`;
+   its reversed form is the URL scheme in `app.json`). In Google Auth Platform → Data Access, make sure `openid`,
+   email and profile are listed. Android will also need a **Web** client ID later.
+3. **Each Supabase project** (staging, production) → Authentication → Sign In / Providers:
+   - **Apple**: enable; Client IDs `com.squadsix.app`; leave the secret empty (only web sign-in needs it).
+   - **Google**: enable; Client IDs = the iOS client ID; turn on **Skip nonce checks** (Google's iOS library adds
+     a nonce the app cannot see).
+   Local development already has both in `supabase/config.toml`.
+4. Rebuild: `npx eas-cli@latest build --profile development --platform ios` from `apps/mobile`, install, and
+   restart `pnpm mobile`.
+
+**Before App Store submission:** Apple requires apps that offer Sign in with Apple to revoke the user's Apple
+token when they delete their account. That call needs Apple's private key on a server, so it is not built yet
+(planned as a server endpoint on the website).
+
 ## Device check
 
 Development builds have a **Device check** screen for the phase-1 spike. See [device-spike.md](device-spike.md).
