@@ -20,7 +20,7 @@ iPhone / Android (Expo app)                    Browser
         │ supabase-js: auth, RLS reads, RPC calls          │
         ▼                                                  ▼
  Supabase (Auth, Postgres + RLS, RPC functions)  ◄── Next.js on Railway
-        ▲                                          (webhooks, account deletion)
+        ▲                                          (webhooks)
         └──────── RevenueCat webhook ──────────────────────┘
 ```
 
@@ -37,7 +37,7 @@ A pnpm workspace:
 
 ```
 apps/mobile/       Expo app (screens, device integrations, offline queue)
-apps/web/          Next.js: marketing site, /api/health, webhooks, account deletion
+apps/web/          Next.js: marketing site, privacy/terms/support pages, /api/health, webhooks
 packages/shared/   Zod schemas, generated DB types, scoring-rule types, design tokens
 supabase/          migrations, pgTAP tests (unchanged location: the deploy pipeline depends on it)
 ```
@@ -167,5 +167,6 @@ not on the phone. Live purchases stay off until App Store / Play products and sa
 - Exact location (GPS tracks, coordinates) is owner-only, always. Teammates and leaderboards see city at most.
 - Profiles split into a public part (display name, avatar, city) and a private part (measurements, timezone,
   goals) with separate RLS.
-- Users can delete their account; a server endpoint removes their data and auth user.
+- Users can delete their account in Settings. `delete_my_account()` (a database function, one transaction) hands
+  over captaincy, removes the auth user and everything personal, and keeps squad ledger rows anonymized.
 - Collect only what the feature in use needs. Health data is read only when the user grants permission.

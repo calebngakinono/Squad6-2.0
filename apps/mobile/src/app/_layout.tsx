@@ -64,6 +64,10 @@ function RootNavigator({ fontsSettled }: { fontsSettled: boolean }) {
         <Stack.Screen name="start-workout" />
         <Stack.Screen name="workout" />
         <Stack.Screen name="standings" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="history" />
+        <Stack.Screen name="past-workout/[id]" />
+        <Stack.Screen name="squad-activity" />
         <Stack.Protected guard={__DEV__}>
           <Stack.Screen name="device-check" />
         </Stack.Protected>
