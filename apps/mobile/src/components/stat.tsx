@@ -52,6 +52,15 @@ export function Stat({ value, label, unit, source, size = "regular", align = "le
   );
 }
 
+/**
+ * Splits an already formatted "5.24 km" or "5:12 /km" into the number and its unit, so the unit can
+ * be set smaller. Text only: nothing is recalculated.
+ */
+export function splitUnit(formatted: string): { value: string; unit?: string } {
+  const at = formatted.lastIndexOf(" ");
+  return at === -1 ? { value: formatted } : { value: formatted.slice(0, at), unit: formatted.slice(at + 1) };
+}
+
 const styles = StyleSheet.create({
   wrap: { gap: space.xxs },
   center: { alignItems: "center" },
