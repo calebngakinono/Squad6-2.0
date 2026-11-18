@@ -304,3 +304,47 @@ their own total. Cities come from the fixed list (`public.cities`), so a city or
 Not built: the season archive and champions (14-day review after December 31), and paging beyond the top 50
 (a squad always sees its own row). For past seasons, "ranked" uses the squad's size today, not its size when
 that season ended.
+
+## 10. Challenges: what is built (2026-11-18)
+
+Built in `supabase/migrations/20261118010000_challenges.sql`; tests in `supabase/tests/challenges.test.sql`;
+app screen `apps/mobile/src/app/challenges.tsx`. Values are exactly the approved ones in §5 and §8.
+
+| Challenge | Rule | Award |
+|---|---|---|
+| **Weekly tiers** (`weekly-tiers-v1`) | Bronze 3 accepted workouts · Silver 5 · Gold 25 km of validated run/walk distance | 40 / 80 / 120, highest tier only (a higher tier tops up to its value) |
+| **Squad week** (`squad-week-v1`) | ⅔ (rounded up) of the members who were in the squad when the week started each do 3 accepted workouts in the squad | 60 to each member who did |
+
+**How it works (plain terms):**
+
+- **No scheduler.** Each challenge is a versioned template that repeats every week. "This week" is the athlete's
+  Monday-to-Sunday in their home time zone, the same time zone that already decides a workout's scoring day.
+- **Explicit Join button** (chosen over auto-join). Auto-joining at the first accepted workout would make that
+  workout count retroactively, which §5 forbids, and it hides the 25 % window from the athlete. With a button the
+  rule is simple to state and to test: join before the week starts ("next week") or by Tuesday 18:00 local time,
+  and only workouts *started* after joining count. Joining is idempotent; at most 3 challenges per week.
+- **Evaluated in Postgres, in the scoring path.** `score_day()` now scores the day's workouts (the existing
+  function, renamed `score_workouts_of_day()`) and then re-evaluates that athlete's challenges for the week, plus
+  every squadmate in the same squad challenge. So it runs on finish, on late Apple Health evidence, and when an
+  operator accepts or rejects a workout with `review_workout()`.
+- **Only accepted workouts count.** Distance counts only from passing GPS (location category) or an auto-recorded
+  health-app workout (platform record); hand-entered distance never counts.
+- **Ledger.** Each tier reached is a `challenge_awards` row (unique per participant and tier) and the ledger rows
+  that pay it use it as their source, so a tier can never be paid twice and every row names the challenge, tier
+  and rule version. If a counted workout is later rejected, an adjustment row takes the points back (never an edit).
+  Rows carry the athlete's squad at join, so squad standings include challenge points like workout points.
+- **Weekly cap of 250** challenge points per athlete, applied on the server in a fixed order. With only these two
+  challenges an athlete can earn at most 180, so the cap matters once more challenge types exist.
+- **Scoring off = nothing awarded.** With no active rule version, challenges record no tier and pay nothing.
+
+**Decisions made while building (easy to change):**
+
+- The squad roster is locked when the week starts: someone who joins mid-week isn't counted and can't take part
+  until next week; someone who leaves still counts toward the roster, so removing members can't lower the bar.
+- Changing squads mid-week forfeits the rest of that week's squad challenge (workouts after the switch belong to
+  the new squad); what was already completed stays.
+- A squad challenge needs a roster of at least 2 (`min_roster` in the config); a one-person squad can't earn it.
+- Gold counts run and walk only (not hike), as written in §5.
+
+**Deferred:** activity-specific challenges, squad collective km, seasonal/monthly events, ranked city events, Pro
+custom challenges, leaving a challenge, a past-weeks challenge history screen, notifications.

@@ -19,7 +19,7 @@ squad's standing on the season leaderboard. Teammates see the activity. Nothing 
 | 3 | **HealthKit evidence** (post-workout matching, provider-independent design) | ✅ high priority |
 | 3 | **Health Connect evidence** | ✅ once the Android device arrives; otherwise first item after Dec 9 |
 | 4 | **Squads**: create, invite link, join request + approval, max six, roles, member activity | ✅ |
-| 5 | **Challenges (official)**: individual tiered and squad participation challenges, evidence requirements, awards in the ledger, history | ✅ core types; ranked city events and seasonal events are stretch |
+| 5 | **Challenges (official)**: individual tiered and squad participation challenges, evidence requirements, awards in the ledger, history | ✅ core types built 2026-11-18 (weekly tiers + squad week, explicit Join, 250/week cap; [scoring-proposal §10](scoring-proposal.md)). Deferred: activity-specific, squad collective km, seasonal/monthly events, ranked city events, Pro custom challenges, a past-weeks history screen |
 | 6 | **Auth and profiles**: email, Sign in with Apple, Google; public/private profile split; account deletion | ✅ |
 | 7 | **Onboarding**: configurable, resumable, branching flow; placeholder screens until the storyboard designs arrive; demo content labeled | ✅ engine + core questions |
 | 8 | Squad chat (basic) | stretch; activity feed is the fallback |
