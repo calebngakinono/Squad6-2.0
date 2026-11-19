@@ -10,7 +10,7 @@ type Props = {
   /** Unit after the number, smaller ("km", "/km", "pts"). */
   unit?: string;
   /**
-   * Where the number came from ("Phone GPS", "Apple Health", "Calculated by Squad Six"). Required by
+   * Where the number came from ("Phone GPS", "Synced from Apple Health", "Squad Six scoring"). Required by
    * the data-integrity rules for any fitness metric; optional only for non-fitness numbers like rank.
    */
   source?: string;

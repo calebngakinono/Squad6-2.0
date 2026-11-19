@@ -140,6 +140,16 @@ one workout, used by the live summary and past workouts) and `SquadPanel` (`feat
 - **Loading / errors / empty:** `Loading` while waiting; `Notice` (with a "Try again" action when a load
   failed) next to what failed, naming the problem and the fix; `EmptyState` when there is nothing yet.
 
+## Words
+
+- **Counted workout**: a workout Squad Six scored and accepted (not discarded, expired, rejected or waiting for
+  review). Never "accepted workout" in the UI.
+- **Where a number came from** (`Stat` `source`): "Phone GPS", "Phone step counter", "Squad Six timer",
+  "Synced from Apple Health", "Phone GPS or Apple Health", and "Squad Six scoring" for points and counted
+  workouts. No "calculated / scored / awarded by" variants.
+- **Not scored yet**: say when points appear ("Points show here once it's scored"), never that scoring is
+  switched off, launching, or done "by the server".
+
 ## Not done yet
 
 - No icon library. Rows draw their chevron, and `Choice` its check mark, with borders. If icons are needed, add `expo-symbols`

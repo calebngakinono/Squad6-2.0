@@ -14,9 +14,9 @@ describe("join request summary", () => {
 
   it("shows the server's season figures", () => {
     expect(requestSeason({ season: 2026, seasonWorkouts: 12, seasonPoints: 2040 })).toBe(
-      "2026 season: 12 accepted workouts · 2,040 points",
+      "2026 season: 12 counted workouts · 2,040 points",
     );
-    expect(requestSeason({ season: 2026, seasonWorkouts: 1, seasonPoints: 1 })).toBe("2026 season: 1 accepted workout · 1 point");
-    expect(requestSeason({ season: 2026, seasonWorkouts: 0, seasonPoints: 0 })).toBe("2026 season: 0 accepted workouts · 0 points");
+    expect(requestSeason({ season: 2026, seasonWorkouts: 1, seasonPoints: 1 })).toBe("2026 season: 1 counted workout · 1 point");
+    expect(requestSeason({ season: 2026, seasonWorkouts: 0, seasonPoints: 0 })).toBe("2026 season: 0 counted workouts · 0 points");
   });
 });

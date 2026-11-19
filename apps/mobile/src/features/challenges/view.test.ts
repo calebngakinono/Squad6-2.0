@@ -14,7 +14,7 @@ const goals: DistanceGoal[] = [
 
 describe("tiers", () => {
   it("describes each tier's goal", () => {
-    expect(tierGoal(tiers[0], goals)).toBe("3 accepted workouts");
+    expect(tierGoal(tiers[0], goals)).toBe("3 counted workouts");
     expect(tierGoal(tiers[2], goals)).toBe("Run 25 km, or walk and hike 40 km");
     expect(goals.map(goalLabel)).toEqual(["Running", "Walking and hiking"]);
     expect(tierLabel("gold")).toBe("Gold");

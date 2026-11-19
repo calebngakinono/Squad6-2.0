@@ -72,7 +72,7 @@ export default function WorkoutScreen() {
   const rate = distance == null ? null : workout.activity === "cycle" ? formatSpeed(distance, seconds, miles) : formatPace(distance, seconds, miles);
   const stats = [
     distance != null && { label: "Distance", text: formatDistance(distance, miles), source: "Phone GPS" },
-    rate != null && { label: workout.activity === "cycle" ? "Average speed" : "Average pace", text: rate, source: "From phone GPS" },
+    rate != null && { label: workout.activity === "cycle" ? "Average speed" : "Average pace", text: rate, source: "Phone GPS" },
     steps != null && { label: "Steps", text: steps.toLocaleString(), source: "Phone step counter" },
   ].filter((x) => x !== false);
   const sources = [distance != null && "phone GPS", steps != null && "phone step counter"].filter((x) => x !== false).join(" and ");
@@ -105,7 +105,7 @@ export default function WorkoutScreen() {
         })}
       </Grid>
       <T variant="caption" tone="textMuted">
-        {confirmed ? `Measured by your ${sources}, calculated by Squad Six.` : `Live from your ${sources}.`}
+        {confirmed ? `Measured by your ${sources}.` : `Live from your ${sources}.`}
       </T>
     </Card>
   );
@@ -185,16 +185,16 @@ export default function WorkoutScreen() {
       )}
 
       {finished && score && synced && (
-        <ScoreCard score={score} footnote="Calculated by Squad Six from what was measured. It can still change for 24 hours if more evidence arrives." />
+        <ScoreCard score={score} footnote="Squad Six scoring, from what was measured. It can still change for 24 hours if Apple Health adds a matching workout." />
       )}
 
       {finished && !(score && synced) && (
         <Card>
-          <T variant="headline">Workout submitted</T>
+          <T variant="headline">{synced ? "Workout saved" : "Saved on this phone"}</T>
           <T tone="textMuted">
             {synced
-              ? "Points are calculated by the server once scoring launches. Nothing is estimated on your phone."
-              : "It will be submitted as soon as you're back online."}
+              ? "Your points show here once it's scored. You can leave this screen."
+              : "It uploads as soon as you're back online."}
           </T>
         </Card>
       )}
