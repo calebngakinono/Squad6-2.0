@@ -152,6 +152,7 @@ export default function HomeScreen() {
       <ListGroup>
         <ListRow title="Squad standings" subtitle="Squads in your city, country and the world" onPress={() => router.push("/standings")} />
         {squad && <ListRow title="Squad activity" subtitle="Who has trained this week" onPress={() => router.push("/squad-activity")} />}
+        <ListRow title="Challenges" subtitle="Weekly bonus points for your regular workouts" onPress={() => router.push("/challenges")} />
         <ListRow title="My workouts" subtitle="Past workouts and their points" onPress={() => router.push("/history")} />
         {__DEV__ && <ListRow title="Device check" subtitle="Development builds only" onPress={() => router.push("/device-check")} />}
       </ListGroup>

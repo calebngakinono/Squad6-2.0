@@ -47,7 +47,7 @@ The pipeline was built for Wrench AI and kept for Squad Six. These names live in
 |---|---|---|
 | Railway project `WrenchAi` | Railway dashboard | Yes. Display name only; tokens keep working. |
 | Supabase projects `wrench-staging`, `wrench-prod` | Supabase dashboard | Yes. Display names only; the project refs in `SUPABASE_PROJECT_REF` never change. |
-| `wrenchaistaging.up.railway.app`, `wrenchaiprod.up.railway.app` | Railway service domains | Yes, but change `APP_URL` in the matching GitHub Environment at the same time, or the post-deploy health check fails. |
+| `wrenchaiprod.up.railway.app` (staging is now `squad6stage.up.railway.app`) | Railway service domains | Yes, but change `APP_URL` in the matching GitHub Environment at the same time, or the post-deploy health check fails. |
 
 ## Troubleshooting
 
