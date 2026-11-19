@@ -127,7 +127,8 @@ one workout, used by the live summary and past workouts) and `SquadPanel` (`feat
   action (no squad: Find your squad; captain: Waiting to join) → one `ListGroup` of destinations, the first
   being Squad standings with my season points as its value → squad management (members, invite code, leave).
   A new destination (e.g. Challenges) is one more `ListRow` in that group. The footer holds the workout
-  action (start, or return to the one in progress).
+  action: return to the one in progress, or "<last activity> again" (primary) beside "Other workout"
+  (secondary), or "Start a workout" for someone with no workouts yet.
 - **Standings:** `ListRow` in a `ListGroup` with the rank as `leading` (`<T numeric tone="textMuted">`),
   points as `value`, and `highlighted` for the athlete's own squad.
 - **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are

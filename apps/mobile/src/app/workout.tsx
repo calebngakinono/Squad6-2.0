@@ -142,9 +142,10 @@ export default function WorkoutScreen() {
     </>
   ) : (
     <Button
-      label="Done"
-      disabled={!synced}
-      accessibilityHint={synced ? undefined : "Available once the workout has synced"}
+      // Offline, the workout is already safe on this phone and keeps uploading in the background; it
+      // is only cleared from the phone once everything has reached the server.
+      label={synced ? "Done" : "Back to home"}
+      accessibilityHint={synced ? undefined : "The workout keeps uploading in the background"}
       onPress={() => {
         clearFinishedWorkout();
         router.dismissTo("/");

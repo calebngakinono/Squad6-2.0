@@ -35,6 +35,16 @@ export function tierReached(tiers: ChallengeTier[], reported: string | null, tie
   return !!top && tier.points <= top.points;
 }
 
+/**
+ * The levels a challenge card shows. Folded: just the next level to reach (or the top one once
+ * everything is reached), since the card's badge already names the level reached. Open: all of them.
+ */
+export function visibleTiers(tiers: ChallengeTier[], reported: string | null, open: boolean): ChallengeTier[] {
+  if (open) return tiers;
+  const next = tiers.find((t) => !tierReached(tiers, reported, t));
+  return next ? [next] : tiers.slice(-1);
+}
+
 /** The squad line: how many members are needed and how many have done it, as the server counted. */
 export function squadProgress(c: Pick<MyChallenge, "squad_roster" | "squad_required" | "squad_qualified">): string | null {
   if (c.squad_roster == null || c.squad_required == null || c.squad_qualified == null) return null;
