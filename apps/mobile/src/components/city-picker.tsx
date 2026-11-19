@@ -5,7 +5,7 @@ import { loadCity, searchCities } from "@/features/cities/api";
 import { cityDetail, cityLabel, type City } from "@squad-six/shared";
 import { useEffect, useRef, useState } from "react";
 import { borderWidth, minTouch, radius, size, space } from "@/theme/tokens";
-import { usePalette } from "@/theme/use-palette";
+import { useTheme } from "@/theme/theme";
 
 type Props = {
   label: string;
@@ -16,7 +16,7 @@ type Props = {
 
 // Search-and-pick city field. A city can only be chosen from the server's list, never typed in.
 export function CityPicker({ label, value, onChange }: Props) {
-  const c = usePalette();
+  const c = useTheme().color;
   const [chosen, setChosen] = useState<City | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<City[] | null>(null);
@@ -108,7 +108,7 @@ export function CityPicker({ label, value, onChange }: Props) {
         autoCorrect={false}
         textContentType="addressCity"
       />
-      {searching && <ActivityIndicator accessibilityLabel="Searching cities" />}
+      {searching && <ActivityIndicator color={c.textMuted} accessibilityLabel="Searching cities" />}
       {failed && (
         <T variant="small" tone="danger" accessibilityLiveRegion="polite">
           Couldn&apos;t search right now. Check your connection and keep typing to try again.

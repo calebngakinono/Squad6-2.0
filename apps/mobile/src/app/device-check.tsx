@@ -2,9 +2,13 @@ import * as Location from "expo-location";
 import { Stack } from "expo-router";
 import { Pedometer } from "expo-sensors";
 import { useEffect, useRef, useState } from "react";
-import { Platform, ScrollView, Share, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Share } from "react-native";
 import { Button } from "@/components/button";
+import { Card } from "@/components/card";
+import { Notice } from "@/components/notice";
+import { Screen } from "@/components/screen";
+import { T } from "@/components/screen-text";
+import { SectionHeader } from "@/components/section-header";
 import { summarizeGps } from "@/spike/gps-summary";
 import { runHealthKitCheck, type HealthKitResult } from "@/spike/healthkit-check";
 import {
@@ -14,13 +18,11 @@ import {
   subscribeToPoints,
 } from "@/spike/location-task";
 import { formatReport } from "@/spike/report";
-import { space, type } from "@/theme/tokens";
-import { usePalette } from "@/theme/use-palette";
+import { monoFamily } from "@/theme/tokens";
 
 // Development-only screen for the phase-1 device spike. It measures what the phone really delivers
 // (GPS in background, steps, Apple Health) so we stop guessing. Nothing here is uploaded.
 export default function DeviceCheckScreen() {
-  const c = usePalette();
   const [pointCount, setPointCount] = useState(0);
   const [tracking, setTracking] = useState(false);
   const [perm, setPerm] = useState({ foreground: "not asked", background: "not asked" });
@@ -104,57 +106,39 @@ export default function DeviceCheckScreen() {
   });
 
   return (
-    <SafeAreaView edges={["bottom"]} style={[styles.screen, { backgroundColor: c.background }]}>
+    <Screen header>
       <Stack.Screen options={{ headerShown: true, title: "Device check" }} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Section title="1. GPS and steps" c={c}>
-          <Text style={[type.small, { color: c.textMuted }]}>
-            Start, then walk outside for 5 minutes. Halfway, lock the phone for 2 minutes and keep walking. Allow
-            location &quot;Always&quot; if asked.
-          </Text>
-          {tracking ? (
-            <Button label="Stop GPS test" onPress={stopGps} />
-          ) : (
-            <Button label="Start GPS test" onPress={startGps} />
-          )}
-        </Section>
+      <Notice tone="info" message="Development builds only. Measures what this phone delivers; nothing here is uploaded." />
 
-        {Platform.OS === "ios" && (
-          <Section title="2. Apple Health" c={c}>
-            <Text style={[type.small, { color: c.textMuted }]}>
-              Reads your last 10 workouts and the heart rate of the latest one. Best after a workout recorded
-              with your Apple Watch or another fitness app.
-            </Text>
-            <Button label="Check Apple Health" onPress={checkHealth} busy={hkBusy} variant="secondary" />
-          </Section>
-        )}
+      <Card>
+        <SectionHeader title="1. GPS and steps" />
+        <T variant="small" tone="textMuted">
+          Start, then walk outside for 5 minutes. Halfway, lock the phone for 2 minutes and keep walking. Allow location
+          &quot;Always&quot; if asked.
+        </T>
+        {tracking ? <Button label="Stop GPS test" onPress={stopGps} /> : <Button label="Start GPS test" onPress={startGps} />}
+      </Card>
 
-        {error && <Text style={[type.small, { color: c.danger }]}>{error}</Text>}
+      {Platform.OS === "ios" && (
+        <Card>
+          <SectionHeader title="2. Apple Health" />
+          <T variant="small" tone="textMuted">
+            Reads your last 10 workouts and the heart rate of the latest one. Best after a workout recorded with your
+            Apple Watch or another fitness app.
+          </T>
+          <Button label="Check Apple Health" onPress={checkHealth} busy={hkBusy} variant="secondary" />
+        </Card>
+      )}
 
-        <Section title="Report" c={c}>
-          <Text selectable style={[type.small, { color: c.text, fontFamily: Platform.select({ ios: "Menlo", default: "monospace" }) }]}>
-            {report}
-          </Text>
-          <Button label="Share report" variant="secondary" onPress={() => Share.share({ message: report })} />
-        </Section>
-      </ScrollView>
-    </SafeAreaView>
+      {error && <Notice message={error} />}
+
+      <Card variant="sunken">
+        <SectionHeader title="Report" />
+        <T variant="small" selectable style={{ fontFamily: Platform.select(monoFamily) }}>
+          {report}
+        </T>
+        <Button label="Share report" variant="secondary" onPress={() => Share.share({ message: report })} />
+      </Card>
+    </Screen>
   );
 }
-
-function Section({ title, c, children }: { title: string; c: { text: string }; children: React.ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text accessibilityRole="header" style={[type.label, { color: c.text }]}>
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  content: { padding: space.lg, gap: space.xl },
-  section: { gap: space.md },
-});

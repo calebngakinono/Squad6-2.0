@@ -2,14 +2,16 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { useTheme } from "@/theme/theme";
 import { borderWidth, radius, size, space, state, type ColorRole } from "@/theme/tokens";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive" | "destructiveGhost";
 
 type Props = {
   label: string;
   onPress: () => void;
   /**
    * primary: the one main action on a screen. secondary: other actions. ghost: low-emphasis actions
-   * (inline "Change", "Skip"). destructive: removes or ends something (leave squad, discard workout).
+   * (inline "Change", "Skip"). destructive: the confirmed, final step of removing something (delete
+   * account). destructiveGhost: a quiet way into a destructive flow that a confirmation then guards
+   * (discard workout, leave squad, remove a set), so it never competes with the primary action.
    */
   variant?: ButtonVariant;
   /** Shows a spinner and blocks taps while an action runs. */
@@ -27,6 +29,7 @@ const looks: Record<ButtonVariant, Look> = {
   secondary: { bg: "surface", pressedBg: "surfacePressed", fg: "text", outline: true },
   ghost: { bg: null, pressedBg: "surfacePressed", fg: "accent", outline: false },
   destructive: { bg: "danger", pressedBg: "dangerPressed", fg: "onDanger", outline: false },
+  destructiveGhost: { bg: null, pressedBg: "dangerSoft", fg: "danger", outline: false },
 };
 
 export function Button({

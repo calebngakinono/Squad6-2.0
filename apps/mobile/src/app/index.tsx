@@ -1,10 +1,16 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Alert, RefreshControl, StyleSheet, View } from "react-native";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
+import { ListGroup } from "@/components/list-group";
+import { ListRow } from "@/components/list-row";
+import { Loading } from "@/components/loading";
+import { Notice } from "@/components/notice";
+import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
+import { SectionHeader } from "@/components/section-header";
+import { Stat } from "@/components/stat";
 import { useSession } from "@/lib/session";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
@@ -15,10 +21,10 @@ import { hydrateWorkout } from "@/features/workout/store";
 import { useWorkout } from "@/features/workout/use-workout";
 import { SquadPanel } from "@/features/squads/squad-panel";
 import { space } from "@/theme/tokens";
-import { usePalette } from "@/theme/use-palette";
 
+// Home. Top to bottom: who you train with, your season so far, where to go next, then the squad
+// itself. The one main action (start or return to a workout) is pinned at the bottom, in thumb reach.
 export default function HomeScreen() {
-  const c = usePalette();
   const { session } = useSession();
   const userId = session!.user.id;
   const [home, setHome] = useState<SquadHome | null>(null);
@@ -37,7 +43,7 @@ export default function HomeScreen() {
       setLoadError(null);
       setMyPoints(await loadMySeasonPoints(season).catch(() => undefined));
     } catch {
-      setLoadError("Couldn't load your squad. Pull down to try again.");
+      setLoadError("Couldn't load your squad. Check your connection, then try again.");
     }
   }, [userId, season]);
 
@@ -60,118 +66,117 @@ export default function HomeScreen() {
       });
   }
 
+  const squad = home?.kind === "in-squad" ? home.squad : null;
+  const workoutOpen = workout && (workoutState === "active" || workoutState === "paused");
+
+  const footer = workoutOpen ? (
+    <>
+      <T variant="small" tone="textMuted" align="center" accessibilityLiveRegion="polite">
+        {`${activityInfo(workout.activity).label} ${workoutState === "paused" ? "paused" : "in progress"}`}
+      </T>
+      <Button label="Back to workout" onPress={() => router.push("/workout")} />
+    </>
+  ) : workout ? (
+    <Button label="View finished workout" onPress={() => router.push("/workout")} />
+  ) : (
+    <Button label="Start a workout" onPress={() => router.push("/start-workout")} />
+  );
+
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: c.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-              await load();
-              setRefreshing(false);
-            }}
-          />
-        }
-      >
-        {workout && (workoutState === "active" || workoutState === "paused") ? (
-          <Card>
-            <T variant="label">{activityInfo(workout.activity).label} in progress{workoutState === "paused" ? " (paused)" : ""}</T>
-            <Button label="Back to workout" onPress={() => router.push("/workout")} />
-          </Card>
-        ) : workout ? (
-          <Button label="View finished workout" variant="secondary" onPress={() => router.push("/workout")} />
-        ) : (
-          <Button label="Start a workout" onPress={() => router.push("/start-workout")} />
-        )}
-
-        <Card>
-          <T variant="label">{season} season</T>
-          {myPoints !== undefined && myPoints > 0 ? (
-            <T>{`You've earned ${formatPoints(myPoints)} points`}</T>
-          ) : myPoints === 0 ? (
-            <T tone="textMuted">No points yet. They appear here once a workout has been scored.</T>
-          ) : null}
-          <Button label="Squad standings" variant="secondary" onPress={() => router.push("/standings")} />
-        </Card>
-
-        {loadError && <T tone="danger">{loadError}</T>}
-        {home === null && !loadError && <ActivityIndicator accessibilityLabel="Loading" />}
-
-        <Button label="My workouts" variant="secondary" onPress={() => router.push("/history")} />
-        <Button label="Challenges" variant="secondary" onPress={() => router.push("/challenges")} />
-
-        {home?.kind === "in-squad" && (
-          <Button label="Squad activity" variant="secondary" onPress={() => router.push("/squad-activity")} />
-        )}
-
-        {home?.kind === "in-squad" && (
-          <SquadPanel
-            squad={home.squad}
-            myUserId={userId}
-            busy={busy}
-            act={act}
-            actions={{
-              decide: squadApi.decide,
-              remove: squadApi.remove,
-              makeCaptain: squadApi.makeCaptain,
-              newInviteCode: squadApi.newInviteCode,
-              leave: squadApi.leave,
-            }}
-          />
-        )}
-
-        {home?.kind === "no-squad" && (
-          <View style={styles.stack}>
-            <View style={styles.header}>
-              <T variant="title" accessibilityRole="header">
-                Find your squad
-              </T>
-              <T tone="textMuted">Train with up to five other people who are counting on you.</T>
-            </View>
-
-            {home.pending.length > 0 && (
-              <Card>
-                <T variant="label">Waiting for approval</T>
-                {home.pending.map((r) => (
-                  <View key={r.id} style={styles.pending}>
-                    <T>
-                      {r.squadName}
-                      {r.city ? ` · ${r.city}` : ""}
-                    </T>
-                    <Button
-                      label="Cancel request"
-                      variant="secondary"
-                      disabled={busy}
-                      onPress={() => act(() => squadApi.cancelRequest(r.id))}
-                    />
-                  </View>
-                ))}
-              </Card>
-            )}
-
-            <Button label="Join with an invite code" onPress={() => router.push("/join")} />
-            <Button label="Start a squad" variant="secondary" onPress={() => router.push("/create-squad")} />
-          </View>
-        )}
-      </ScrollView>
-
-      <View style={styles.footer}>
-        {__DEV__ && (
-          <Button variant="secondary" label="Device check (dev only)" onPress={() => router.push("/device-check")} />
-        )}
-        <Button variant="secondary" label="Settings" onPress={() => router.push("/settings")} />
+    <Screen
+      footer={footer}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={async () => {
+            setRefreshing(true);
+            await load();
+            setRefreshing(false);
+          }}
+        />
+      }
+    >
+      <View style={styles.intro}>
+        <SectionHeader
+          level="screen"
+          title={squad?.name ?? "Squad Six"}
+          subtitle={squad ? `${squad.city} · ${squad.members.length} of 6 members` : undefined}
+          action={{ label: "Settings", onPress: () => router.push("/settings") }}
+        />
+        {squad?.description ? <T tone="textMuted">{squad.description}</T> : null}
       </View>
-    </SafeAreaView>
+
+      {loadError && <Notice message={loadError} action={{ label: "Try again", onPress: () => void load() }} />}
+      {home === null && !loadError && <Loading label="Loading your squad" />}
+
+      {home?.kind === "no-squad" && (
+        <Card>
+          <SectionHeader title="Find your squad" subtitle="Train with up to five other people who are counting on you." />
+          {home.pending.map((r) => (
+            <ListRow
+              key={r.id}
+              title={r.squadName}
+              subtitle={r.city ? `${r.city} · waiting for the captain` : "Waiting for the captain"}
+              trailing={
+                <Button
+                  label="Cancel"
+                  variant="ghost"
+                  disabled={busy}
+                  accessibilityLabel={`Cancel your request to join ${r.squadName}`}
+                  onPress={() => act(() => squadApi.cancelRequest(r.id))}
+                />
+              }
+            />
+          ))}
+          <View style={styles.actions}>
+            <Button label="Join with an invite code" variant="secondary" onPress={() => router.push("/join")} />
+            <Button label="Start a squad" variant="ghost" onPress={() => router.push("/create-squad")} />
+          </View>
+        </Card>
+      )}
+
+      {myPoints !== undefined && (
+        <Card>
+          <T variant="label" tone="textMuted">
+            {`${season} season`}
+          </T>
+          {myPoints > 0 ? (
+            <Stat size="large" value={formatPoints(myPoints)} unit="pts" label="Your points so far" source="Calculated by Squad Six" />
+          ) : (
+            <T tone="textMuted">No points yet. They appear here once a workout has been scored.</T>
+          )}
+        </Card>
+      )}
+
+      {/* Where to go next. Add a destination as one more ListRow; the group handles dividers. */}
+      <ListGroup>
+        <ListRow title="Squad standings" subtitle="Squads in your city, country and the world" onPress={() => router.push("/standings")} />
+        {squad && <ListRow title="Squad activity" subtitle="Who has trained this week" onPress={() => router.push("/squad-activity")} />}
+        <ListRow title="Challenges" subtitle="Weekly bonus points for your regular workouts" onPress={() => router.push("/challenges")} />
+        <ListRow title="My workouts" subtitle="Past workouts and their points" onPress={() => router.push("/history")} />
+        {__DEV__ && <ListRow title="Device check" subtitle="Development builds only" onPress={() => router.push("/device-check")} />}
+      </ListGroup>
+
+      {squad && (
+        <SquadPanel
+          squad={squad}
+          myUserId={userId}
+          busy={busy}
+          act={act}
+          actions={{
+            decide: squadApi.decide,
+            remove: squadApi.remove,
+            makeCaptain: squadApi.makeCaptain,
+            newInviteCode: squadApi.newInviteCode,
+            leave: squadApi.leave,
+          }}
+        />
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  content: { padding: space.lg, gap: space.lg },
-  stack: { gap: space.lg },
-  header: { gap: space.sm, paddingTop: space.md },
-  pending: { gap: space.sm },
-  footer: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: space.sm },
+  intro: { gap: space.sm },
+  actions: { gap: space.xs },
 });

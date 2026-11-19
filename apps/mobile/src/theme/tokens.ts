@@ -98,7 +98,9 @@ type TypeToken = TextStyle & { fontSize: number; lineHeight: number; fontWeight:
 // Existing names (title, body, label, small, metric) keep working; display, headline, button and
 // caption were added. All sizes scale with the phone's text-size setting (Dynamic Type).
 export const type = {
-  /** Hero numbers: the live workout timer, a season total. */
+  /** The live workout timer only: readable at arm's length, mid-run. */
+  timer: { fontSize: 64, lineHeight: 72, fontWeight: "600", letterSpacing: -1.5, fontVariant: ["tabular-nums"] },
+  /** Hero numbers: a season total, a finished workout's points. */
   display: { fontSize: 44, lineHeight: 52, fontWeight: "600", letterSpacing: -1, fontVariant: ["tabular-nums"] },
   /** Screen title. One per screen. */
   title: { fontSize: 30, lineHeight: 36, fontWeight: "600", letterSpacing: -0.6 },
@@ -119,6 +121,9 @@ export const type = {
 } satisfies Record<string, TypeToken>;
 
 export type TypeVariant = keyof typeof type;
+
+/** Monospace face for raw diagnostic output only (the dev device-check report), never for UI text. */
+export const monoFamily = { ios: "Menlo", default: "monospace" } as const;
 
 /** Turns a type token into a style that uses the loaded font face (or the system font). */
 export function resolveTextStyle(token: TypeToken, fontsLoaded: boolean): TextStyle {
@@ -144,6 +149,8 @@ export const layout = {
   cardPadding: 20,
   /** Gap between items inside a card or group. */
   stackGap: space.md,
+  /** Gap between a SectionHeader and the list or card it introduces. */
+  headingGap: space.sm + space.xs,
 } as const;
 
 export const radius = { sm: 8, md: 12, lg: 16, xl: 24, pill: 999 } as const;
@@ -162,6 +169,14 @@ export const size = {
   row: 56,
   /** Drawn chevron in list rows. */
   chevron: 8,
+  /** Width of the leading column in a list row (a rank), so titles line up. */
+  leading: 32,
+  /** Minimum height of a tappable tile in a grid (activity picker). */
+  tile: 96,
+  /** Radio and checkbox marks in choice rows. */
+  mark: 22,
+  /** Inner dot of a selected radio mark. */
+  markDot: 10,
 } as const;
 
 // ---------------------------------------------------------------------------------------------------
