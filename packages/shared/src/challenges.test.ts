@@ -13,7 +13,7 @@ const row = {
   join_blocked: null,
   joined_next_week: false,
   accepted_workouts: 3,
-  validated_distance_m: 12000,
+  distance_m: { run: 12000, walk_hike: 0 },
   tier: "bronze",
   points: 40,
   squad_roster: null,
@@ -25,8 +25,11 @@ const row = {
 describe("challenge schemas", () => {
   it("accepts the seeded challenge configs from the migration", () => {
     const dir = new URL("../../../supabase/migrations/", import.meta.url);
-    const sql = readFileSync(new URL("20261118010000_challenges.sql", dir), "utf8");
-    const configs = [...sql.matchAll(/'(\{\s*"(?:distance_activities|tier)"[\s\S]*?\})'/g)].map((m) => JSON.parse(m[1]));
+    // The weekly tiers config as updated by the Gold migration, then the squad config from the original.
+    const sql = ["20261119010000_challenges_gold_distance.sql", "20261118010000_challenges.sql"]
+      .map((f) => readFileSync(new URL(f, dir), "utf8"))
+      .join("\n");
+    const configs = [...sql.matchAll(/'(\{\s*"(?:distance_goals|tier)"[\s\S]*?\})'/g)].map((m) => JSON.parse(m[1]));
     expect(configs).toHaveLength(2);
     expect(myChallengeSchema.safeParse({ ...row, kind: "individual_tiered", config: configs[0] }).success).toBe(true);
     expect(

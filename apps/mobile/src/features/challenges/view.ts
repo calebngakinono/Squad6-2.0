@@ -1,4 +1,4 @@
-import type { ChallengeTier, ChallengeWeek, MyChallenge } from "@squad-six/shared";
+import type { ChallengeTier, ChallengeWeek, DistanceGoal, MyChallenge } from "@squad-six/shared";
 
 // Display helpers for the challenges screen. Pure, so they are unit-tested. Nothing here decides a tier
 // or a point: those come from the server (my_challenges). These only turn the server's numbers into words.
@@ -10,11 +10,23 @@ export const formatKm = (metres: number) => (metres / 1000).toFixed(1);
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
-/** "3 accepted workouts" / "25 km of run or walk distance". */
-export function tierGoal(tier: ChallengeTier, distanceActivities: string[]): string {
+const ACTIVITY_VERBS: Record<string, string> = { run: "run", walk: "walk", hike: "hike", cycle: "ride" };
+const ACTIVITY_NOUNS: Record<string, string> = { run: "running", walk: "walking", hike: "hiking", cycle: "cycling" };
+const andList = (words: string[]) =>
+  words.length <= 1 ? (words[0] ?? "") : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const wholeKm = (metres: number) => formatKm(metres).replace(/\.0$/, "");
+
+/** "Running" / "Walking and hiking": the label for a distance goal's progress. */
+export function goalLabel(goal: DistanceGoal): string {
+  return capitalize(andList(goal.activities.map((a) => ACTIVITY_NOUNS[a] ?? a)));
+}
+
+/** "3 accepted workouts" / "Run 25 km, or walk and hike 40 km". */
+export function tierGoal(tier: ChallengeTier, goals: DistanceGoal[]): string {
   if (tier.measure === "accepted_workouts") return plural(tier.target, "accepted workout");
-  const what = distanceActivities.length > 0 ? `${distanceActivities.join(" or ")} distance` : "distance";
-  return `${formatKm(tier.target).replace(/\.0$/, "")} km of ${what}`;
+  const phrases = goals.map((g) => `${andList(g.activities.map((a) => ACTIVITY_VERBS[a] ?? a))} ${wholeKm(g.target)} km`);
+  return capitalize(phrases.join(", or "));
 }
 
 /** Whether a tier row should look reached: the tier the server reported, and the cheaper ones below it. */
