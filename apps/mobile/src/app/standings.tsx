@@ -2,6 +2,7 @@ import type { SquadStanding, StandingsPlace, StandingsScope } from "@squad-six/s
 import { Stack, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, StyleSheet, View } from "react-native";
+import { Badge } from "@/components/badge";
 import { EmptyState } from "@/components/empty-state";
 import { ListGroup } from "@/components/list-group";
 import { ListRow } from "@/components/list-row";
@@ -136,7 +137,7 @@ export default function StandingsScreen() {
 }
 
 function StandingRow({ rank, squad }: { rank: string; squad: SquadStanding }) {
-  const title = squad.is_mine ? `${squad.name} (your squad)` : squad.name;
+  const title = squad.name;
   const subtitle = squadSubtitle(squad);
   const value = formatPoints(squad.points);
   return (
@@ -146,7 +147,8 @@ function StandingRow({ rank, squad }: { rank: string; squad: SquadStanding }) {
       subtitle={subtitle}
       value={value}
       highlighted={squad.is_mine}
-      accessibilityLabel={`${rank === "–" ? "Not ranked" : `Rank ${rank}`}, ${title}, ${subtitle}, ${value} points`}
+      trailing={squad.is_mine ? <Badge label="You" tone="accent" /> : undefined}
+      accessibilityLabel={`${rank === "–" ? "Not ranked" : `Rank ${rank}`}, ${title}${squad.is_mine ? ", your squad" : ""}, ${subtitle}, ${value} points`}
       leading={
         <T variant="label" tone={squad.is_mine ? "accent" : "textMuted"} numeric align="right">
           {rank}

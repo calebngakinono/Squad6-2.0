@@ -1,12 +1,14 @@
 import type { MyChallenge } from "@squad-six/shared";
 import { Stack, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, RefreshControl, StyleSheet, View } from "react-native";
+import { RefreshControl, StyleSheet, View } from "react-native";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
 import { ListRow } from "@/components/list-row";
+import { Loading } from "@/components/loading";
+import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { Stat } from "@/components/stat";
@@ -21,6 +23,7 @@ import {
   tierGoal,
   tierLabel,
   tierReached,
+  visibleTiers,
 } from "@/features/challenges/view";
 import { formatPoints } from "@/features/standings/view";
 import { layout, space } from "@/theme/tokens";
@@ -39,7 +42,7 @@ export default function ChallengesScreen() {
       setChallenges(await loadMyChallenges());
       setError(null);
     } catch {
-      setError("Couldn't load this week's challenges. Pull down to try again.");
+      setError("Couldn't load this week's challenges. Check your connection, then try again.");
     }
   }, []);
 
@@ -78,12 +81,8 @@ export default function ChallengesScreen() {
       }
     >
       <Stack.Screen options={{ headerShown: true, title: "Challenges" }} />
-      {error && (
-        <T tone="danger" accessibilityLiveRegion="polite">
-          {error}
-        </T>
-      )}
-      {challenges === null && !error && <ActivityIndicator accessibilityLabel="Loading challenges" />}
+      {error && <Notice message={error} action={{ label: "Try again", onPress: () => void load() }} />}
+      {challenges === null && !error && <Loading label="Loading challenges" />}
       {challenges?.length === 0 && (
         <EmptyState
           title="No challenges yet"
@@ -92,7 +91,7 @@ export default function ChallengesScreen() {
       )}
       {scoringOff && (
         <T variant="small" tone="textMuted">
-          Points are switched off right now, so challenges don&apos;t award anything yet. Your progress still shows.
+          Challenge points aren&apos;t being awarded yet. Your progress still shows here.
         </T>
       )}
       {challenges?.map((c) => (
@@ -106,8 +105,8 @@ export default function ChallengesScreen() {
       ))}
       {challenges && challenges.length > 0 && (
         <T variant="small" tone="textMuted">
-          Weeks run Monday to Sunday in your home time zone. Only accepted workouts you start after joining count,
-          and challenge points are capped at 250 a week.
+          A counted workout is one Squad Six scored and accepted. Only those you start after joining count toward a
+          challenge. Weeks run Monday to Sunday in your home time zone, and challenge points are capped at 250 a week.
         </T>
       )}
     </Screen>
@@ -125,6 +124,7 @@ function ChallengeCard({
   error: string | null;
   onJoin: (week: "current" | "next") => void;
 }) {
+  const [open, setOpen] = useState(false);
   const action = joinAction(c);
   const note = joinNote(c);
   const squadLine = c.kind === "squad_participation" ? squadProgress(c) : null;
@@ -147,7 +147,12 @@ function ChallengeCard({
 
       {c.kind === "individual_tiered" && (
         <View>
-          {c.config.tiers.map((t, i) => {
+          {!open && (
+            <T variant="caption" tone="textMuted">
+              {c.config.tiers.every((t) => tierReached(c.config.tiers, c.tier, t)) ? "Top level" : "Next level"}
+            </T>
+          )}
+          {visibleTiers(c.config.tiers, c.tier, open).map((t, i, shown) => {
             const reached = tierReached(c.config.tiers, c.tier, t);
             return (
               <ListRow
@@ -157,10 +162,15 @@ function ChallengeCard({
                 value={`${t.points} pts`}
                 highlighted={reached}
                 trailing={reached ? <Badge label="Reached" tone="success" /> : undefined}
-                divider={i < c.config.tiers.length - 1}
+                divider={i < shown.length - 1}
               />
             );
           })}
+          <Button
+            label={open ? "Show less" : `See all ${c.config.tiers.length} levels`}
+            variant="ghost"
+            onPress={() => setOpen((o) => !o)}
+          />
         </View>
       )}
 
@@ -169,8 +179,8 @@ function ChallengeCard({
           <View style={styles.stat}>
             <Stat
               value={String(c.accepted_workouts)}
-              label="Accepted workouts"
-              source="Scored by Squad Six"
+              label="Counted workouts"
+              source="Squad Six scoring"
             />
           </View>
           {c.kind === "individual_tiered"
@@ -180,13 +190,13 @@ function ChallengeCard({
                     value={formatKm(c.distance_m[g.key] ?? 0)}
                     unit={`of ${formatKm(g.target).replace(/\.0$/, "")} km`}
                     label={goalLabel(g)}
-                    source="GPS or health app"
+                    source="Phone GPS or Apple Health"
                   />
                 </View>
               ))
             : null}
           <View style={styles.stat}>
-            <Stat value={formatPoints(c.points)} unit="pts" label="Earned" source="Awarded by Squad Six" />
+            <Stat value={formatPoints(c.points)} unit="pts" label="Earned" source="Squad Six scoring" />
           </View>
         </View>
       )}
@@ -197,11 +207,7 @@ function ChallengeCard({
           {note}
         </T>
       )}
-      {error && (
-        <T variant="small" tone="danger" accessibilityLiveRegion="polite">
-          {error}
-        </T>
-      )}
+      {error && <Notice message={error} />}
       {action && (
         <Button
           label={action.label}

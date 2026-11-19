@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(20);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@example.com');
 create function pg_temp.found(q text) returns text language sql as $$
@@ -37,8 +37,11 @@ select throws_ok($$select public.create_squad('Bad City', 1)$$, 'P0001', 'city_r
 select lives_ok($$select public.create_squad('Red Rocks', 5546220)$$, 'a squad is created with a listed city');
 select is((select city || '/' || city_id from public.squads where name = 'Red Rocks'), 'Saint George, Utah/5546220', 'the squad stores the city and its label');
 
+-- Onboarding runs before sign-up, so a visitor can search the (public) city list, but not change anything.
 set local role anon;
-select throws_ok($$select * from public.search_cities('denver')$$, '42501', null, 'anonymous visitors cannot search');
+select is(pg_temp.found('denv'), 'Denver, Colorado (US) | Denville, New Jersey (US)', 'visitors can search the city list');
+select is((select name from public.cities where id = 5419384), 'Denver', 'visitors can read a chosen city');
+select throws_ok($$update public.profiles set city_id = 5419384$$, '42501', null, 'visitors cannot set a city on any profile');
 
 select * from finish();
 rollback;

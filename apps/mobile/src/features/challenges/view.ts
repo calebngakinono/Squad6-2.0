@@ -22,9 +22,9 @@ export function goalLabel(goal: DistanceGoal): string {
   return capitalize(andList(goal.activities.map((a) => ACTIVITY_NOUNS[a] ?? a)));
 }
 
-/** "3 accepted workouts" / "Run 25 km, or walk and hike 40 km". */
+/** "3 counted workouts" / "Run 25 km, or walk and hike 40 km". */
 export function tierGoal(tier: ChallengeTier, goals: DistanceGoal[]): string {
-  if (tier.measure === "accepted_workouts") return plural(tier.target, "accepted workout");
+  if (tier.measure === "accepted_workouts") return plural(tier.target, "counted workout");
   const phrases = goals.map((g) => `${andList(g.activities.map((a) => ACTIVITY_VERBS[a] ?? a))} ${wholeKm(g.target)} km`);
   return capitalize(phrases.join(", or "));
 }
@@ -33,6 +33,16 @@ export function tierGoal(tier: ChallengeTier, goals: DistanceGoal[]): string {
 export function tierReached(tiers: ChallengeTier[], reported: string | null, tier: ChallengeTier): boolean {
   const top = tiers.find((t) => t.tier === reported);
   return !!top && tier.points <= top.points;
+}
+
+/**
+ * The levels a challenge card shows. Folded: just the next level to reach (or the top one once
+ * everything is reached), since the card's badge already names the level reached. Open: all of them.
+ */
+export function visibleTiers(tiers: ChallengeTier[], reported: string | null, open: boolean): ChallengeTier[] {
+  if (open) return tiers;
+  const next = tiers.find((t) => !tierReached(tiers, reported, t));
+  return next ? [next] : tiers.slice(-1);
 }
 
 /** The squad line: how many members are needed and how many have done it, as the server counted. */
