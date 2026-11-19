@@ -172,7 +172,7 @@ export default function HomeScreen() {
             {`${season} season`}
           </T>
           {myPoints > 0 ? (
-            <Stat size="large" value={formatPoints(myPoints)} unit="pts" label="Your points so far" source="Calculated by Squad Six" />
+            <Stat size="large" value={formatPoints(myPoints)} unit="pts" label="Your points so far" source="Squad Six scoring" />
           ) : (
             <T tone="textMuted">No points yet. They appear here once a workout has been scored.</T>
           )}

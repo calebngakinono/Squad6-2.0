@@ -92,7 +92,7 @@ export default function ChallengesScreen() {
       )}
       {scoringOff && (
         <T variant="small" tone="textMuted">
-          Points are switched off right now, so challenges don&apos;t award anything yet. Your progress still shows.
+          Challenge points aren&apos;t being awarded yet. Your progress still shows here.
         </T>
       )}
       {challenges?.map((c) => (
@@ -106,8 +106,8 @@ export default function ChallengesScreen() {
       ))}
       {challenges && challenges.length > 0 && (
         <T variant="small" tone="textMuted">
-          Weeks run Monday to Sunday in your home time zone. Only accepted workouts you start after joining count,
-          and challenge points are capped at 250 a week.
+          A counted workout is one Squad Six scored and accepted. Only those you start after joining count toward a
+          challenge. Weeks run Monday to Sunday in your home time zone, and challenge points are capped at 250 a week.
         </T>
       )}
     </Screen>
@@ -169,8 +169,8 @@ function ChallengeCard({
           <View style={styles.stat}>
             <Stat
               value={String(c.accepted_workouts)}
-              label="Accepted workouts"
-              source="Scored by Squad Six"
+              label="Counted workouts"
+              source="Squad Six scoring"
             />
           </View>
           {c.kind === "individual_tiered"
@@ -180,13 +180,13 @@ function ChallengeCard({
                     value={formatKm(c.distance_m[g.key] ?? 0)}
                     unit={`of ${formatKm(g.target).replace(/\.0$/, "")} km`}
                     label={goalLabel(g)}
-                    source="GPS or health app"
+                    source="Phone GPS or Apple Health"
                   />
                 </View>
               ))
             : null}
           <View style={styles.stat}>
-            <Stat value={formatPoints(c.points)} unit="pts" label="Earned" source="Awarded by Squad Six" />
+            <Stat value={formatPoints(c.points)} unit="pts" label="Earned" source="Squad Six scoring" />
           </View>
         </View>
       )}

@@ -22,9 +22,9 @@ export function goalLabel(goal: DistanceGoal): string {
   return capitalize(andList(goal.activities.map((a) => ACTIVITY_NOUNS[a] ?? a)));
 }
 
-/** "3 accepted workouts" / "Run 25 km, or walk and hike 40 km". */
+/** "3 counted workouts" / "Run 25 km, or walk and hike 40 km". */
 export function tierGoal(tier: ChallengeTier, goals: DistanceGoal[]): string {
-  if (tier.measure === "accepted_workouts") return plural(tier.target, "accepted workout");
+  if (tier.measure === "accepted_workouts") return plural(tier.target, "counted workout");
   const phrases = goals.map((g) => `${andList(g.activities.map((a) => ACTIVITY_VERBS[a] ?? a))} ${wholeKm(g.target)} km`);
   return capitalize(phrases.join(", or "));
 }
