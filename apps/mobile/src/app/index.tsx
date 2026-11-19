@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, RefreshControl, StyleSheet, View } from "react-native";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
@@ -12,6 +12,7 @@ import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
 import { Stat } from "@/components/stat";
 import { useSession } from "@/lib/session";
+import { takeRouteAfterOnboarding } from "@/features/onboarding/next-route";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
 import { loadMySeasonPoints } from "@/features/standings/api";
@@ -46,6 +47,12 @@ export default function HomeScreen() {
       setLoadError("Couldn't load your squad. Check your connection, then try again.");
     }
   }, [userId, season]);
+
+  // Straight after onboarding: open Join or Start a squad if that's what the person chose.
+  useEffect(() => {
+    const next = takeRouteAfterOnboarding();
+    if (next === "/join" || next === "/create-squad") router.push(next);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

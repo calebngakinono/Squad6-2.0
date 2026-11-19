@@ -24,6 +24,8 @@ const base = {
   id,
   title: z.string().min(1).max(120),
   body: z.string().max(500).optional(),
+  /** Label of the main button. The app picks Continue/Next when absent. */
+  cta: z.string().min(1).max(40).optional(),
   /** Where the answer is stored. Profile fields are applied to the profile; anything else stays in answers. */
   field: z.enum(PROFILE_FIELDS).optional(),
   required: z.boolean().default(true),
@@ -32,8 +34,36 @@ const base = {
   next: id.optional(),
 };
 
+/**
+ * How an info step is laid out. Copy stays in the config; numbers on the gap and plan screens are
+ * computed in the app from the person's own answers (never invented).
+ * - statement: a title and body.
+ * - welcome: the first screen, with a way into sign-in for existing members.
+ * - gap: yearly difference between the workouts someone does now and their goal.
+ * - how_it_works: a short numbered list (`items`).
+ * - plan: a summary of the person's answers.
+ */
+export const INFO_LAYOUTS = ["statement", "welcome", "gap", "how_it_works", "plan"] as const;
+export type InfoLayout = (typeof INFO_LAYOUTS)[number];
+
+const item = z.object({ title: z.string().min(1).max(80), body: z.string().min(1).max(200) });
+
 export const onboardingStepSchema = z.discriminatedUnion("type", [
-  z.object({ ...base, type: z.literal("info"), required: z.literal(false).default(false) }),
+  z.object({
+    ...base,
+    type: z.literal("info"),
+    required: z.literal(false).default(false),
+    layout: z.enum(INFO_LAYOUTS).default("statement"),
+    items: z.array(item).max(5).default([]),
+    /** Extra copy a layout uses (e.g. the gap screen's text when there is no gap). */
+    copy: z.record(z.string().regex(/^[a-z_]{1,40}$/), z.string().max(300)).default({}),
+    /** Step ids whose answers a layout reads (e.g. gap: { current, goal }). */
+    params: z.record(z.string().regex(/^[a-z_]{1,40}$/), id).default({}),
+  }),
+  /** Account creation. Skipped when the person is already signed in. */
+  z.object({ ...base, type: z.literal("signup"), required: z.literal(false).default(false) }),
+  /** Squad Six Pro offer. Always skippable; it never blocks finishing onboarding. */
+  z.object({ ...base, type: z.literal("paywall"), required: z.literal(false).default(false), items: z.array(item).max(5).default([]) }),
   z.object({ ...base, type: z.literal("text"), maxLength: z.number().int().min(1).max(280).default(80) }),
   z.object({
     ...base,
@@ -68,7 +98,8 @@ export const onboardingFlowSchema = z
       ids.add(s.id);
     }
     for (const s of flow.steps) {
-      for (const target of [s.next, ...s.branches.map((b) => b.goto), ...s.branches.map((b) => b.when.step)]) {
+      const params = s.type === "info" ? Object.values(s.params) : [];
+      for (const target of [s.next, ...s.branches.map((b) => b.goto), ...s.branches.map((b) => b.when.step), ...params]) {
         if (target && !ids.has(target)) ctx.addIssue({ code: "custom", message: `${s.id} points to unknown step ${target}` });
       }
     }
@@ -83,7 +114,7 @@ export type Answers = Record<string, AnswerValue>;
 /** Validates one answer against its step. Returns an error message or null. */
 export function validateAnswer(step: OnboardingStep, value: AnswerValue | undefined): string | null {
   const empty = value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
-  if (step.type === "info") return null;
+  if (step.type === "info" || step.type === "signup" || step.type === "paywall") return null;
   if (empty) return step.required ? "Please answer to continue." : null;
 
   switch (step.type) {
@@ -165,4 +196,28 @@ export function profileUpdates(flow: OnboardingFlow, answers: Answers): Partial<
     }
   }
   return out;
+}
+
+/** Answers that are numbers, for layouts that compute from them. */
+function numberAnswer(answers: Answers, stepId: string | undefined): number | null {
+  const v = stepId ? answers[stepId] : undefined;
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+/**
+ * The gap screen: how many workouts a year lie between what someone does now and their goal,
+ * from their own two answers. `yearly` is 0 when they already meet the goal.
+ */
+export function workoutGap(answers: Answers, params: Record<string, string>): { current: number; goal: number; yearly: number } | null {
+  const current = numberAnswer(answers, params.current);
+  const goal = numberAnswer(answers, params.goal);
+  if (current === null || goal === null) return null;
+  return { current, goal, yearly: Math.max(0, goal - current) * 52 };
+}
+
+/** Whole weeks left in the season (seasons run January 1 to December 31), counting the current week. */
+export function seasonWeeksLeft(today: Date): number {
+  const end = Date.UTC(today.getFullYear(), 11, 31);
+  const start = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.max(1, Math.ceil((end - start + 86_400_000) / (7 * 86_400_000)));
 }

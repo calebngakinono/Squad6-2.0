@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(20);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -49,6 +49,15 @@ select is((select display_name from public.profiles where id = '00000000-0000-00
 set local role anon;
 select throws_ok($$select public.complete_onboarding(1, '{}', 'A', 5419384, 'UTC', 3)$$, '42501', null,
   'anonymous visitors cannot complete onboarding');
+select throws_ok($$select public.save_onboarding_progress(1, 'x', '{}')$$, '42501', null,
+  'anonymous visitors cannot save progress to an account');
+
+-- Onboarding runs before sign-up: a visitor reads the active flow (v3) and nothing else.
+select is((select array_agg(version) from public.onboarding_flows), array[3], 'visitors see only the active flow, v3');
+select is((select count(*)::int from public.onboarding_flows, jsonb_array_elements(definition->'steps') s where s->>'type' = 'signup'), 1,
+  'the flow has one account step (screen order is checked in packages/shared)');
+select throws_ok($$insert into public.onboarding_flows (version, definition) values (98, '{}')$$, '42501', null,
+  'visitors cannot add flows');
 
 select * from finish();
 rollback;
