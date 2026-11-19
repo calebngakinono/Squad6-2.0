@@ -13,6 +13,9 @@ import { SectionHeader } from "@/components/section-header";
 import { Stat } from "@/components/stat";
 import { useSession } from "@/lib/session";
 import { takeRouteAfterOnboarding } from "@/features/onboarding/next-route";
+import { loadWeekGoals } from "@/features/goals/api";
+import { WeekStrip } from "@/features/goals/week-strip";
+import type { WeekGoalRow } from "@squad-six/shared";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
 import { loadMySeasonPoints } from "@/features/standings/api";
@@ -35,10 +38,23 @@ export default function HomeScreen() {
   const season = seasonYears(new Date())[0];
   // The athlete's own season total; undefined until loaded (or if it couldn't be loaded).
   const [myPoints, setMyPoints] = useState<number | undefined>(undefined);
+  // This week's goal progress for me and my squad (null while loading).
+  const [goals, setGoals] = useState<WeekGoalRow[] | null>(null);
+  const [goalsError, setGoalsError] = useState<string | null>(null);
   const { workout } = useWorkout();
   const workoutState = workout ? stateOf(workout.events) : null;
 
+  const loadGoals = useCallback(async () => {
+    try {
+      setGoals(await loadWeekGoals());
+      setGoalsError(null);
+    } catch {
+      setGoalsError("Couldn't load this week. Check your connection, then try again.");
+    }
+  }, []);
+
   const load = useCallback(async () => {
+    void loadGoals();
     try {
       setHome(await loadSquadHome(userId));
       setLoadError(null);
@@ -46,7 +62,7 @@ export default function HomeScreen() {
     } catch {
       setLoadError("Couldn't load your squad. Check your connection, then try again.");
     }
-  }, [userId, season]);
+  }, [userId, season, loadGoals]);
 
   // Straight after onboarding: open Join or Start a squad if that's what the person chose.
   useEffect(() => {
@@ -114,6 +130,14 @@ export default function HomeScreen() {
       </View>
 
       {loadError && <Notice message={loadError} action={{ label: "Try again", onPress: () => void load() }} />}
+
+      <WeekStrip
+        rows={goals}
+        inSquad={home?.kind !== "no-squad"}
+        error={goalsError}
+        onRetry={() => void loadGoals()}
+        onPress={squad ? () => router.push("/squad-activity") : undefined}
+      />
       {home === null && !loadError && <Loading label="Loading your squad" />}
 
       {home?.kind === "no-squad" && (

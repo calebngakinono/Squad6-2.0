@@ -137,7 +137,7 @@ export default function SettingsScreen() {
             <View style={styles.field}>
               <T variant="label">Weekly goal</T>
               <T variant="small" tone="textMuted">
-                Days a week you want to train. A personal goal; it doesn&apos;t change your points.
+                Days a week you want to train. Your squad sees it with your days this week. It doesn&apos;t change your points.
               </T>
             </View>
             <View style={styles.pills} accessibilityRole="radiogroup" accessibilityLabel="Weekly goal in days">

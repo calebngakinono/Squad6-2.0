@@ -1,4 +1,4 @@
-import type { SquadActivityRow } from "@squad-six/shared";
+import type { SquadActivityRow, WeekGoalRow } from "@squad-six/shared";
 import { router, Stack, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { RefreshControl, StyleSheet, View } from "react-native";
@@ -12,7 +12,10 @@ import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
 import { loadSquadActivity } from "@/features/history/api";
-import { activityLabel, dayLabel, memberWeek, outcomeLabel } from "@/features/history/view";
+import { activityLabel, dayLabel, outcomeLabel } from "@/features/history/view";
+import { loadWeekGoals } from "@/features/goals/api";
+import { goalLabel, pips } from "@/features/goals/view";
+import { GoalPips } from "@/features/goals/week-strip";
 import { loadSquadHome, type SquadHome } from "@/features/squads/api";
 import { useSession } from "@/lib/session";
 import { layout } from "@/theme/tokens";
@@ -24,14 +27,16 @@ export default function SquadActivityScreen() {
   const userId = session!.user.id;
   const [home, setHome] = useState<SquadHome | null>(null);
   const [rows, setRows] = useState<SquadActivityRow[] | null>(null);
+  const [goals, setGoals] = useState<WeekGoalRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [h, r] = await Promise.all([loadSquadHome(userId), loadSquadActivity(14)]);
+      const [h, r, g] = await Promise.all([loadSquadHome(userId), loadSquadActivity(14), loadWeekGoals()]);
       setHome(h);
       setRows(r);
+      setGoals(g);
       setError(null);
     } catch {
       setError("Couldn't load your squad's activity. Check your connection, then try again.");
@@ -46,8 +51,8 @@ export default function SquadActivityScreen() {
 
   const now = new Date();
   const squad = home?.kind === "in-squad" ? home.squad : null;
-  const week = squad && rows ? memberWeek(squad.members, rows, userId, now) : null;
-  const trained = week?.filter((m) => m.workouts > 0).length ?? 0;
+  const week = squad ? goals : null;
+  const trained = week?.filter((m) => m.days_this_week > 0).length ?? 0;
 
   return (
     <Screen
@@ -65,7 +70,7 @@ export default function SquadActivityScreen() {
     >
       <Stack.Screen options={{ headerShown: true, title: squad?.name ?? "Squad activity" }} />
       {error && <Notice message={error} action={{ label: "Try again", onPress: () => void load() }} />}
-      {(home === null || rows === null) && !error && <Loading label="Loading activity" />}
+      {(home === null || rows === null || goals === null) && !error && <Loading label="Loading activity" />}
       {home?.kind === "no-squad" && (
         <EmptyState
           title="Not in a squad yet"
@@ -76,19 +81,23 @@ export default function SquadActivityScreen() {
 
       {week && (
         <View style={styles.section}>
-          <SectionHeader title="Last 7 days" subtitle={`${trained} of ${week.length} trained`} />
+          <SectionHeader title="This week" subtitle={`${trained} of ${week.length} have trained · weeks start Monday`} />
           <ListGroup>
-            {week.map((m) => (
-              <ListRow
-                key={m.userId}
-                title={m.isMe ? `${m.name} (you)` : m.name}
-                subtitle={m.workouts === 0 ? "No workout yet this week" : `${m.workouts} workout${m.workouts === 1 ? "" : "s"}`}
-                trailing={
-                  m.workouts === 0 ? <Badge label="Not yet" tone="warning" /> : <Badge label={`${m.points.toLocaleString("en-US")} pts`} tone="accent" />
-                }
-                highlighted={m.isMe}
-              />
-            ))}
+            {week.map((m) => {
+              const name = m.is_me ? "You" : (m.display_name ?? "Teammate");
+              const reached = m.weekly_goal !== null && m.days_this_week >= m.weekly_goal;
+              const label = `${goalLabel(m.days_this_week, m.weekly_goal)} this week`;
+              return (
+                <ListRow
+                  key={m.user_id}
+                  title={name}
+                  subtitle={m.weekly_goal === null ? `${label} · no goal set` : label}
+                  accessibilityLabel={`${name}, ${label}${reached ? ", goal reached" : ""}`}
+                  trailing={reached ? <Badge label="Goal reached" tone="accent" /> : <GoalPips marks={pips(m.days_this_week, m.weekly_goal)} />}
+                  highlighted={m.is_me}
+                />
+              );
+            })}
           </ListGroup>
         </View>
       )}

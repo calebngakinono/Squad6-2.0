@@ -27,3 +27,16 @@ export const myWorkoutSchema = z.object({
   workout_scores: z.object({ status: z.string(), total: z.number().int() }).nullable(),
 });
 export type MyWorkout = z.infer<typeof myWorkoutSchema>;
+
+/** One member's weekly goal and progress, as squad_week_goals() returns it (counts only). */
+export const weekGoalRowSchema = z.object({
+  user_id: z.string(),
+  display_name: z.string().nullable(),
+  is_me: z.boolean(),
+  /** Days a week the member aims to train; null when they never set one. */
+  weekly_goal: z.number().int().min(1).max(14).nullable(),
+  /** Distinct days this week (Monday to Sunday, the member's home time zone) with a finished workout. */
+  days_this_week: z.number().int().min(0).max(7),
+  week_start: z.string(),
+});
+export type WeekGoalRow = z.infer<typeof weekGoalRowSchema>;

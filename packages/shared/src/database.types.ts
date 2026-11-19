@@ -936,6 +936,11 @@ isOneToOne: true
               "city": string | null,"country": string | null,"display_name": string | null,"member_since": string,"note": string | null,"request_id": string,"requested_at": string,"season": number,"season_points": number,"season_workouts": number,"user_id": string
             }[]
                            },
+"squad_week_goals":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "days_this_week": number,"display_name": string | null,"is_me": boolean,"user_id": string,"week_start": string,"weekly_goal": number | null
+            }[]
+                           },
 "squad_standings":
 { Args: { "max_rows"?: number,"scope"?: string,"season": number }; Returns: {
               "city": string,"country": string,"is_mine": boolean,"is_ranked": boolean,"members": number,"name": string,"points": number,"rank": number,"squad_id": string

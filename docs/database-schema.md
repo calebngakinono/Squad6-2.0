@@ -7,7 +7,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 |---|---|---|---|
 | `profiles` | ✅ | **Public** profile, 1:1 with `auth.users`, created by the signup trigger: display name, `city_id` (a city from `cities`) and `city`, its label such as "Denver, Colorado", written by the database (avatar later). Wrench `experience_level` removed 2026-11-11 (approved). | Signed-in users read; owner updates `display_name`, `city_id` only (column grants); a city can no longer be typed |
 | `cities` | ✅ | Fixed list of 34,215 cities: every city over 15,000 people plus smaller capitals (GeoNames `cities15000`, CC BY 4.0, built by `scripts/build-cities-seed.py`). Name, accent-free search name, region, country code and name, population. `search_cities(query, max_rows)` finds cities by the start of the name, biggest first (ignores case, accents and dots; "St" finds "Saint") | Read and search: signed in and visitors (`anon`, public GeoNames data, needed by onboarding before sign-up). Changed by migrations only |
-| `profile_private` | ✅ | Home timezone (set only via `set_home_timezone()`: valid IANA name, at most one change per 7 days), personal weekly commitment (not scored), onboarding answers (`onboarding_flow_version`, `onboarding_answers` ≤ 16 KB; `onboarding_step` unused since v3, which keeps progress on the phone) and completion | Owner only; owner updates `weekly_commitment`; progress via `save_onboarding_progress()`, completion via `complete_onboarding()` |
+| `profile_private` | ✅ | Home timezone (set only via `set_home_timezone()`: valid IANA name, at most one change per 7 days), weekly goal `weekly_commitment` (not scored; shared with the squad only through `squad_week_goals()`), onboarding answers (`onboarding_flow_version`, `onboarding_answers` ≤ 16 KB; `onboarding_step` unused since v3, which keeps progress on the phone) and completion | Owner only; owner updates `weekly_commitment`; progress via `save_onboarding_progress()`, completion via `complete_onboarding()` |
 | `squads` | ✅ | Name, `city_id` (from `cities`, required when created) and its label `city`, description, created_by, archived_at (set when the last member leaves) | Signed-in read; writes via functions only |
 | `squad_members` | ✅ | Membership **history**: squad, user, role, joined_at, left_at, left_reason. One active squad per athlete, one captain per squad (unique indexes). Max six, enforced by locking the squad row on approval (race-tested) | Squadmates and self read; writes via functions only |
 | `squad_invite_codes` | ✅ | One 8-character code per squad (no look-alike characters); captain can regenerate | Active members read |
@@ -112,6 +112,13 @@ grants (`profiles.display_name`, `profiles.city_id`, `profile_private.weekly_com
 `squad_activity(days, max_rows)`: the caller's current squad's finished workouts from the last `days` (default 14):
 member name, activity, day, end time, active minutes, scoring outcome and points. Current members only. Never any
 route, distance or health data. Workouts themselves stay owner-only; this function is the only way teammates see them.
+
+`squad_week_goals()`: for the caller and the current members of their squad (just the caller without a squad):
+display name, weekly goal (`profile_private.weekly_commitment`, null if never set) and days trained this week.
+A day counts once it has a finished workout (`submitted`, `accepted` or `needs_review`); weeks run Monday to Sunday
+in each member's home time zone; a changed goal applies to the current week. Goals are always shared with the squad
+(Caleb, 2026-11-19), never with other squads. Counts only: no workout details, location or health data. Earns and
+costs no points.
 
 ## Rules for every migration
 
