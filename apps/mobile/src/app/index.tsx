@@ -19,8 +19,10 @@ import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
 import { loadMySeasonPoints } from "@/features/standings/api";
 import { formatPoints, seasonYears } from "@/features/standings/view";
-import { activityInfo, stateOf } from "@/features/workout/machine";
-import { hydrateWorkout } from "@/features/workout/store";
+import { ACTIVITIES, activityInfo, stateOf, type Activity } from "@/features/workout/machine";
+import { loadMyWorkouts } from "@/features/history/api";
+import { ButtonRow } from "@/components/button-row";
+import { hydrateWorkout, startWorkout } from "@/features/workout/store";
 import { useWorkout } from "@/features/workout/use-workout";
 import { SquadPanel } from "@/features/squads/squad-panel";
 import { space } from "@/theme/tokens";
@@ -40,6 +42,8 @@ export default function HomeScreen() {
   // This week's goal progress for me and my squad (null while loading).
   const [goals, setGoals] = useState<WeekGoalRow[] | null>(null);
   const [goalsError, setGoalsError] = useState<string | null>(null);
+  // The activity of my most recent workout, for the one-tap "again" button.
+  const [lastActivity, setLastActivity] = useState<Activity | null>(null);
   const { workout } = useWorkout();
   const workoutState = workout ? stateOf(workout.events) : null;
 
@@ -54,6 +58,9 @@ export default function HomeScreen() {
 
   const load = useCallback(async () => {
     void loadGoals();
+    loadMyWorkouts(1)
+      .then(([last]) => setLastActivity(ACTIVITIES.find((a) => a.value === last?.activity && a.value !== "other")?.value ?? null))
+      .catch(() => {});
     try {
       setHome(await loadSquadHome(userId));
       setLoadError(null);
@@ -100,6 +107,18 @@ export default function HomeScreen() {
     </>
   ) : workout ? (
     <Button label="View finished workout" onPress={() => router.push("/workout")} />
+  ) : lastActivity ? (
+    // The daily routine in one tap; anything else is one more.
+    <ButtonRow>
+      <Button label="Other workout" variant="secondary" onPress={() => router.push("/start-workout")} />
+      <Button
+        label={`${activityInfo(lastActivity).label} again`}
+        accessibilityHint="Starts the timer now"
+        onPress={() => {
+          if (startWorkout(lastActivity)) router.push("/workout");
+        }}
+      />
+    </ButtonRow>
   ) : (
     <Button label="Start a workout" onPress={() => router.push("/start-workout")} />
   );

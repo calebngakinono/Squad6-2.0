@@ -23,6 +23,7 @@ import {
   tierGoal,
   tierLabel,
   tierReached,
+  visibleTiers,
 } from "@/features/challenges/view";
 import { formatPoints } from "@/features/standings/view";
 import { layout, space } from "@/theme/tokens";
@@ -123,6 +124,7 @@ function ChallengeCard({
   error: string | null;
   onJoin: (week: "current" | "next") => void;
 }) {
+  const [open, setOpen] = useState(false);
   const action = joinAction(c);
   const note = joinNote(c);
   const squadLine = c.kind === "squad_participation" ? squadProgress(c) : null;
@@ -145,7 +147,12 @@ function ChallengeCard({
 
       {c.kind === "individual_tiered" && (
         <View>
-          {c.config.tiers.map((t, i) => {
+          {!open && (
+            <T variant="caption" tone="textMuted">
+              {c.config.tiers.every((t) => tierReached(c.config.tiers, c.tier, t)) ? "Top level" : "Next level"}
+            </T>
+          )}
+          {visibleTiers(c.config.tiers, c.tier, open).map((t, i, shown) => {
             const reached = tierReached(c.config.tiers, c.tier, t);
             return (
               <ListRow
@@ -155,10 +162,15 @@ function ChallengeCard({
                 value={`${t.points} pts`}
                 highlighted={reached}
                 trailing={reached ? <Badge label="Reached" tone="success" /> : undefined}
-                divider={i < c.config.tiers.length - 1}
+                divider={i < shown.length - 1}
               />
             );
           })}
+          <Button
+            label={open ? "Show less" : `See all ${c.config.tiers.length} levels`}
+            variant="ghost"
+            onPress={() => setOpen((o) => !o)}
+          />
         </View>
       )}
 
