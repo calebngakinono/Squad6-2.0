@@ -23,7 +23,79 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "cities": {
+            "challenge_awards": {
+                  Row: {
+                    "id": string,"participant_id": string,"reached_at": string,"rule_version": string,"tier": string,"tier_points": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "id"?: string,"participant_id": string,"reached_at"?: string,"rule_version": string,"tier": string,"tier_points": number
+                  }
+                  Update: {
+                    "id"?: string,"participant_id"?: string,"reached_at"?: string,"rule_version"?: string,"tier"?: string,"tier_points"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "challenge_awards_participant_id_fkey"
+      columns: ["participant_id"]
+isOneToOne: false
+      referencedRelation: "challenge_participants"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "challenge_awards_rule_version_fkey"
+      columns: ["rule_version"]
+isOneToOne: false
+      referencedRelation: "scoring_rule_versions"
+      referencedColumns: ["version"]
+    }
+                  ]
+                },"challenge_participants": {
+                  Row: {
+                    "accepted_workouts": number,"challenge_id": string,"evaluated_at": string | null,"home_timezone": string,"id": string,"joined_at": string,"squad_id": string | null,"tier": string | null,"user_id": string,"distance_m": Json,"week_ends_at": string,"week_start": string,"week_starts_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "accepted_workouts"?: number,"challenge_id": string,"evaluated_at"?: string | null,"home_timezone": string,"id"?: string,"joined_at": string,"squad_id"?: string | null,"tier"?: string | null,"user_id": string,"distance_m"?: Json,"week_ends_at": string,"week_start": string,"week_starts_at": string
+                  }
+                  Update: {
+                    "accepted_workouts"?: number,"challenge_id"?: string,"evaluated_at"?: string | null,"home_timezone"?: string,"id"?: string,"joined_at"?: string,"squad_id"?: string | null,"tier"?: string | null,"user_id"?: string,"distance_m"?: Json,"week_ends_at"?: string,"week_start"?: string,"week_starts_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "challenge_participants_challenge_id_fkey"
+      columns: ["challenge_id"]
+isOneToOne: false
+      referencedRelation: "challenges"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "challenge_participants_squad_id_fkey"
+      columns: ["squad_id"]
+isOneToOne: false
+      referencedRelation: "squads"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "challenge_participants_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"challenges": {
+                  Row: {
+                    "available_from": string,"available_until": string | null,"config": NonNullable<Json>,"created_at": string,"description": string,"id": string,"kind": string,"sort_order": number,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "available_from": string,"available_until"?: string | null,"config": NonNullable<Json>,"created_at"?: string,"description": string,"id": string,"kind": string,"sort_order"?: number,"title": string
+                  }
+                  Update: {
+                    "available_from"?: string,"available_until"?: string | null,"config"?: NonNullable<Json>,"created_at"?: string,"description"?: string,"id"?: string,"kind"?: string,"sort_order"?: number,"title"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"cities": {
                   Row: {
                     "country": string,"country_code": string,"id": number,"name": string,"population": number,"region": string | null,"search_name": string
                   }
@@ -179,14 +251,14 @@ isOneToOne: true
                   ]
                 },"squad_join_requests": {
                   Row: {
-                    "created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"squad_id": string,"status": string,"user_id": string
+                    "created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"note": string | null,"squad_id": string,"status": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"squad_id": string,"status"?: string,"user_id": string
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"note"?: string | null,"squad_id": string,"status"?: string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"squad_id"?: string,"status"?: string,"user_id"?: string
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"note"?: string | null,"squad_id"?: string,"status"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -540,6 +612,56 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"challenge_active_rule":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"challenge_evaluate":
+{ Args: { "target_date": string,"target_user": string }; Returns: undefined
+                           },
+"challenge_in_squad_at":
+{ Args: { "at": string,"target_squad": string,"target_user": string }; Returns: boolean
+                           },
+"challenge_join_at":
+{ Args: { "at": string,"target_challenge": string,"target_user": string,"which_week": string }; Returns: {
+              "accepted_workouts": number,
+"challenge_id": string,
+"evaluated_at": string | null,
+"home_timezone": string,
+"id": string,
+"joined_at": string,
+"squad_id": string | null,
+"tier": string | null,
+"user_id": string,
+"distance_m": Json,
+"week_ends_at": string,
+"week_start": string,
+"week_starts_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "challenge_participants"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"challenge_limits":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"challenge_progress":
+{ Args: { "goals": Json,"in_squad": string,"since": string,"target_user": string,"target_week": string }; Returns: {
+              "accepted_workouts": number,"distance_m": Json
+            }
+                           },
+"challenge_reconcile":
+{ Args: { "on_date": string,"target_user": string,"target_week": string }; Returns: undefined
+                           },
+"challenge_squad_status":
+{ Args: { "target_challenge": string,"target_squad": string,"target_week": string }; Returns: {
+              "qualified": number,"required": number,"roster": number
+            }
+                           },
+"challenge_week_start":
+{ Args: { "d": string }; Returns: string
+                           },
 "city_label":
 { Args: { "target": number }; Returns: string
                            },
@@ -624,6 +746,28 @@ isOneToOne: true
 "is_squad_member":
 { Args: { "target_squad": string }; Returns: boolean
                            },
+"join_challenge":
+{ Args: { "challenge": string,"week"?: string }; Returns: {
+              "accepted_workouts": number,
+"challenge_id": string,
+"evaluated_at": string | null,
+"home_timezone": string,
+"id": string,
+"joined_at": string,
+"squad_id": string | null,
+"tier": string | null,
+"user_id": string,
+"distance_m": Json,
+"week_ends_at": string,
+"week_start": string,
+"week_starts_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "challenge_participants"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "leave_squad":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -648,6 +792,11 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"my_challenges":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "accepted_workouts": number,"challenge_id": string,"config": Json,"description": string,"join_blocked": string,"join_closes_at": string,"joined": boolean,"joined_next_week": boolean,"kind": string,"points": number,"scoring_on": boolean,"squad_qualified": number,"squad_required": number,"squad_roster": number,"tier": string,"title": string,"distance_m": Json,"week_ends_at": string,"week_start": string
+            }[]
+                           },
 "my_season_points":
 { Args: { "season": number }; Returns: number
                            },
@@ -695,7 +844,7 @@ isOneToOne: true
 { Args: { "member_user": string }; Returns: undefined
                            },
 "request_to_join":
-{ Args: { "invite_code": string }; Returns: string
+{ Args: { "invite_code": string,"note"?: string }; Returns: string
                            },
 "require_user":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -757,6 +906,9 @@ isOneToOne: true
 "score_workout_day":
 { Args: { "target": string }; Returns: undefined
                            },
+"score_workouts_of_day":
+{ Args: { "target_date": string,"target_user": string }; Returns: undefined
+                           },
 "scoring_performance":
 { Args: { "active_seconds": number,"activity": string,"cfg": Json,"distance_m": number,"live_sets": number }; Returns: Record<string, unknown>
                            },
@@ -777,6 +929,11 @@ isOneToOne: true
 "squad_activity":
 { Args: { "days"?: number,"max_rows"?: number }; Returns: {
               "active_minutes": number,"activity": string,"display_name": string,"ended_at": string,"is_me": boolean,"local_date": string,"points": number,"session_id": string,"status": string,"user_id": string
+            }[]
+                           },
+"squad_join_request_details":
+{ Args: { "target_squad": string }; Returns: {
+              "city": string | null,"country": string | null,"display_name": string | null,"member_since": string,"note": string | null,"request_id": string,"requested_at": string,"season": number,"season_points": number,"season_workouts": number,"user_id": string
             }[]
                            },
 "squad_standings":
