@@ -11,7 +11,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `squads` | ✅ | Name, `city_id` (from `cities`, required when created) and its label `city`, description, created_by, archived_at (set when the last member leaves) | Signed-in read; writes via functions only |
 | `squad_members` | ✅ | Membership **history**: squad, user, role, joined_at, left_at, left_reason. One active squad per athlete, one captain per squad (unique indexes). Max six, enforced by locking the squad row on approval (race-tested) | Squadmates and self read; writes via functions only |
 | `squad_invite_codes` | ✅ | One 8-character code per squad (no look-alike characters); captain can regenerate | Active members read |
-| `squad_join_requests` | ✅ | pending → approved / declined / cancelled / expired. Max 3 pending per athlete; joining a squad cancels the others | Requester and captain read; writes via functions only |
+| `squad_join_requests` | ✅ | pending → approved / declined / cancelled / expired. Max 3 pending per athlete; joining a squad cancels the others. Optional `note` (≤ 280 characters) from the person asking, for the captain | Requester and captain read; writes via functions only |
 | `workout_sessions` | ✅ | Live session state machine (see architecture.md): activity, state, version, server `started_at`/`ended_at`, server-computed `active_seconds`, home time zone + scoring day + squad locked at start, `started_offline`. One open workout per athlete (partial unique index, race-tested); idempotent start on `client_session_id`; open > 12 h → `expired` | Owner reads; writes via functions only. Squad summary view comes with the feed |
 | `workout_session_events` | ✅ | Append-only start/pause/resume/finish/cancel/expire log: server time, client time, clamped `effective_at`, `offline` flag; unique per client event id | Owner reads; written by functions only |
 | `workout_route_points` | ✅ | Phone GPS fixes for a workout: time, latitude, longitude, accuracy, altitude, speed, `mocked` flag. One row per instant (re-sent batches add nothing). Only for run / walk / hike / ride | **Owner reads only** (precise location is never visible to anyone else); written by `add_route_points()` only |
@@ -36,7 +36,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 
 ## Squad functions (the app's API)
 
-`create_squad(name, city_id, description)` (max 3 per 30 days) · `preview_squad(code)` · `request_to_join(code)` ·
+`create_squad(name, city_id, description)` (max 3 per 30 days) · `preview_squad(code)` · `request_to_join(code, note?)` · `squad_join_request_details(squad)` (captain only: name, note, city, member since, this season's accepted workouts and points) ·
 `cancel_join_request(id)` · `decide_join_request(id, approve)` (captain) · `leave_squad()` ·
 `remove_squad_member(user)` (captain) · `transfer_captaincy(user)` (captain) · `regenerate_invite_code()` (captain).
 When a captain leaves, the longest-standing member becomes captain; when the last member leaves, the squad is

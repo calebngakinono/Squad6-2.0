@@ -251,14 +251,14 @@ isOneToOne: true
                   ]
                 },"squad_join_requests": {
                   Row: {
-                    "created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"squad_id": string,"status": string,"user_id": string
+                    "created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"note": string | null,"squad_id": string,"status": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"squad_id": string,"status"?: string,"user_id": string
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"note"?: string | null,"squad_id": string,"status"?: string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"squad_id"?: string,"status"?: string,"user_id"?: string
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"note"?: string | null,"squad_id"?: string,"status"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -844,7 +844,7 @@ isOneToOne: true
 { Args: { "member_user": string }; Returns: undefined
                            },
 "request_to_join":
-{ Args: { "invite_code": string }; Returns: string
+{ Args: { "invite_code": string,"note"?: string }; Returns: string
                            },
 "require_user":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -929,6 +929,11 @@ isOneToOne: true
 "squad_activity":
 { Args: { "days"?: number,"max_rows"?: number }; Returns: {
               "active_minutes": number,"activity": string,"display_name": string,"ended_at": string,"is_me": boolean,"local_date": string,"points": number,"session_id": string,"status": string,"user_id": string
+            }[]
+                           },
+"squad_join_request_details":
+{ Args: { "target_squad": string }; Returns: {
+              "city": string | null,"country": string | null,"display_name": string | null,"member_since": string,"note": string | null,"request_id": string,"requested_at": string,"season": number,"season_points": number,"season_workouts": number,"user_id": string
             }[]
                            },
 "squad_standings":

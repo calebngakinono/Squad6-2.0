@@ -5,6 +5,7 @@ import { T } from "@/components/screen-text";
 import { space } from "@/theme/tokens";
 import type { MySquad } from "./api";
 import { inviteLink } from "./errors";
+import { requestMemberSince, requestPlace, requestSeason } from "./request-view";
 
 type Props = {
   squad: MySquad;
@@ -56,7 +57,16 @@ export function SquadPanel({ squad, myUserId, busy, act, actions }: Props) {
           <T variant="label">Waiting to join ({squad.requests.length})</T>
           {squad.requests.map((r) => (
             <View key={r.id} style={styles.row}>
-              <T style={styles.grow}>{displayName(r.name)}</T>
+              <View style={styles.requestInfo}>
+                <T variant="label">{displayName(r.name)}</T>
+                <T variant="small" tone="textMuted">
+                  {requestPlace(r)} · {requestMemberSince(r)}
+                </T>
+                <T variant="small" tone="textMuted">
+                  {requestSeason(r)}
+                </T>
+                {r.note ? <T accessibilityLabel={`Their message: ${r.note}`}>{`“${r.note}”`}</T> : null}
+              </View>
               <View style={styles.rowActions}>
                 <Button label="Decline" variant="secondary" disabled={busy} onPress={() => act(() => actions.decide(r.id, false))} />
                 <Button
@@ -156,7 +166,7 @@ const styles = StyleSheet.create({
   stack: { gap: space.lg },
   header: { gap: space.xs },
   row: { gap: space.sm },
-  grow: { flexShrink: 1 },
+  requestInfo: { gap: space.xs },
   rowActions: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
   member: { gap: space.sm },
 });

@@ -1,9 +1,24 @@
+import { joinRequestDetailSchema, joinRequestInputSchema } from "@squad-six/shared";
+
 import { supabase } from "@/lib/supabase";
 
 // Reads use RLS-filtered tables; every change goes through a database function (the server enforces rules).
 
 export type Member = { userId: string; name: string | null; role: "captain" | "member"; joinedAt: string };
-export type JoinRequest = { id: string; userId: string; name: string | null; createdAt: string };
+/** A pending request as the captain sees it. Season figures are the server's records. */
+export type JoinRequest = {
+  id: string;
+  userId: string;
+  name: string | null;
+  createdAt: string;
+  note: string | null;
+  city: string | null;
+  country: string | null;
+  memberSince: string;
+  season: number;
+  seasonWorkouts: number;
+  seasonPoints: number;
+};
 export type MySquad = {
   id: string;
   name: string;
@@ -67,19 +82,14 @@ export async function loadSquadHome(userId: string): Promise<SquadHome> {
       .order("joined_at"),
     supabase.from("squad_invite_codes").select("code").eq("squad_id", squadId).maybeSingle(),
     isCaptain
-      ? supabase
-          .from("squad_join_requests")
-          .select("id, user_id, created_at")
-          .eq("squad_id", squadId)
-          .eq("status", "pending")
-          .order("created_at")
+      ? supabase.rpc("squad_join_request_details", { target_squad: squadId })
       : Promise.resolve({ data: [], error: null }),
   ]);
   for (const r of [squadRes, membersRes, codeRes, reqRes]) if (r.error) throw r.error;
 
   const memberRows = membersRes.data ?? [];
-  const requestRows = reqRes.data ?? [];
-  const nameMap = await names([...memberRows.map((m) => m.user_id), ...requestRows.map((r) => r.user_id)]);
+  const requestRows = joinRequestDetailSchema.array().parse(reqRes.data ?? []);
+  const nameMap = await names(memberRows.map((m) => m.user_id));
 
   return {
     kind: "in-squad",
@@ -97,10 +107,17 @@ export async function loadSquadHome(userId: string): Promise<SquadHome> {
         joinedAt: m.joined_at,
       })),
       requests: requestRows.map((r) => ({
-        id: r.id,
+        id: r.request_id,
         userId: r.user_id,
-        name: nameMap.get(r.user_id) ?? null,
-        createdAt: r.created_at,
+        name: r.display_name,
+        createdAt: r.requested_at,
+        note: r.note,
+        city: r.city,
+        country: r.country,
+        memberSince: r.member_since,
+        season: r.season,
+        seasonWorkouts: r.season_workouts,
+        seasonPoints: r.season_points,
       })),
     },
   };
@@ -116,7 +133,9 @@ export const squadApi = {
   create: (name: string, cityId: number, description: string) =>
     call(supabase.rpc("create_squad", { squad_name: name, squad_city_id: cityId, squad_description: description })),
   preview: async (code: string) => (await call(supabase.rpc("preview_squad", { invite_code: code })))?.[0] ?? null,
-  requestToJoin: (code: string) => call(supabase.rpc("request_to_join", { invite_code: code })),
+  /** Ask to join with an optional note for the captain (validated before it is sent). */
+  requestToJoin: (code: string, note?: string) =>
+    call(supabase.rpc("request_to_join", joinRequestInputSchema.parse({ invite_code: code, note }))),
   cancelRequest: (id: string) => call(supabase.rpc("cancel_join_request", { request_id: id })),
   decide: (id: string, approve: boolean) => call(supabase.rpc("decide_join_request", { request_id: id, approve })),
   leave: () => call(supabase.rpc("leave_squad")),
