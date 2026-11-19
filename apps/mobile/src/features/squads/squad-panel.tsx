@@ -10,6 +10,7 @@ import { SectionHeader } from "@/components/section-header";
 import { layout, space } from "@/theme/tokens";
 import type { Member, MySquad } from "./api";
 import { inviteLink } from "./errors";
+import { requestMemberSince, requestPlace, requestSeason } from "./request-view";
 
 type Props = {
   squad: MySquad;
@@ -84,7 +85,16 @@ export function SquadPanel({ squad, myUserId, busy, act, actions }: Props) {
           <Card>
             {squad.requests.map((r) => (
               <View key={r.id} style={styles.request}>
-                <T variant="label">{displayName(r.name)}</T>
+                <View style={styles.requestInfo}>
+                  <T variant="label">{displayName(r.name)}</T>
+                  <T variant="small" tone="textMuted">
+                    {requestPlace(r)} · {requestMemberSince(r)}
+                  </T>
+                  <T variant="small" tone="textMuted">
+                    {requestSeason(r)}
+                  </T>
+                  {r.note ? <T accessibilityLabel={`Their message: ${r.note}`}>{`“${r.note}”`}</T> : null}
+                </View>
                 <ButtonRow>
                   <Button
                     label="Decline"
@@ -184,6 +194,7 @@ const styles = StyleSheet.create({
   stack: { gap: space.xl },
   section: { gap: layout.headingGap },
   request: { gap: space.sm },
+  requestInfo: { gap: space.xxs },
   badges: { flexDirection: "row", gap: space.xs },
   code: { gap: space.xxs },
 });

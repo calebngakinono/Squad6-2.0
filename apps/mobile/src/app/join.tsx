@@ -9,6 +9,7 @@ import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { TextField } from "@/components/text-field";
+import { JOIN_NOTE_MAX } from "@squad-six/shared";
 import { squadApi } from "@/features/squads/api";
 import { normalizeInviteCode, squadErrorMessage } from "@/features/squads/errors";
 import { space } from "@/theme/tokens";
@@ -20,6 +21,7 @@ export default function JoinScreen() {
   const params = useLocalSearchParams<{ code?: string }>();
   const [input, setInput] = useState(params.code ?? "");
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [note, setNote] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export default function JoinScreen() {
     setBusy(true);
     setError(null);
     try {
-      await squadApi.requestToJoin(code);
+      await squadApi.requestToJoin(code, note);
       setSent(true);
     } catch (e) {
       setError(squadErrorMessage(e as { message?: string }));
@@ -118,6 +120,18 @@ export default function JoinScreen() {
               </T>
               {preview.is_full && <T tone="textMuted">This squad is full, so it can&apos;t take new members right now.</T>}
             </Card>
+          )}
+
+          {preview && !preview.is_full && (
+            <TextField
+              label="Message to the captain (optional)"
+              helper={`The captain sees this with your name, city, and this season's workouts and points. ${note.length}/${JOIN_NOTE_MAX}`}
+              value={note}
+              onChangeText={setNote}
+              multiline
+              maxLength={JOIN_NOTE_MAX}
+              placeholder="e.g. I run 3 times a week, mostly mornings."
+            />
           )}
 
           {error && <Notice message={error} />}

@@ -5,6 +5,7 @@ const MESSAGES: Record<string, string> = {
   invalid_invite_code: "That code doesn't match an active squad. Check it and try again.",
   squad_full: "This squad already has six members.",
   too_many_pending_requests: "You have 3 requests waiting. Cancel one before asking another squad.",
+  note_too_long: "Keep your message to 280 characters.",
   request_not_found: "That request is no longer available.",
   request_already_decided: "That request was already handled.",
   requester_in_other_squad: "They've already joined another squad.",

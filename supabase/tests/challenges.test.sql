@@ -1,5 +1,5 @@
 begin;
-select plan(60);
+select plan(64);
 
 -- Official challenges (supabase/migrations/*_challenges.sql, docs/scoring-proposal.md §5).
 -- Week under test: Monday 2026-06-01 to Sunday 2026-06-07, athletes in UTC unless stated.
@@ -7,7 +7,7 @@ select plan(60);
 -- athlete's day is scored with score_day(), which is what the app's finish path runs.
 
 insert into auth.users (id, email)
-select ('00000000-0000-0000-0000-0000000000' || lpad(n::text, 2, '0'))::uuid, 'u' || n || '@example.com' from generate_series(1, 26) n;
+select ('00000000-0000-0000-0000-0000000000' || lpad(n::text, 2, '0'))::uuid, 'u' || n || '@example.com' from generate_series(1, 29) n;
 update public.profile_private set home_timezone = 'UTC';
 update public.profile_private set home_timezone = 'America/Denver' where user_id = '00000000-0000-0000-0000-000000000026';
 
@@ -85,7 +85,7 @@ select is(pg_temp.cpoints(1), 80, 'silver tops up to 80, not 40 + 80');
 select pg_temp.workout(1, 5, 5);
 select is(pg_temp.tier(1), 'gold', '25 km of GPS run distance: gold');
 select is(pg_temp.cpoints(1), 120, 'gold tops up to 120');
-select is((select validated_distance_m::int from public.challenge_participants where user_id = pg_temp.uid(1)), 25000, 'validated distance is stored');
+select is((select (distance_m ->> 'run')::int from public.challenge_participants where user_id = pg_temp.uid(1)), 25000, 'validated running distance is stored');
 select is(
   (select string_agg(c.challenge_id || '/' || a.tier || '/' || l.rule_version || '/' || l.kind || ':' || l.points, ', ' order by l.id)
    from public.points_ledger l join public.challenge_awards a on a.id = l.source_id join public.challenge_participants c on c.id = a.participant_id
@@ -119,8 +119,21 @@ select is((select string_agg(kind || ':' || points, ',') from public.points_ledg
 select pg_temp.join(3, 'weekly-tiers-v1');
 select pg_temp.workout(3, d, null, 40, null, 'walk', 10) from generate_series(0, 2) d;
 select is(pg_temp.tier(3), 'bronze', 'three accepted walks with step evidence: bronze');
-select is((select validated_distance_m::int from public.challenge_participants where user_id = pg_temp.uid(3)), 0,
+select is((select (distance_m ->> 'walk_hike')::int from public.challenge_participants where user_id = pg_temp.uid(3)), 0,
   '30 km of hand-entered distance counts for nothing');
+
+-- Gold for walking and hiking needs 40 km (Caleb, 2026-11-18), and goals don't mix.
+select pg_temp.join(27, 'weekly-tiers-v1');
+select pg_temp.workout(27, d, 10, 120, null, 'walk') from generate_series(0, 2) d;
+select is(pg_temp.tier(27), 'bronze', '30 km of GPS walking: bronze, not gold (walking needs 40 km)');
+select is((select (distance_m ->> 'walk_hike')::int from public.challenge_participants where user_id = pg_temp.uid(27)), 30000,
+  'walking distance is stored under walk_hike');
+select pg_temp.join(28, 'weekly-tiers-v1');
+select pg_temp.workout(28, 0, 20, 300, null, 'hike'), pg_temp.workout(28, 1, 20, 300, null, 'walk');
+select is(pg_temp.tier(28), 'gold', '20 km hiking + 20 km walking = 40 km: gold');
+select pg_temp.join(29, 'weekly-tiers-v1');
+select pg_temp.workout(29, 0, 15, 90, null, 'run'), pg_temp.workout(29, 1, 24, 300, null, 'walk');
+select is(pg_temp.tier(29), 'none', '15 km running + 24 km walking: neither goal met, so no gold');
 
 -- No retroactive workouts: only workouts started after joining.
 select pg_temp.workout(4, 0);                                -- Monday 07:00, before joining
@@ -147,7 +160,7 @@ select throws_ok($$select public.challenge_join_at(pg_temp.uid(5), 'weekly-tiers
 -- At most 3 official challenges per athlete per week. (Test-only templates, not running in later weeks.)
 insert into public.challenges (id, kind, title, description, config, available_from, available_until, sort_order)
 select 'test-' || x, 'individual_tiered', 'Test ' || x, 'Test only',
-       '{"distance_activities": [], "tiers": [{"tier": "big", "points": 200, "measure": "accepted_workouts", "target": 3}]}',
+       '{"distance_goals": [], "tiers": [{"tier": "big", "points": 200, "measure": "accepted_workouts", "target": 3}]}',
        '2026-06-01', '2026-06-01', 0
 from unnest(array['big', 'c', 'd']) x;
 select pg_temp.join(7, 'weekly-tiers-v1'), pg_temp.join(7, 'test-big'), pg_temp.join(7, 'test-c');

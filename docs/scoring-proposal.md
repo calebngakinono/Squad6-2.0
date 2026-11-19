@@ -185,7 +185,7 @@ locked (versioned) once they start. Pro "custom squad challenges" are for fun an
 
 | Type | Example | Award (proposed) |
 |---|---|---|
-| Individual tiered (weekly) | Bronze: 3 accepted workouts · Silver: 5 · Gold: 25 km validated run/walk distance | 40 / 80 / 120 (highest tier only) |
+| Individual tiered (weekly) | Bronze: 3 accepted workouts · Silver: 5 · Gold: 25 km validated running, or 40 km validated walking and hiking (Caleb, 2026-11-18) | 40 / 80 / 120 (highest tier only) |
 | Activity-specific | Weekend distance, strength-set totals | Same tier scale |
 | Squad participation (weekly) | At least ⅔ of members (rounded up) each complete 3 accepted workouts | 60 per participating member |
 | Squad collective | Squad total of 150 validated km in a week | 60 per contributing member |
@@ -312,7 +312,7 @@ app screen `apps/mobile/src/app/challenges.tsx`. Values are exactly the approved
 
 | Challenge | Rule | Award |
 |---|---|---|
-| **Weekly tiers** (`weekly-tiers-v1`) | Bronze 3 accepted workouts · Silver 5 · Gold 25 km of validated run/walk distance | 40 / 80 / 120, highest tier only (a higher tier tops up to its value) |
+| **Weekly tiers** (`weekly-tiers-v1`) | Bronze 3 accepted workouts · Silver 5 · Gold: run 25 km, or walk and hike 40 km (validated; each goal on its own, no mixing; Caleb, 2026-11-18) | 40 / 80 / 120, highest tier only (a higher tier tops up to its value) |
 | **Squad week** (`squad-week-v1`) | ⅔ (rounded up) of the members who were in the squad when the week started each do 3 accepted workouts in the squad | 60 to each member who did |
 
 **How it works (plain terms):**
@@ -337,6 +337,10 @@ app screen `apps/mobile/src/app/challenges.tsx`. Values are exactly the approved
   challenges an athlete can earn at most 180, so the cap matters once more challenge types exist.
 - **Scoring off = nothing awarded.** With no active rule version, challenges record no tier and pay nothing.
 
+**Confirmed by Caleb (2026-11-18):** challenges count the athlete's regular workouts (no extra workouts), joining
+is a Join button, and the squad roster is locked when the week starts. Gold is 25 km of running, or 40 km of
+walking and hiking; the two goals are separate (15 km running plus 24 km walking is not gold).
+
 **Decisions made while building (easy to change):**
 
 - The squad roster is locked when the week starts: someone who joins mid-week isn't counted and can't take part
@@ -344,7 +348,6 @@ app screen `apps/mobile/src/app/challenges.tsx`. Values are exactly the approved
 - Changing squads mid-week forfeits the rest of that week's squad challenge (workouts after the switch belong to
   the new squad); what was already completed stays.
 - A squad challenge needs a roster of at least 2 (`min_roster` in the config); a one-person squad can't earn it.
-- Gold counts run and walk only (not hike), as written in §5.
 
 **Deferred:** activity-specific challenges, squad collective km, seasonal/monthly events, ranked city events, Pro
 custom challenges, leaving a challenge, a past-weeks challenge history screen, notifications.

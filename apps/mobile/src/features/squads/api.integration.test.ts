@@ -46,14 +46,14 @@ describe.skipIf(!isLocal)("squad API against local Supabase", () => {
     current.client = athlete.client;
     await api.squadApi.setDisplayName(athlete.id, "Ath");
     expect(await api.squadApi.preview(code.toLowerCase())).toMatchObject({ name: "Integration Squad", member_count: 1 });
-    await api.squadApi.requestToJoin(code);
+    await api.squadApi.requestToJoin(code, "  I run three times a week.  ");
     const waiting = await api.loadSquadHome(athlete.id);
     expect(waiting).toMatchObject({ kind: "no-squad", pending: [{ squadName: "Integration Squad", city: "Denver, Colorado" }] });
 
     current.client = captain.client;
     const withRequest = await api.loadSquadHome(captain.id);
     const request = withRequest.kind === "in-squad" ? withRequest.squad.requests[0] : undefined;
-    expect(request).toMatchObject({ name: "Ath" });
+    expect(request).toMatchObject({ name: "Ath", note: "I run three times a week.", seasonWorkouts: 0, seasonPoints: 0 });
     await api.squadApi.decide(request!.id, true);
 
     current.client = athlete.client;

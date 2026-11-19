@@ -9,3 +9,4 @@ export * from "./standings";
 export * from "./cities";
 export * from "./activity";
 export * from "./challenges";
+export * from "./squads";
