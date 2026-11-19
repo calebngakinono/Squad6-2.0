@@ -13,6 +13,7 @@ import { Stat } from "@/components/stat";
 import { joinChallenge, loadMyChallenges } from "@/features/challenges/api";
 import {
   formatKm,
+  goalLabel,
   joinAction,
   joinErrorMessage,
   joinNote,
@@ -152,7 +153,7 @@ function ChallengeCard({
               <ListRow
                 key={t.tier}
                 title={tierLabel(t.tier)}
-                subtitle={tierGoal(t, c.config.distance_activities)}
+                subtitle={tierGoal(t, c.config.distance_goals)}
                 value={`${t.points} pts`}
                 highlighted={reached}
                 trailing={reached ? <Badge label="Reached" tone="success" /> : undefined}
@@ -172,11 +173,18 @@ function ChallengeCard({
               source="Scored by Squad Six"
             />
           </View>
-          {c.kind === "individual_tiered" ? (
-            <View style={styles.stat}>
-              <Stat value={formatKm(c.validated_distance_m)} unit="km" label="Run and walk" source="GPS or health app" />
-            </View>
-          ) : null}
+          {c.kind === "individual_tiered"
+            ? c.config.distance_goals.map((g) => (
+                <View key={g.key} style={styles.stat}>
+                  <Stat
+                    value={formatKm(c.distance_m[g.key] ?? 0)}
+                    unit={`of ${formatKm(g.target).replace(/\.0$/, "")} km`}
+                    label={goalLabel(g)}
+                    source="GPS or health app"
+                  />
+                </View>
+              ))
+            : null}
           <View style={styles.stat}>
             <Stat value={formatPoints(c.points)} unit="pts" label="Earned" source="Awarded by Squad Six" />
           </View>

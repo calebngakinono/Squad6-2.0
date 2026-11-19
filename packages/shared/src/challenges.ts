@@ -13,16 +13,24 @@ export const joinChallengeInputSchema = z.object({
 });
 export type JoinChallengeInput = z.infer<typeof joinChallengeInputSchema>;
 
-export const challengeTierSchema = z.object({
-  tier: z.string(),
-  points: z.number().int(),
-  measure: z.enum(["accepted_workouts", "validated_distance_m"]),
-  target: z.number(),
-});
+export const challengeTierSchema = z.discriminatedUnion("measure", [
+  z.object({ tier: z.string(), points: z.number().int(), measure: z.literal("accepted_workouts"), target: z.number() }),
+  /** Met when any one distance goal is met on its own (goals don't mix). */
+  z.object({ tier: z.string(), points: z.number().int(), measure: z.literal("distance_goal") }),
+]);
 export type ChallengeTier = z.infer<typeof challengeTierSchema>;
 
+/** A distance target for some activities, e.g. run 25 km, or walk and hike 40 km. */
+export const distanceGoalSchema = z.object({
+  key: z.string(),
+  activities: z.array(z.string()).min(1),
+  /** Metres. */
+  target: z.number().positive(),
+});
+export type DistanceGoal = z.infer<typeof distanceGoalSchema>;
+
 export const individualChallengeConfigSchema = z.object({
-  distance_activities: z.array(z.string()),
+  distance_goals: z.array(distanceGoalSchema),
   tiers: z.array(challengeTierSchema).min(1),
 });
 
@@ -47,7 +55,8 @@ const baseRow = {
   join_blocked: z.enum(["join_window_closed", "too_many_challenges", "not_in_squad", "joined_squad_mid_week"]).nullable(),
   joined_next_week: z.boolean(),
   accepted_workouts: z.number().int(),
-  validated_distance_m: z.number(),
+  /** Validated metres per distance goal key, as the server last computed them. */
+  distance_m: z.record(z.string(), z.number()),
   /** Highest tier reached this week, as the server last computed it. */
   tier: z.string().nullable(),
   /** Points actually paid for this challenge this week (from the ledger, after the weekly cap). */

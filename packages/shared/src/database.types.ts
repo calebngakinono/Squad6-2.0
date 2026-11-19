@@ -51,14 +51,14 @@ isOneToOne: false
                   ]
                 },"challenge_participants": {
                   Row: {
-                    "accepted_workouts": number,"challenge_id": string,"evaluated_at": string | null,"home_timezone": string,"id": string,"joined_at": string,"squad_id": string | null,"tier": string | null,"user_id": string,"validated_distance_m": number,"week_ends_at": string,"week_start": string,"week_starts_at": string
+                    "accepted_workouts": number,"challenge_id": string,"evaluated_at": string | null,"home_timezone": string,"id": string,"joined_at": string,"squad_id": string | null,"tier": string | null,"user_id": string,"distance_m": Json,"week_ends_at": string,"week_start": string,"week_starts_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "accepted_workouts"?: number,"challenge_id": string,"evaluated_at"?: string | null,"home_timezone": string,"id"?: string,"joined_at": string,"squad_id"?: string | null,"tier"?: string | null,"user_id": string,"validated_distance_m"?: number,"week_ends_at": string,"week_start": string,"week_starts_at": string
+                    "accepted_workouts"?: number,"challenge_id": string,"evaluated_at"?: string | null,"home_timezone": string,"id"?: string,"joined_at": string,"squad_id"?: string | null,"tier"?: string | null,"user_id": string,"distance_m"?: Json,"week_ends_at": string,"week_start": string,"week_starts_at": string
                   }
                   Update: {
-                    "accepted_workouts"?: number,"challenge_id"?: string,"evaluated_at"?: string | null,"home_timezone"?: string,"id"?: string,"joined_at"?: string,"squad_id"?: string | null,"tier"?: string | null,"user_id"?: string,"validated_distance_m"?: number,"week_ends_at"?: string,"week_start"?: string,"week_starts_at"?: string
+                    "accepted_workouts"?: number,"challenge_id"?: string,"evaluated_at"?: string | null,"home_timezone"?: string,"id"?: string,"joined_at"?: string,"squad_id"?: string | null,"tier"?: string | null,"user_id"?: string,"distance_m"?: Json,"week_ends_at"?: string,"week_start"?: string,"week_starts_at"?: string
                   }
                   Relationships: [
                     {
@@ -632,7 +632,7 @@ isOneToOne: true
 "squad_id": string | null,
 "tier": string | null,
 "user_id": string,
-"validated_distance_m": number,
+"distance_m": Json,
 "week_ends_at": string,
 "week_start": string,
 "week_starts_at": string
@@ -647,8 +647,8 @@ isOneToOne: true
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
 "challenge_progress":
-{ Args: { "activities": string[],"in_squad": string,"since": string,"target_user": string,"target_week": string }; Returns: {
-              "accepted_workouts": number,"validated_distance_m": number
+{ Args: { "goals": Json,"in_squad": string,"since": string,"target_user": string,"target_week": string }; Returns: {
+              "accepted_workouts": number,"distance_m": Json
             }
                            },
 "challenge_reconcile":
@@ -757,7 +757,7 @@ isOneToOne: true
 "squad_id": string | null,
 "tier": string | null,
 "user_id": string,
-"validated_distance_m": number,
+"distance_m": Json,
 "week_ends_at": string,
 "week_start": string,
 "week_starts_at": string
@@ -794,7 +794,7 @@ isOneToOne: true
       } },
 "my_challenges":
 { Args: Record<PropertyKey, never>; Returns: {
-              "accepted_workouts": number,"challenge_id": string,"config": Json,"description": string,"join_blocked": string,"join_closes_at": string,"joined": boolean,"joined_next_week": boolean,"kind": string,"points": number,"scoring_on": boolean,"squad_qualified": number,"squad_required": number,"squad_roster": number,"tier": string,"title": string,"validated_distance_m": number,"week_ends_at": string,"week_start": string
+              "accepted_workouts": number,"challenge_id": string,"config": Json,"description": string,"join_blocked": string,"join_closes_at": string,"joined": boolean,"joined_next_week": boolean,"kind": string,"points": number,"scoring_on": boolean,"squad_qualified": number,"squad_required": number,"squad_roster": number,"tier": string,"title": string,"distance_m": Json,"week_ends_at": string,"week_start": string
             }[]
                            },
 "my_season_points":

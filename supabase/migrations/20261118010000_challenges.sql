@@ -1,7 +1,8 @@
 -- Official challenges, core MVP types (docs/scoring-proposal.md §5, approved by Caleb on 2026-11-10).
 --
 --   Weekly tiers (individual): Bronze 3 accepted workouts (40) · Silver 5 accepted workouts (80) ·
---                              Gold 25 km of validated run/walk distance (120). Highest tier only.
+--                              Gold: 25 km of validated running, or 40 km of validated walking and hiking
+--                              (120; Caleb, 2026-11-18). Highest tier only.
 --   Squad week (squad):        at least 2/3 (rounded up) of the members who were in the squad when the
 --                              week started each complete 3 accepted workouts → 60 per member who did.
 --
@@ -66,7 +67,8 @@ create table public.challenge_participants (
   squad_id uuid references public.squads (id) on delete set null,
   -- Progress (server-written only).
   accepted_workouts int not null default 0,
-  validated_distance_m numeric not null default 0,
+  -- Validated distance in metres per distance goal, e.g. {"run": 12000, "walk_hike": 31000}.
+  distance_m jsonb not null default '{}'::jsonb,
   tier text,
   evaluated_at timestamptz,
   unique (challenge_id, user_id, week_start),
@@ -138,13 +140,16 @@ create trigger challenges_locked
 insert into public.challenges (id, kind, title, description, config, available_from, sort_order) values
 (
   'weekly-tiers-v1', 'individual_tiered', 'Weekly tiers',
-  'Bronze: 3 accepted workouts. Silver: 5 accepted workouts. Gold: 25 km of run or walk distance measured by GPS or a health app. You earn your highest tier only.',
+  'Bronze: 3 accepted workouts. Silver: 5 accepted workouts. Gold: run 25 km, or walk and hike 40 km, measured by GPS or a health app. You earn your highest tier only.',
   '{
-    "distance_activities": ["run", "walk"],
+    "distance_goals": [
+      {"key": "run", "activities": ["run"], "target": 25000},
+      {"key": "walk_hike", "activities": ["walk", "hike"], "target": 40000}
+    ],
     "tiers": [
       {"tier": "bronze", "points": 40, "measure": "accepted_workouts", "target": 3},
       {"tier": "silver", "points": 80, "measure": "accepted_workouts", "target": 5},
-      {"tier": "gold", "points": 120, "measure": "validated_distance_m", "target": 25000}
+      {"tier": "gold", "points": 120, "measure": "distance_goal"}
     ]
   }',
   '2025-12-29', 1
@@ -186,26 +191,32 @@ as $$
 $$;
 
 -- What counts for an athlete in a week: accepted workouts that started after they joined (and, for a
--- squad challenge, were done in that squad), and the validated distance of the listed activities.
+-- squad challenge, were done in that squad), and for each distance goal ({"key", "activities"}) the
+-- validated distance of its activities. Manual distance never counts.
 create function public.challenge_progress(target_user uuid, target_week date, since timestamptz, in_squad uuid,
-                                          activities text[], out accepted_workouts int, out validated_distance_m numeric)
+                                          goals jsonb, out accepted_workouts int, out distance_m jsonb)
 language sql
 stable
 set search_path = ''
 as $$
-  select count(*)::int,
-         coalesce(sum(case
-           when w.activity = any (activities)
-            and ws.categories && array['location', 'platform_record']
-            and ws.detail ->> 'distance_source' in ('gps', 'healthkit', 'health_connect')
-           then (ws.detail ->> 'distance_m')::numeric end), 0)
-  from public.workout_sessions w
-  join public.workout_scores ws on ws.session_id = w.id
-  where w.user_id = target_user
-    and w.local_date between target_week and target_week + 6
-    and w.started_at >= since
-    and ws.status = 'accepted'
-    and (in_squad is null or w.squad_id = in_squad)
+  with counted as (
+    select w.activity,
+           case when ws.categories && array['location', 'platform_record']
+                 and ws.detail ->> 'distance_source' in ('gps', 'healthkit', 'health_connect')
+                then (ws.detail ->> 'distance_m')::numeric end as validated_m
+    from public.workout_sessions w
+    join public.workout_scores ws on ws.session_id = w.id
+    where w.user_id = target_user
+      and w.local_date between target_week and target_week + 6
+      and w.started_at >= since
+      and ws.status = 'accepted'
+      and (in_squad is null or w.squad_id = in_squad)
+  )
+  select (select count(*)::int from counted),
+         coalesce((select jsonb_object_agg(g ->> 'key',
+                     (select coalesce(sum(c.validated_m), 0) from counted c
+                      where c.activity = any (array(select jsonb_array_elements_text(g -> 'activities')))))
+                   from jsonb_array_elements(coalesce(goals, '[]'::jsonb)) g), '{}'::jsonb)
 $$;
 
 -- Was the athlete a member of the squad at that moment?
@@ -251,7 +262,7 @@ begin
     from public.challenge_participants p
     where p.challenge_id = target_challenge and p.squad_id = target_squad and p.week_start = target_week
       and public.challenge_in_squad_at(p.user_id, p.squad_id, p.week_starts_at)
-      and (select x.accepted_workouts from public.challenge_progress(p.user_id, p.week_start, p.joined_at, p.squad_id, '{}') x)
+      and (select x.accepted_workouts from public.challenge_progress(p.user_id, p.week_start, p.joined_at, p.squad_id, '[]'::jsonb) x)
           >= (cfg ->> 'workouts_each')::int;
 end;
 $$;
@@ -276,8 +287,8 @@ declare
   cfg jsonb;
   t jsonb;
   done_workouts int;
-  done_m numeric;
-  measured numeric;
+  done_m jsonb;
+  met boolean;
   sq record;
   reached text;
   reached_points int;
@@ -307,20 +318,24 @@ begin
     reached_points := 0;
 
     if p.kind = 'individual_tiered' then
-      select x.accepted_workouts, x.validated_distance_m into done_workouts, done_m
-        from public.challenge_progress(p.user_id, p.week_start, p.joined_at, null,
-               array(select jsonb_array_elements_text(cfg -> 'distance_activities'))) x;
+      select x.accepted_workouts, x.distance_m into done_workouts, done_m
+        from public.challenge_progress(p.user_id, p.week_start, p.joined_at, null, cfg -> 'distance_goals') x;
       for t in select * from jsonb_array_elements(cfg -> 'tiers') loop
-        measured := case t ->> 'measure' when 'accepted_workouts' then done_workouts::numeric
-                                      when 'validated_distance_m' then done_m end;
-        if measured >= (t ->> 'target')::numeric and (t ->> 'points')::int > reached_points then
+        -- 'distance_goal' is met when any one goal is met on its own (no mixing of activities).
+        met := case t ->> 'measure'
+          when 'accepted_workouts' then done_workouts >= (t ->> 'target')::int
+          when 'distance_goal' then exists (
+            select 1 from jsonb_array_elements(coalesce(cfg -> 'distance_goals', '[]'::jsonb)) g
+            where coalesce((done_m ->> (g ->> 'key'))::numeric, 0) >= (g ->> 'target')::numeric)
+          else false end;
+        if met and (t ->> 'points')::int > reached_points then
           reached := t ->> 'tier';
           reached_points := (t ->> 'points')::int;
         end if;
       end loop;
     else -- squad_participation
-      select x.accepted_workouts, x.validated_distance_m into done_workouts, done_m
-        from public.challenge_progress(p.user_id, p.week_start, p.joined_at, p.squad_id, '{}') x;
+      select x.accepted_workouts, x.distance_m into done_workouts, done_m
+        from public.challenge_progress(p.user_id, p.week_start, p.joined_at, p.squad_id, '[]'::jsonb) x;
       if p.squad_id is not null then
         select * into sq from public.challenge_squad_status(p.challenge_id, p.squad_id, p.week_start);
         if done_workouts >= (cfg ->> 'workouts_each')::int
@@ -338,7 +353,7 @@ begin
     room := room - deserved;
 
     update public.challenge_participants set
-      accepted_workouts = done_workouts, validated_distance_m = coalesce(done_m, 0), tier = reached, evaluated_at = now()
+      accepted_workouts = done_workouts, distance_m = coalesce(done_m, '{}'::jsonb), tier = reached, evaluated_at = now()
     where id = p.id;
 
     if reached is not null then
@@ -557,7 +572,7 @@ returns table (
   join_blocked text,
   joined_next_week boolean,
   accepted_workouts int,
-  validated_distance_m numeric,
+  distance_m jsonb,
   tier text,
   points int,
   squad_roster int,
@@ -634,7 +649,7 @@ begin
     joined_next_week := exists (select 1 from public.challenge_participants x
                                 where x.challenge_id = c.id and x.user_id = uid and x.week_start = wk + 7);
     accepted_workouts := coalesce(p.accepted_workouts, 0);
-    validated_distance_m := coalesce(p.validated_distance_m, 0);
+    distance_m := coalesce(p.distance_m, '{}'::jsonb);
     tier := p.tier;
     points := (select coalesce(sum(l.points), 0)::int from public.points_ledger l
                join public.challenge_awards a on a.id = l.source_id
@@ -655,7 +670,7 @@ revoke all on function
   public.challenge_limits(),
   public.challenge_week_start(date),
   public.challenge_active_rule(),
-  public.challenge_progress(uuid, date, timestamptz, uuid, text[]),
+  public.challenge_progress(uuid, date, timestamptz, uuid, jsonb),
   public.challenge_in_squad_at(uuid, uuid, timestamptz),
   public.challenge_squad_status(text, uuid, date),
   public.challenge_reconcile(uuid, date, date),
