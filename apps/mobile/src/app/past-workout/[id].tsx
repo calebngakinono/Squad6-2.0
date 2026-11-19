@@ -75,7 +75,7 @@ export default function PastWorkoutScreen() {
               <T tone="textMuted">
                 {loaded.workout.state === "expired"
                   ? "This workout was left running for more than 12 hours, so it was closed and not scored."
-                  : "Not scored. Points are calculated by the server once scoring is switched on."}
+                  : "Not scored yet. Points show here once it's scored."}
               </T>
             </Card>
           )}

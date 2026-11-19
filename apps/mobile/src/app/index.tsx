@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, RefreshControl, StyleSheet, View } from "react-native";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
@@ -10,14 +10,19 @@ import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
-import { Stat } from "@/components/stat";
 import { useSession } from "@/lib/session";
+import { takeRouteAfterOnboarding } from "@/features/onboarding/next-route";
+import { loadWeekGoals } from "@/features/goals/api";
+import { WeekStrip } from "@/features/goals/week-strip";
+import type { WeekGoalRow } from "@squad-six/shared";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
 import { loadMySeasonPoints } from "@/features/standings/api";
 import { formatPoints, seasonYears } from "@/features/standings/view";
-import { activityInfo, stateOf } from "@/features/workout/machine";
-import { hydrateWorkout } from "@/features/workout/store";
+import { ACTIVITIES, activityInfo, stateOf, type Activity } from "@/features/workout/machine";
+import { loadMyWorkouts } from "@/features/history/api";
+import { ButtonRow } from "@/components/button-row";
+import { hydrateWorkout, startWorkout } from "@/features/workout/store";
 import { useWorkout } from "@/features/workout/use-workout";
 import { SquadPanel } from "@/features/squads/squad-panel";
 import { space } from "@/theme/tokens";
@@ -34,10 +39,28 @@ export default function HomeScreen() {
   const season = seasonYears(new Date())[0];
   // The athlete's own season total; undefined until loaded (or if it couldn't be loaded).
   const [myPoints, setMyPoints] = useState<number | undefined>(undefined);
+  // This week's goal progress for me and my squad (null while loading).
+  const [goals, setGoals] = useState<WeekGoalRow[] | null>(null);
+  const [goalsError, setGoalsError] = useState<string | null>(null);
+  // The activity of my most recent workout, for the one-tap "again" button.
+  const [lastActivity, setLastActivity] = useState<Activity | null>(null);
   const { workout } = useWorkout();
   const workoutState = workout ? stateOf(workout.events) : null;
 
+  const loadGoals = useCallback(async () => {
+    try {
+      setGoals(await loadWeekGoals());
+      setGoalsError(null);
+    } catch {
+      setGoalsError("Couldn't load this week. Check your connection, then try again.");
+    }
+  }, []);
+
   const load = useCallback(async () => {
+    void loadGoals();
+    loadMyWorkouts(1)
+      .then(([last]) => setLastActivity(ACTIVITIES.find((a) => a.value === last?.activity && a.value !== "other")?.value ?? null))
+      .catch(() => {});
     try {
       setHome(await loadSquadHome(userId));
       setLoadError(null);
@@ -45,7 +68,13 @@ export default function HomeScreen() {
     } catch {
       setLoadError("Couldn't load your squad. Check your connection, then try again.");
     }
-  }, [userId, season]);
+  }, [userId, season, loadGoals]);
+
+  // Straight after onboarding: open Join or Start a squad if that's what the person chose.
+  useEffect(() => {
+    const next = takeRouteAfterOnboarding();
+    if (next === "/join" || next === "/create-squad") router.push(next);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -78,6 +107,18 @@ export default function HomeScreen() {
     </>
   ) : workout ? (
     <Button label="View finished workout" onPress={() => router.push("/workout")} />
+  ) : lastActivity ? (
+    // The daily routine in one tap; anything else is one more.
+    <ButtonRow>
+      <Button label="Other workout" variant="secondary" onPress={() => router.push("/start-workout")} />
+      <Button
+        label={`${activityInfo(lastActivity).label} again`}
+        accessibilityHint="Starts the timer now"
+        onPress={() => {
+          if (startWorkout(lastActivity)) router.push("/workout");
+        }}
+      />
+    </ButtonRow>
   ) : (
     <Button label="Start a workout" onPress={() => router.push("/start-workout")} />
   );
@@ -107,6 +148,14 @@ export default function HomeScreen() {
       </View>
 
       {loadError && <Notice message={loadError} action={{ label: "Try again", onPress: () => void load() }} />}
+
+      <WeekStrip
+        rows={goals}
+        inSquad={home?.kind !== "no-squad"}
+        error={goalsError}
+        onRetry={() => void loadGoals()}
+        onPress={squad ? () => router.push("/squad-activity") : undefined}
+      />
       {home === null && !loadError && <Loading label="Loading your squad" />}
 
       {home?.kind === "no-squad" && (
@@ -135,46 +184,43 @@ export default function HomeScreen() {
         </Card>
       )}
 
-      {myPoints !== undefined && (
-        <Card>
-          <T variant="label" tone="textMuted">
-            {`${season} season`}
-          </T>
-          {myPoints > 0 ? (
-            <Stat size="large" value={formatPoints(myPoints)} unit="pts" label="Your points so far" source="Calculated by Squad Six" />
-          ) : (
-            <T tone="textMuted">No points yet. They appear here once a workout has been scored.</T>
-          )}
-        </Card>
-      )}
+      {/* Needs the captain's decision, so it comes before anything to browse. */}
+      {squad && <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="requests" actions={squadActions} />}
 
-      {/* Where to go next. Add a destination as one more ListRow; the group handles dividers. */}
+      {/* Where to go next. Add a destination as one more ListRow; the group handles dividers.
+          My season points live on the standings row: one place for "how are we doing this season". */}
       <ListGroup>
-        <ListRow title="Squad standings" subtitle="Squads in your city, country and the world" onPress={() => router.push("/standings")} />
-        {squad && <ListRow title="Squad activity" subtitle="Who has trained this week" onPress={() => router.push("/squad-activity")} />}
+        <ListRow
+          title="Squad standings"
+          subtitle={
+            myPoints === undefined
+              ? "Squads in your city, country and the world"
+              : myPoints > 0
+                ? `Your ${season} points · Squad Six scoring`
+                : "No points yet. They show once a workout is scored."
+          }
+          value={myPoints ? formatPoints(myPoints) : undefined}
+          accessibilityLabel={myPoints ? `Squad standings. Your ${season} points: ${formatPoints(myPoints)}, from Squad Six scoring` : undefined}
+          onPress={() => router.push("/standings")}
+        />
+        {squad && <ListRow title="Squad activity" subtitle="This week and recent workouts" onPress={() => router.push("/squad-activity")} />}
         <ListRow title="Challenges" subtitle="Weekly bonus points for your regular workouts" onPress={() => router.push("/challenges")} />
         <ListRow title="My workouts" subtitle="Past workouts and their points" onPress={() => router.push("/history")} />
         {__DEV__ && <ListRow title="Device check" subtitle="Development builds only" onPress={() => router.push("/device-check")} />}
       </ListGroup>
 
-      {squad && (
-        <SquadPanel
-          squad={squad}
-          myUserId={userId}
-          busy={busy}
-          act={act}
-          actions={{
-            decide: squadApi.decide,
-            remove: squadApi.remove,
-            makeCaptain: squadApi.makeCaptain,
-            newInviteCode: squadApi.newInviteCode,
-            leave: squadApi.leave,
-          }}
-        />
-      )}
+      {squad && <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="manage" actions={squadActions} />}
     </Screen>
   );
 }
+
+const squadActions = {
+  decide: squadApi.decide,
+  remove: squadApi.remove,
+  makeCaptain: squadApi.makeCaptain,
+  newInviteCode: squadApi.newInviteCode,
+  leave: squadApi.leave,
+};
 
 const styles = StyleSheet.create({
   intro: { gap: space.sm },

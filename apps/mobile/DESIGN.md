@@ -120,16 +120,38 @@ one workout, used by the live summary and past workouts) and `SquadPanel` (`feat
   `SectionHeader` plus its content, `layout.headingGap` apart.
 - **Lists:** wrap `ListRow`s in a `ListGroup`. Inside a `Card` (mixed content) set `divider={false}` on
   the last row yourself.
-- **Home:** title row (squad name + Settings), status/season `Card`s, then one `ListGroup` of
-  destinations. A new destination (e.g. Challenges) is one more `ListRow` in that group. The footer holds
-  the workout action (start, or return to the one in progress).
+- **This week strip** (`features/goals/week-strip.tsx`): top of Home. Six seats (you first in the accent,
+  teammates on `surfaceSunken`, `accentSoft` once they reach their goal, dashed open seats), one pip per goal
+  day under each. No warning colors on people; a reached goal is the accent, never a celebration.
+- **Home:** in reading order: title row (squad name + Settings) → the this-week strip (primary) → what needs
+  action (no squad: Find your squad; captain: Waiting to join) → one `ListGroup` of destinations, the first
+  being Squad standings with my season points as its value → squad management (members, invite code, leave).
+  A new destination (e.g. Challenges) is one more `ListRow` in that group. The footer holds the workout
+  action: return to the one in progress, or "<last activity> again" (primary) beside "Other workout"
+  (secondary), or "Start a workout" for someone with no workouts yet.
 - **Standings:** `ListRow` in a `ListGroup` with the rank as `leading` (`<T numeric tone="textMuted">`),
   points as `value`, and `highlighted` for the athlete's own squad.
 - **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are
   `Stat`s in a `Grid` inside a `Card`, each with `source` ("Phone GPS", "Phone step counter",
   "Synced from Apple Health"). Footer: `ButtonRow` (Pause/Resume | Finish) and a `destructiveGhost` Discard.
+- **Onboarding** (`app/onboarding.tsx`, `features/onboarding/layouts.tsx`): back chevron and a thin
+  progress bar at the top (hidden on the welcome and the Pro offer), the title (`display` on statement
+  screens, `title` on questions), the answer controls, and one primary button in the footer that stays
+  disabled until the question is answered. Each screen fades in once (`motion.duration.slow`). The
+  six-seat row (you filled, five teammates soft) is the only picture. Days-a-week questions use the
+  number-key grid with the chosen number shown large.
 - **Loading / errors / empty:** `Loading` while waiting; `Notice` (with a "Try again" action when a load
   failed) next to what failed, naming the problem and the fix; `EmptyState` when there is nothing yet.
+
+## Words
+
+- **Counted workout**: a workout Squad Six scored and accepted (not discarded, expired, rejected or waiting for
+  review). Never "accepted workout" in the UI.
+- **Where a number came from** (`Stat` `source`): "Phone GPS", "Phone step counter", "Squad Six timer",
+  "Synced from Apple Health", "Phone GPS or Apple Health", and "Squad Six scoring" for points and counted
+  workouts. No "calculated / scored / awarded by" variants.
+- **Not scored yet**: say when points appear ("Points show here once it's scored"), never that scoring is
+  switched off, launching, or done "by the server".
 
 ## Not done yet
 

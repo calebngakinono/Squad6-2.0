@@ -1,6 +1,6 @@
 import type { ChallengeTier, DistanceGoal } from "@squad-six/shared";
 import { describe, expect, it } from "vitest";
-import { formatKm, goalLabel, joinAction, joinErrorMessage, joinNote, squadProgress, tierGoal, tierLabel, tierReached } from "./view";
+import { formatKm, goalLabel, joinAction, joinErrorMessage, joinNote, squadProgress, tierGoal, tierLabel, tierReached, visibleTiers } from "./view";
 
 const tiers: ChallengeTier[] = [
   { tier: "bronze", points: 40, measure: "accepted_workouts", target: 3 },
@@ -14,7 +14,7 @@ const goals: DistanceGoal[] = [
 
 describe("tiers", () => {
   it("describes each tier's goal", () => {
-    expect(tierGoal(tiers[0], goals)).toBe("3 accepted workouts");
+    expect(tierGoal(tiers[0], goals)).toBe("3 counted workouts");
     expect(tierGoal(tiers[2], goals)).toBe("Run 25 km, or walk and hike 40 km");
     expect(goals.map(goalLabel)).toEqual(["Running", "Walking and hiking"]);
     expect(tierLabel("gold")).toBe("Gold");
@@ -58,5 +58,17 @@ describe("joining", () => {
   it("maps server error codes to plain language", () => {
     expect(joinErrorMessage({ message: "join_window_closed" })).toMatch(/Tuesday/);
     expect(joinErrorMessage({ message: "boom" })).toMatch(/Something went wrong/);
+  });
+});
+
+describe("visibleTiers", () => {
+  it("folded, shows only the next level to reach", () => {
+    expect(visibleTiers(tiers, null, false).map((t) => t.tier)).toEqual(["bronze"]);
+    expect(visibleTiers(tiers, "silver", false).map((t) => t.tier)).toEqual(["gold"]);
+  });
+
+  it("shows the top level once all are reached, and every level when open", () => {
+    expect(visibleTiers(tiers, "gold", false).map((t) => t.tier)).toEqual(["gold"]);
+    expect(visibleTiers(tiers, "silver", true)).toHaveLength(3);
   });
 });

@@ -75,7 +75,8 @@ function RootNavigator({ fontsSettled }: { fontsSettled: boolean }) {
           <Stack.Screen name="device-check" />
         </Stack.Protected>
       </Stack.Protected>
-      <Stack.Protected guard={needsOnboarding}>
+      {/* Onboarding comes first for new people and creates the account near its end. */}
+      <Stack.Protected guard={!signedIn || needsOnboarding}>
         <Stack.Screen name="onboarding" />
       </Stack.Protected>
       <Stack.Protected guard={!signedIn}>
