@@ -17,7 +17,7 @@ export default function StartWorkoutScreen() {
           <Tile
             key={a.value}
             title={a.label}
-            caption={a.gps ? "Tracks distance with GPS" : a.sets ? "Log your sets" : "Timer"}
+            caption={a.gps ? "Tracks distance with GPS" : a.sets ? "Log your sets" : "Time only"}
             accessibilityLabel={`Start ${a.label}`}
             accessibilityHint="Starts the timer now"
             onPress={() => {

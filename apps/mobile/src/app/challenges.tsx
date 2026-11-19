@@ -1,12 +1,14 @@
 import type { MyChallenge } from "@squad-six/shared";
 import { Stack, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, RefreshControl, StyleSheet, View } from "react-native";
+import { RefreshControl, StyleSheet, View } from "react-native";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
 import { ListRow } from "@/components/list-row";
+import { Loading } from "@/components/loading";
+import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { Stat } from "@/components/stat";
@@ -39,7 +41,7 @@ export default function ChallengesScreen() {
       setChallenges(await loadMyChallenges());
       setError(null);
     } catch {
-      setError("Couldn't load this week's challenges. Pull down to try again.");
+      setError("Couldn't load this week's challenges. Check your connection, then try again.");
     }
   }, []);
 
@@ -78,12 +80,8 @@ export default function ChallengesScreen() {
       }
     >
       <Stack.Screen options={{ headerShown: true, title: "Challenges" }} />
-      {error && (
-        <T tone="danger" accessibilityLiveRegion="polite">
-          {error}
-        </T>
-      )}
-      {challenges === null && !error && <ActivityIndicator accessibilityLabel="Loading challenges" />}
+      {error && <Notice message={error} action={{ label: "Try again", onPress: () => void load() }} />}
+      {challenges === null && !error && <Loading label="Loading challenges" />}
       {challenges?.length === 0 && (
         <EmptyState
           title="No challenges yet"
@@ -197,11 +195,7 @@ function ChallengeCard({
           {note}
         </T>
       )}
-      {error && (
-        <T variant="small" tone="danger" accessibilityLiveRegion="polite">
-          {error}
-        </T>
-      )}
+      {error && <Notice message={error} />}
       {action && (
         <Button
           label={action.label}
