@@ -1,17 +1,22 @@
-import type { ChallengeTier } from "@squad-six/shared";
+import type { ChallengeTier, DistanceGoal } from "@squad-six/shared";
 import { describe, expect, it } from "vitest";
-import { formatKm, joinAction, joinErrorMessage, joinNote, squadProgress, tierGoal, tierLabel, tierReached } from "./view";
+import { formatKm, goalLabel, joinAction, joinErrorMessage, joinNote, squadProgress, tierGoal, tierLabel, tierReached } from "./view";
 
 const tiers: ChallengeTier[] = [
   { tier: "bronze", points: 40, measure: "accepted_workouts", target: 3 },
   { tier: "silver", points: 80, measure: "accepted_workouts", target: 5 },
-  { tier: "gold", points: 120, measure: "validated_distance_m", target: 25000 },
+  { tier: "gold", points: 120, measure: "distance_goal" },
+];
+const goals: DistanceGoal[] = [
+  { key: "run", activities: ["run"], target: 25000 },
+  { key: "walk_hike", activities: ["walk", "hike"], target: 40000 },
 ];
 
 describe("tiers", () => {
   it("describes each tier's goal", () => {
-    expect(tierGoal(tiers[0], ["run", "walk"])).toBe("3 accepted workouts");
-    expect(tierGoal(tiers[2], ["run", "walk"])).toBe("25 km of run or walk distance");
+    expect(tierGoal(tiers[0], goals)).toBe("3 accepted workouts");
+    expect(tierGoal(tiers[2], goals)).toBe("Run 25 km, or walk and hike 40 km");
+    expect(goals.map(goalLabel)).toEqual(["Running", "Walking and hiking"]);
     expect(tierLabel("gold")).toBe("Gold");
     expect(formatKm(12345)).toBe("12.3");
   });
