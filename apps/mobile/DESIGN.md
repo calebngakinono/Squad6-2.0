@@ -128,6 +128,12 @@ one workout, used by the live summary and past workouts) and `SquadPanel` (`feat
 - **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are
   `Stat`s in a `Grid` inside a `Card`, each with `source` ("Phone GPS", "Phone step counter",
   "Synced from Apple Health"). Footer: `ButtonRow` (Pause/Resume | Finish) and a `destructiveGhost` Discard.
+- **Onboarding** (`app/onboarding.tsx`, `features/onboarding/layouts.tsx`): back chevron and a thin
+  progress bar at the top (hidden on the welcome and the Pro offer), the title (`display` on statement
+  screens, `title` on questions), the answer controls, and one primary button in the footer that stays
+  disabled until the question is answered. Each screen fades in once (`motion.duration.slow`). The
+  six-seat row (you filled, five teammates soft) is the only picture. Days-a-week questions use the
+  number-key grid with the chosen number shown large.
 - **Loading / errors / empty:** `Loading` while waiting; `Notice` (with a "Try again" action when a load
   failed) next to what failed, naming the problem and the fix; `EmptyState` when there is nothing yet.
 

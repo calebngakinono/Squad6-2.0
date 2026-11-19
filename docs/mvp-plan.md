@@ -21,7 +21,7 @@ squad's standing on the season leaderboard. Teammates see the activity. Nothing 
 | 4 | **Squads**: create, invite link, join request + approval, max six, roles, member activity | ✅ |
 | 5 | **Challenges (official)**: individual tiered and squad participation challenges, evidence requirements, awards in the ledger, history | ✅ core types built 2026-11-18 (weekly tiers + squad week, explicit Join, 250/week cap; [scoring-proposal §10](scoring-proposal.md)). Deferred: activity-specific, squad collective km, seasonal/monthly events, ranked city events, Pro custom challenges, a past-weeks history screen |
 | 6 | **Auth and profiles**: email, Sign in with Apple, Google; public/private profile split; account deletion | ✅ |
-| 7 | **Onboarding**: configurable, resumable, branching flow; placeholder screens until the storyboard designs arrive; demo content labeled | ✅ engine + core questions |
+| 7 | **Onboarding**: configurable, resumable, branching flow that runs before sign-up (15 screens: questions, personal gap and plan, account on 14, Pro offer on 15); no invented stats or reviews | ✅ v3 flow 2026-11-19; final visuals from the designer |
 | 8 | Squad chat (basic) | stretch; activity feed is the fallback |
 | 9 | Marketing site (one page) plus privacy policy, terms and support pages (App Store needs the privacy and support URLs) | ✅ built 2026-11-17 (`apps/web`) |
 | 10 | Pro: entitlements table, server checks, RevenueCat sandbox | stretch; no live purchases |
