@@ -123,9 +123,11 @@ one workout, used by the live summary and past workouts) and `SquadPanel` (`feat
 - **This week strip** (`features/goals/week-strip.tsx`): top of Home. Six seats (you first in the accent,
   teammates on `surfaceSunken`, `accentSoft` once they reach their goal, dashed open seats), one pip per goal
   day under each. No warning colors on people; a reached goal is the accent, never a celebration.
-- **Home:** title row (squad name + Settings), the this-week strip, status/season `Card`s, then one `ListGroup` of
-  destinations. A new destination (e.g. Challenges) is one more `ListRow` in that group. The footer holds
-  the workout action (start, or return to the one in progress).
+- **Home:** in reading order: title row (squad name + Settings) → the this-week strip (primary) → what needs
+  action (no squad: Find your squad; captain: Waiting to join) → one `ListGroup` of destinations, the first
+  being Squad standings with my season points as its value → squad management (members, invite code, leave).
+  A new destination (e.g. Challenges) is one more `ListRow` in that group. The footer holds the workout
+  action (start, or return to the one in progress).
 - **Standings:** `ListRow` in a `ListGroup` with the rank as `leading` (`<T numeric tone="textMuted">`),
   points as `value`, and `highlighted` for the athlete's own squad.
 - **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are

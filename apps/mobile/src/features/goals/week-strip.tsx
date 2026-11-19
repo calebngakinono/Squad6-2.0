@@ -23,12 +23,23 @@ export function WeekStrip({ rows, inSquad, error, onRetry, onPress }: Props) {
   const seats = rows ? weekSeats(rows, inSquad) : null;
   const me = rows?.find((r) => r.is_me);
   const reached = me?.weekly_goal != null && me.days_this_week >= me.weekly_goal;
+  const list = seats ?? placeholderSeats(inSquad);
+  const solo = list.length === 1;
+  // As a button, VoiceOver reads the strip as one element, so it carries the whole summary.
+  const teammates = rows?.filter((r) => !r.is_me) ?? [];
+  const summary = !rows
+    ? "This week, loading"
+    : [`This week. ${myGoalLine(me)}`, teammates.length > 0 && `${teammates.filter((r) => r.days_this_week > 0).length} of ${teammates.length} teammates have trained`]
+        .filter(Boolean)
+        .join(". ");
 
   if (error) return <Notice message={error} action={{ label: "Try again", onPress: onRetry }} />;
 
   return (
     <Pressable
+      accessible={!!onPress}
       accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={onPress ? summary : undefined}
       accessibilityHint={onPress ? "Opens your squad's week" : undefined}
       disabled={!onPress}
       onPress={onPress}
@@ -44,13 +55,13 @@ export function WeekStrip({ rows, inSquad, error, onRetry, onPress }: Props) {
           This week
         </T>
         {/* Same height while loading, so nothing jumps when the numbers arrive. */}
-        <T variant="headline" tone={reached ? "accent" : "text"} accessibilityLiveRegion="polite">
+        <T variant="headline" tone={reached ? "accent" : "text"} accessibilityLabel={seats ? undefined : "Loading this week"}>
           {seats ? myGoalLine(me) || " " : " "}
         </T>
       </View>
-      <View style={styles.seats}>
-        {(seats ?? placeholderSeats(inSquad)).map((s) => (
-          <SeatView key={s.key} seat={s} loading={!seats} />
+      <View style={[styles.seats, solo && styles.seatsSolo]}>
+        {list.map((s) => (
+          <SeatView key={s.key} seat={s} loading={!seats} solo={solo} />
         ))}
       </View>
     </Pressable>
@@ -61,11 +72,12 @@ function placeholderSeats(inSquad: boolean): Seat[] {
   return Array.from({ length: inSquad ? 6 : 1 }, (_, i) => ({ kind: "open", key: `loading-${i}` }));
 }
 
-function SeatView({ seat, loading }: { seat: Seat; loading: boolean }) {
+function SeatView({ seat, loading, solo }: { seat: Seat; loading: boolean; solo: boolean }) {
   const t = useTheme();
   if (seat.kind === "open") {
+    // Open and loading seats are pictures only; the strip's line says what matters.
     return (
-      <View style={styles.seat} accessibilityElementsHidden={!loading} importantForAccessibility={loading ? "auto" : "no-hide-descendants"}>
+      <View style={[styles.seat, solo && styles.seatSolo]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <View
           style={[styles.face, loading ? { backgroundColor: t.color.surfaceSunken } : { borderWidth: borderWidth.thin, borderStyle: "dashed", borderColor: t.color.borderStrong }]}
         />
@@ -77,7 +89,7 @@ function SeatView({ seat, loading }: { seat: Seat; loading: boolean }) {
   }
   const marks = pips(seat.days, seat.goal);
   return (
-    <View style={styles.seat} accessible accessibilityLabel={seat.spoken}>
+    <View style={[styles.seat, solo && styles.seatSolo]} accessible accessibilityLabel={seat.spoken}>
       <View
         style={[
           styles.face,
@@ -117,7 +129,9 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, borderCurve: "continuous", padding: layout.cardPadding, gap: space.lg },
   head: { gap: space.xxs },
   seats: { flexDirection: "row", justifyContent: "space-between", gap: space.xs },
+  seatsSolo: { justifyContent: "flex-start" },
   seat: { flex: 1, alignItems: "center", gap: space.xs, minWidth: 0 },
+  seatSolo: { flex: 0, minWidth: FACE + space.lg },
   face: { width: FACE, height: FACE, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   pips: { flexDirection: "row", gap: 3, minHeight: PIP },
   pip: { width: PIP, height: PIP, borderRadius: radius.pill },

@@ -10,7 +10,6 @@ import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
-import { Stat } from "@/components/stat";
 import { useSession } from "@/lib/session";
 import { takeRouteAfterOnboarding } from "@/features/onboarding/next-route";
 import { loadWeekGoals } from "@/features/goals/api";
@@ -166,46 +165,43 @@ export default function HomeScreen() {
         </Card>
       )}
 
-      {myPoints !== undefined && (
-        <Card>
-          <T variant="label" tone="textMuted">
-            {`${season} season`}
-          </T>
-          {myPoints > 0 ? (
-            <Stat size="large" value={formatPoints(myPoints)} unit="pts" label="Your points so far" source="Squad Six scoring" />
-          ) : (
-            <T tone="textMuted">No points yet. They appear here once a workout has been scored.</T>
-          )}
-        </Card>
-      )}
+      {/* Needs the captain's decision, so it comes before anything to browse. */}
+      {squad && <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="requests" actions={squadActions} />}
 
-      {/* Where to go next. Add a destination as one more ListRow; the group handles dividers. */}
+      {/* Where to go next. Add a destination as one more ListRow; the group handles dividers.
+          My season points live on the standings row: one place for "how are we doing this season". */}
       <ListGroup>
-        <ListRow title="Squad standings" subtitle="Squads in your city, country and the world" onPress={() => router.push("/standings")} />
-        {squad && <ListRow title="Squad activity" subtitle="Who has trained this week" onPress={() => router.push("/squad-activity")} />}
+        <ListRow
+          title="Squad standings"
+          subtitle={
+            myPoints === undefined
+              ? "Squads in your city, country and the world"
+              : myPoints > 0
+                ? `Your ${season} points · Squad Six scoring`
+                : "No points yet. They show once a workout is scored."
+          }
+          value={myPoints ? formatPoints(myPoints) : undefined}
+          accessibilityLabel={myPoints ? `Squad standings. Your ${season} points: ${formatPoints(myPoints)}, from Squad Six scoring` : undefined}
+          onPress={() => router.push("/standings")}
+        />
+        {squad && <ListRow title="Squad activity" subtitle="This week and recent workouts" onPress={() => router.push("/squad-activity")} />}
         <ListRow title="Challenges" subtitle="Weekly bonus points for your regular workouts" onPress={() => router.push("/challenges")} />
         <ListRow title="My workouts" subtitle="Past workouts and their points" onPress={() => router.push("/history")} />
         {__DEV__ && <ListRow title="Device check" subtitle="Development builds only" onPress={() => router.push("/device-check")} />}
       </ListGroup>
 
-      {squad && (
-        <SquadPanel
-          squad={squad}
-          myUserId={userId}
-          busy={busy}
-          act={act}
-          actions={{
-            decide: squadApi.decide,
-            remove: squadApi.remove,
-            makeCaptain: squadApi.makeCaptain,
-            newInviteCode: squadApi.newInviteCode,
-            leave: squadApi.leave,
-          }}
-        />
-      )}
+      {squad && <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="manage" actions={squadActions} />}
     </Screen>
   );
 }
+
+const squadActions = {
+  decide: squadApi.decide,
+  remove: squadApi.remove,
+  makeCaptain: squadApi.makeCaptain,
+  newInviteCode: squadApi.newInviteCode,
+  leave: squadApi.leave,
+};
 
 const styles = StyleSheet.create({
   intro: { gap: space.sm },
