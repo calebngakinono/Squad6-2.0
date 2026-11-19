@@ -29,6 +29,8 @@ const pairs: [fg: ColorRole, bg: ColorRole, min: number][] = [
   ["onDanger", "dangerPressed", TEXT],
   ["accent", "accentSoft", TEXT],
   ["text", "accentSoft", TEXT],
+  // Highlighted list rows ("your squad") put secondary text on accentSoft.
+  ["textMuted", "accentSoft", TEXT],
   ["success", "successSoft", TEXT],
   ["warning", "warningSoft", TEXT],
   ["danger", "dangerSoft", TEXT],
@@ -48,6 +50,7 @@ test("both appearances define the same color roles", () => {
 test("controls meet the minimum touch size", () => {
   expect(size.control).toBeGreaterThanOrEqual(minTouch);
   expect(size.row).toBeGreaterThanOrEqual(minTouch);
+  expect(size.tile).toBeGreaterThanOrEqual(minTouch);
 });
 
 test("every type weight has a loaded face, and the smallest size is 12pt", () => {

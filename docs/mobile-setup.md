@@ -71,7 +71,7 @@ step below for **staging** first, test, then repeat it for **production**.
 | | Staging | Production |
 |---|---|---|
 | Supabase project (old name, kept on purpose) | `wrench-staging` | `wrench-prod` |
-| Website URL (for step 3) | `https://wrenchaistaging.up.railway.app` | `https://wrenchaiprod.up.railway.app` |
+| Website URL (for step 3) | `https://squad6stage.up.railway.app` | `https://wrenchaiprod.up.railway.app` |
 
 Supabase moves menu items around now and then. If a label below doesn't match, search for it with the
 dashboard's search box (⌘K).

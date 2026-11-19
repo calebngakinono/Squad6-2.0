@@ -11,7 +11,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `squads` | ✅ | Name, `city_id` (from `cities`, required when created) and its label `city`, description, created_by, archived_at (set when the last member leaves) | Signed-in read; writes via functions only |
 | `squad_members` | ✅ | Membership **history**: squad, user, role, joined_at, left_at, left_reason. One active squad per athlete, one captain per squad (unique indexes). Max six, enforced by locking the squad row on approval (race-tested) | Squadmates and self read; writes via functions only |
 | `squad_invite_codes` | ✅ | One 8-character code per squad (no look-alike characters); captain can regenerate | Active members read |
-| `squad_join_requests` | ✅ | pending → approved / declined / cancelled / expired. Max 3 pending per athlete; joining a squad cancels the others | Requester and captain read; writes via functions only |
+| `squad_join_requests` | ✅ | pending → approved / declined / cancelled / expired. Max 3 pending per athlete; joining a squad cancels the others. Optional `note` (≤ 280 characters) from the person asking, for the captain | Requester and captain read; writes via functions only |
 | `workout_sessions` | ✅ | Live session state machine (see architecture.md): activity, state, version, server `started_at`/`ended_at`, server-computed `active_seconds`, home time zone + scoring day + squad locked at start, `started_offline`. One open workout per athlete (partial unique index, race-tested); idempotent start on `client_session_id`; open > 12 h → `expired` | Owner reads; writes via functions only. Squad summary view comes with the feed |
 | `workout_session_events` | ✅ | Append-only start/pause/resume/finish/cancel/expire log: server time, client time, clamped `effective_at`, `offline` flag; unique per client event id | Owner reads; written by functions only |
 | `workout_route_points` | ✅ | Phone GPS fixes for a workout: time, latitude, longitude, accuracy, altitude, speed, `mocked` flag. One row per instant (re-sent batches add nothing). Only for run / walk / hike / ride | **Owner reads only** (precise location is never visible to anyone else); written by `add_route_points()` only |
@@ -23,9 +23,9 @@ migration for the feature that needs it). The migration is the source of truth; 
 | `points_ledger` | ✅ | Append-only awards and adjustments: user, squad (locked at workout start), season, scoring day, source, rule version, kind (`award` / `adjustment`), revision, points, reason. Unique per source + rule version + kind + revision, so a workout is awarded once and each correction is its own row. `user_id` becomes null on account deletion (the row still counts for the squad) | Owner reads own; squad/leaderboards via views (later) |
 | `workout_reviews` | ✅ | Append-only review decisions (`accepted` / `rejected`, reason, reviewer name); the latest per workout wins. `accepted` clears a plausibility flag; `rejected` sets the score to `rejected` with 0 points. Written by `review_workout()` (operators only), which re-scores the day. View `workouts_awaiting_review` lists flagged workouts (summaries only, operators only) | Owner reads decision and reason; operators write |
 | `workout_evidence` | ✅ | Summary of a health-platform workout attached as evidence: provider (`healthkit`, later `health_connect`), platform record id, source app and device, times, server-computed `overlap`, optional distance, energy and heart-rate summary. A platform record backs one workout only (unique); one record per provider per workout. Summaries only: no raw samples, no routes | Owner reads; written by `attach_workout_evidence()` only |
-| `challenges` | 📝 | Official challenge definition: type, tiers, evidence requirement, window, rule version (locked once started) | Read: signed in |
-| `challenge_participants` | 📝 | Athlete or squad enrollment and progress | Owner / squad members |
-| `challenge_awards` | 📝 | Tier awarded; unique per challenge + participant + tier; mirrored as ledger rows | Owner / squad members |
+| `challenges` | ✅ | Official weekly challenge templates: `kind` (`individual_tiered`, `squad_participation`), title, description, `config` (tiers / squad rule), first and last week, sort order. Seeded: `weekly-tiers-v1`, `squad-week-v1`. A joined challenge's rules cannot be edited (trigger `challenge_locked`); a change is a new row | Read: signed in. Changed by migrations only |
+| `challenge_participants` | ✅ | One athlete in one week (Monday, home time zone) of one challenge: week span locked at join, `joined_at`, squad at join, and server-computed progress (`accepted_workouts`, `distance_m` (validated metres per distance goal, e.g. `{"run": 12000, "walk_hike": 31000}`), `tier`) | Owner reads; written only by `join_challenge()` and the evaluator |
+| `challenge_awards` | ✅ | Each tier a participant reached (unique per participant + tier), with its value and rule version. It is the `source_id` of the `points_ledger` rows (`source_type = 'challenge'`) that pay it | Owner reads; written by the evaluator only |
 | `season_champions` | 📝 | Archived top squads per city per season | Read: signed in |
 | `seasons` | — | Not a table: a season is a calendar year (the athlete's home-timezone year, stored on each ledger row). `season_window(year)` gives the part that has elapsed | — |
 | `season_standings` | ✅ (functions) | Not stored: derived from the ledger on request. `squad_standings(season, scope, max_rows)` ranks **squads only** by the plain total of points earned in them, for scope `city`, `country` or `world` (centred on the caller's squad's city, or their own). Ranked from 4 current members; smaller squads are listed with points and no rank. Always includes the caller's squad. `my_season_points(season)` is the athlete's own total; `my_standings_place()` their city and country. No individual ranking exists. Materialize per season if this gets slow | Signed-in users (squad totals, names and cities only; the ledger stays owner-only) |
@@ -36,7 +36,7 @@ migration for the feature that needs it). The migration is the source of truth; 
 
 ## Squad functions (the app's API)
 
-`create_squad(name, city_id, description)` (max 3 per 30 days) · `preview_squad(code)` · `request_to_join(code)` ·
+`create_squad(name, city_id, description)` (max 3 per 30 days) · `preview_squad(code)` · `request_to_join(code, note?)` · `squad_join_request_details(squad)` (captain only: name, note, city, member since, this season's accepted workouts and points) ·
 `cancel_join_request(id)` · `decide_join_request(id, approve)` (captain) · `leave_squad()` ·
 `remove_squad_member(user)` (captain) · `transfer_captaincy(user)` (captain) · `regenerate_invite_code()` (captain).
 When a captain leaves, the longest-standing member becomes captain; when the last member leaves, the squad is
@@ -85,6 +85,20 @@ by deferred triggers when a workout is finished and when its metrics or evidence
 decides which evidence categories pass; `scoring_performance()` computes effort and intensity from the rule
 config. `set_scoring_active(version, from)` switches a rule version on. Details and known gaps:
 [`scoring-proposal.md` §9](scoring-proposal.md).
+
+## Challenge functions
+
+`join_challenge(challenge, week)` (`week` = `current` or `next`): joins this week during its first 25 % (Monday 00:00
+to Tuesday 18:00 in the home time zone) or next week any time; idempotent; at most 3 per week. Errors:
+`join_window_closed`, `too_many_challenges`, `not_in_squad`, `joined_squad_mid_week`, `timezone_required`,
+`challenge_not_running`, `challenge_not_found`, `invalid_week`. `my_challenges()`: this week's challenges with join
+state, progress, tier, points paid (from the ledger) and, for the squad challenge, roster / needed / done.
+
+Internal (not callable by app users): `challenge_evaluate(user, date)` runs inside `score_day()` (which is now
+`score_workouts_of_day()` followed by it), so it runs on finish, on late evidence and on `review_workout()`.
+`challenge_reconcile()` brings one athlete-week's challenge ledger rows in line with the facts (award / top-up /
+reversal, weekly cap 250). `challenge_join_at()` is the join rule with the time passed in (for tests). Details:
+[`scoring-proposal.md` §10](scoring-proposal.md).
 
 ## Account functions
 

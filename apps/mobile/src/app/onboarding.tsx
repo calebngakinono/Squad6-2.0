@@ -1,8 +1,14 @@
 import { firstIncompleteStepId, nextStepId, pathFor, validateAnswer, type AnswerValue, type Answers } from "@squad-six/shared";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { StyleSheet, View } from "react-native";
+import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
+import { ButtonRow } from "@/components/button-row";
+import { EmptyState } from "@/components/empty-state";
+import { Loading } from "@/components/loading";
+import { Notice } from "@/components/notice";
+import { Progress } from "@/components/progress";
+import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { completeOnboarding, loadOnboarding, onboardingErrorMessage, saveProgress, type OnboardingState } from "@/features/onboarding/api";
 import { useOnboardingStatus } from "@/features/onboarding/status";
@@ -10,10 +16,8 @@ import { StepInput } from "@/features/onboarding/step-input";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { space } from "@/theme/tokens";
-import { usePalette } from "@/theme/use-palette";
 
 export default function OnboardingScreen() {
-  const c = usePalette();
   const { session } = useSession();
   const userId = session!.user.id;
   const { refresh } = useOnboardingStatus();
@@ -43,17 +47,19 @@ export default function OnboardingScreen() {
 
   if (loadError) {
     return (
-      <SafeAreaView style={[styles.screen, styles.center, { backgroundColor: c.background }]}>
-        <T tone="danger">Couldn&apos;t load the setup questions.</T>
-        <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />
-      </SafeAreaView>
+      <Screen footer={<Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />}>
+        <EmptyState
+          title="Couldn't load the setup questions"
+          message="Check your connection, then close and reopen the app."
+        />
+      </Screen>
     );
   }
   if (!state || !stepId) {
     return (
-      <SafeAreaView style={[styles.screen, styles.center, { backgroundColor: c.background }]}>
-        <ActivityIndicator accessibilityLabel="Loading" />
-      </SafeAreaView>
+      <Screen scroll={false}>
+        <Loading label="Loading setup" fill />
+      </Screen>
     );
   }
 
@@ -103,54 +109,53 @@ export default function OnboardingScreen() {
   }
 
   const isLast = nextStepId(flow, step.id, answers) === null;
+  const next = <Button label={isLast ? "Finish" : step.type === "info" ? "Continue" : "Next"} onPress={goNext} busy={busy} />;
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: c.background }]}>
-      <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <T variant="small" tone="textMuted" accessibilityLabel={`Step ${index + 1} of ${path.length}`}>
-            {index + 1} / {path.length}
-          </T>
-          <View style={styles.header}>
-            <T variant="title" accessibilityRole="header">
-              {step.title}
-            </T>
-            {step.body ? <T tone="textMuted">{step.body}</T> : null}
-          </View>
+    <Screen
+      // Navigation stays at the bottom, in thumb reach.
+      footer={
+        index > 0 ? (
+          <ButtonRow>
+            <Button
+              label="Back"
+              variant="secondary"
+              disabled={busy}
+              onPress={() => {
+                setError(null);
+                setStepId(path[index - 1]);
+              }}
+            />
+            {next}
+          </ButtonRow>
+        ) : (
+          next
+        )
+      }
+    >
+      <View style={styles.progress}>
+        <Progress value={index + 1} total={path.length} label="Setup progress" />
+        <T variant="caption" tone="textMuted" importantForAccessibility="no" accessibilityElementsHidden>
+          {`Step ${index + 1} of ${path.length}`}
+        </T>
+      </View>
 
-          <View style={styles.input}>
-            <StepInput key={step.id} step={step} value={value} onChange={setValue} />
-          </View>
+      <View style={styles.header}>
+        <T variant="title" accessibilityRole="header">
+          {step.title}
+        </T>
+        {step.body ? <T tone="textMuted">{step.body}</T> : null}
+        {!step.required && step.type !== "info" && <Badge label="Optional" />}
+      </View>
 
-          {error && (
-            <T variant="small" tone="danger" accessibilityLiveRegion="polite">
-              {error}
-            </T>
-          )}
-        </ScrollView>
+      <StepInput key={step.id} step={step} value={value} onChange={setValue} />
 
-        {/* Navigation stays at the bottom, in thumb reach. */}
-        <View style={styles.footer}>
-          <Button label={isLast ? "Finish" : step.type === "info" ? "Continue" : "Next"} onPress={goNext} busy={busy} />
-          {index > 0 && (
-            <Button label="Back" variant="secondary" disabled={busy} onPress={() => { setError(null); setStepId(path[index - 1]); }} />
-          )}
-          {!step.required && step.type !== "info" && value === undefined && (
-            <T variant="small" tone="textMuted" style={styles.center}>
-              Optional
-            </T>
-          )}
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      {error && <Notice message={error} />}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  center: { alignItems: "center", justifyContent: "center", gap: space.md, textAlign: "center" },
-  content: { padding: space.lg, gap: space.lg, flexGrow: 1 },
+  progress: { gap: space.sm },
   header: { gap: space.sm },
-  input: { gap: space.md },
-  footer: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: space.sm },
 });

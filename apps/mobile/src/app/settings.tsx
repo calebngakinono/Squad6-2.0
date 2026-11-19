@@ -2,11 +2,14 @@ import Constants from "expo-constants";
 import { Stack, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, Linking, Platform, StyleSheet, View } from "react-native";
-import { Pill } from "@/components/badge";
+import { Badge, Pill } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { CityPicker } from "@/components/city-picker";
+import { ListGroup } from "@/components/list-group";
 import { ListRow } from "@/components/list-row";
+import { Loading } from "@/components/loading";
+import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
@@ -18,9 +21,11 @@ import { useWorkout } from "@/features/workout/use-workout";
 import { getWebsiteUrl } from "@/lib/env";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
-import { space } from "@/theme/tokens";
+import { layout, space } from "@/theme/tokens";
 
 const GOAL_DAYS = [1, 2, 3, 4, 5, 6, 7];
+
+type SaveKey = "name" | "city" | "goal" | "tz";
 
 export default function SettingsScreen() {
   const { session } = useSession();
@@ -30,7 +35,9 @@ export default function SettingsScreen() {
   const [name, setName] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  // Which change the message is about, so it shows next to that control rather than at the top of
+  // the screen where it may be scrolled out of view.
+  const [message, setMessage] = useState<{ key: SaveKey; text: string; error: boolean } | null>(null);
   const website = getWebsiteUrl();
   const phoneZone = deviceTimeZone();
 
@@ -52,19 +59,22 @@ export default function SettingsScreen() {
   );
 
   // Runs one change, shows the outcome, and reloads so the screen shows what the server stored.
-  async function save(key: string, fn: () => Promise<void>, done: string) {
+  async function save(key: SaveKey, fn: () => Promise<void>, done: string) {
     setSaving(key);
     setMessage(null);
     try {
       await fn();
-      setMessage({ text: done, error: false });
+      setMessage({ key, text: done, error: false });
       await load();
     } catch (e) {
-      setMessage({ text: settingsErrorMessage(e), error: true });
+      setMessage({ key, text: settingsErrorMessage(e), error: true });
     } finally {
       setSaving(null);
     }
   }
+
+  const feedback = (...keys: SaveKey[]) =>
+    message && keys.includes(message.key) ? <Notice message={message.text} tone={message.error ? "danger" : "success"} /> : null;
 
   function confirmDelete() {
     Alert.alert(
@@ -96,21 +106,12 @@ export default function SettingsScreen() {
     <Screen header>
       <Stack.Screen options={{ headerShown: true, title: "Settings" }} />
 
-      {loadError && (
-        <View style={styles.stack}>
-          <T tone="danger">{loadError}</T>
-          <Button label="Try again" variant="secondary" onPress={load} />
-        </View>
-      )}
-      {message && (
-        <T variant="small" tone={message.error ? "danger" : "success"} accessibilityLiveRegion="polite">
-          {message.text}
-        </T>
-      )}
+      {loadError && <Notice message={loadError} action={{ label: "Try again", onPress: () => void load() }} />}
+      {!settings && !loadError && <Loading label="Loading settings" />}
 
       {settings && (
         <>
-          <View style={styles.stack}>
+          <View style={styles.section}>
             <SectionHeader title="Profile" subtitle="Your squad and other athletes see your name and city." />
             <TextField label="Name" value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" textContentType="name" />
             {nameChanged && (
@@ -128,14 +129,17 @@ export default function SettingsScreen() {
                 if (id !== null && id !== settings.cityId) void save("city", () => settingsApi.setCity(userId, id), "City saved.");
               }}
             />
+            {feedback("name", "city")}
           </View>
 
-          <View style={styles.stack}>
+          <View style={styles.section}>
             <SectionHeader title="Training" />
-            <T variant="label">Weekly goal</T>
-            <T variant="small" tone="textMuted">
-              Days a week you want to train. A personal goal; it doesn&apos;t change your points.
-            </T>
+            <View style={styles.field}>
+              <T variant="label">Weekly goal</T>
+              <T variant="small" tone="textMuted">
+                Days a week you want to train. A personal goal; it doesn&apos;t change your points.
+              </T>
+            </View>
             <View style={styles.pills} accessibilityRole="radiogroup" accessibilityLabel="Weekly goal in days">
               {GOAL_DAYS.map((d) => (
                 <Pill
@@ -148,11 +152,14 @@ export default function SettingsScreen() {
                 />
               ))}
             </View>
-            <ListRow
-              title="Home time zone"
-              subtitle="Decides which day a workout counts for. It can change once a week."
-              value={settings.homeTimezone ?? "Not set"}
-            />
+            {feedback("goal")}
+            <ListGroup>
+              <ListRow
+                title="Home time zone"
+                subtitle="Decides which day a workout counts for. It can change once a week."
+                value={settings.homeTimezone ?? "Not set"}
+              />
+            </ListGroup>
             {phoneZone && phoneZone !== settings.homeTimezone && (
               <Button
                 label={`Use this phone's time zone (${phoneZone})`}
@@ -161,13 +168,14 @@ export default function SettingsScreen() {
                 onPress={() => save("tz", () => settingsApi.setHomeTimezone(phoneZone), "Time zone saved.")}
               />
             )}
+            {feedback("tz")}
           </View>
 
           {Platform.OS === "ios" && health.available && (
-            <View style={styles.stack}>
+            <View style={styles.section}>
               <SectionHeader title="Apple Health" />
-              <Card variant="outlined">
-                <T>{health.connected ? "Connected" : "Not connected"}</T>
+              <Card>
+                <Badge label={health.connected ? "Connected" : "Not connected"} tone={health.connected ? "success" : "neutral"} />
                 <T variant="small" tone="textMuted">
                   {health.connected
                     ? "After a workout, Squad Six looks for a matching workout from your watch or another app and attaches it as evidence. It reads workouts and heart rate only and never writes anything. To stop, turn off access in the Health app → Sharing → Apps → Squad Six."
@@ -178,21 +186,23 @@ export default function SettingsScreen() {
             </View>
           )}
 
-          <View style={styles.stack}>
+          <View style={styles.section}>
             <SectionHeader title="Account" />
-            <ListRow title="Email" value={settings.email ?? "–"} />
+            <ListGroup>
+              <ListRow title="Email" value={settings.email ?? "–"} />
+            </ListGroup>
             <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />
-            <Button label="Delete account" variant="destructive" busy={saving === "delete"} onPress={confirmDelete} />
+            <Button label="Delete account" variant="destructiveGhost" busy={saving === "delete"} onPress={confirmDelete} />
           </View>
 
-          <View style={styles.stack}>
+          <View style={styles.section}>
             <SectionHeader title="About" />
             {website && (
-              <>
+              <ListGroup>
                 <ListRow title="Privacy policy" chevron onPress={() => Linking.openURL(`${website}/privacy`)} />
                 <ListRow title="Terms of use" chevron onPress={() => Linking.openURL(`${website}/terms`)} />
-                <ListRow title="Help and support" chevron onPress={() => Linking.openURL(`${website}/support`)} divider={false} />
-              </>
+                <ListRow title="Help and support" chevron onPress={() => Linking.openURL(`${website}/support`)} />
+              </ListGroup>
             )}
             <T variant="caption" tone="textMuted">
               Squad Six {Constants.expoConfig?.version ?? ""}. City data © GeoNames (geonames.org), CC BY 4.0.
@@ -205,6 +215,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: space.md },
+  section: { gap: layout.stackGap },
+  field: { gap: space.xs },
   pills: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
 });

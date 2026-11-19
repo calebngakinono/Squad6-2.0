@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
+import { Pill } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
+import { ListRow } from "@/components/list-row";
 import { T } from "@/components/screen-text";
 import { TextField } from "@/components/text-field";
 import { space } from "@/theme/tokens";
@@ -26,16 +28,25 @@ export function SetLogger({ sets, editable }: { sets: LocalSet[]; editable: bool
     repsNum <= 100 &&
     (weightNum === null || (Number.isFinite(weightNum) && weightNum >= 0 && weightNum <= 500));
 
+  const listed = visible.slice().reverse();
+
   return (
     <Card>
-      <T variant="label">Sets ({visible.length})</T>
+      <View style={styles.head}>
+        <T variant="headline" accessibilityRole="header">
+          Sets
+        </T>
+        <T variant="label" tone="textMuted" numeric>
+          {`${visible.length} logged`}
+        </T>
+      </View>
       {editable && (
         <>
           <TextField label="Exercise" value={exercise} onChangeText={setExercise} maxLength={60} autoCapitalize="words" />
           {recent.length > 0 && (
-            <View style={styles.row}>
+            <View style={styles.pills} accessibilityLabel="Recent exercises">
               {recent.map((r) => (
-                <Button key={r} label={r} variant="secondary" onPress={() => setExercise(r)} />
+                <Pill key={r} label={r} selected={exercise === r} onPress={() => setExercise(r)} />
               ))}
             </View>
           )}
@@ -44,35 +55,45 @@ export function SetLogger({ sets, editable }: { sets: LocalSet[]; editable: bool
               <TextField label="Reps" value={reps} onChangeText={setReps} keyboardType="number-pad" maxLength={3} />
             </View>
             <View style={styles.grow}>
-              <TextField label="Weight (kg, optional)" value={weight} onChangeText={setWeight} keyboardType="decimal-pad" maxLength={5} />
+              <TextField label="Weight (kg)" helper="Optional" value={weight} onChangeText={setWeight} keyboardType="decimal-pad" maxLength={5} />
             </View>
           </View>
           <Button label="Log set" disabled={!valid} onPress={() => logSet(exercise, repsNum, weightNum)} />
         </>
       )}
-      {visible
-        .slice()
-        .reverse()
-        .map((s, i) => (
-          <View key={s.id} style={styles.setRow}>
-            <T style={styles.grow}>
-              {visible.length - i}. {s.exercise} · {s.reps} reps{s.weightKg != null ? ` · ${s.weightKg} kg` : ""}
-            </T>
-            {editable && (
-              <Button
-                label="Remove"
-                variant="secondary"
-                onPress={() =>
-                  Alert.alert("Remove this set?", undefined, [
-                    { text: "Keep", style: "cancel" },
-                    { text: "Remove", style: "destructive", onPress: () => deleteSet(s.id) },
-                  ])
-                }
-              />
-            )}
-          </View>
-        ))}
-      <T variant="small" tone="textMuted">
+      {listed.length > 0 && (
+        <View>
+          {listed.map((s, i) => (
+            <ListRow
+              key={s.id}
+              leading={
+                <T variant="label" tone="textMuted" numeric>
+                  {visible.length - i}
+                </T>
+              }
+              title={s.exercise}
+              subtitle={`${s.reps} reps${s.weightKg != null ? ` · ${s.weightKg} kg` : ""}`}
+              divider={i < listed.length - 1}
+              trailing={
+                editable ? (
+                  <Button
+                    label="Remove"
+                    variant="destructiveGhost"
+                    accessibilityLabel={`Remove set ${visible.length - i}, ${s.exercise}`}
+                    onPress={() =>
+                      Alert.alert("Remove this set?", undefined, [
+                        { text: "Keep", style: "cancel" },
+                        { text: "Remove", style: "destructive", onPress: () => deleteSet(s.id) },
+                      ])
+                    }
+                  />
+                ) : undefined
+              }
+            />
+          ))}
+        </View>
+      )}
+      <T variant="caption" tone="textMuted">
         Entered by you (manual). Weight is never used for points.
       </T>
     </Card>
@@ -80,7 +101,8 @@ export function SetLogger({ sets, editable }: { sets: LocalSet[]; editable: bool
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
+  head: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: space.md },
+  pills: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
+  row: { flexDirection: "row", gap: space.sm },
   grow: { flex: 1 },
-  setRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
 });
