@@ -1,4 +1,4 @@
-// Single source of visual tokens for the app ("clean premium": warm neutrals, one deep green accent).
+// Single source of visual tokens for the app ("Trail Blaze": forest greens, sage blazes, routed-sign type).
 // Screens and components read these instead of one-off colors and sizes, so a designer can replace the
 // look by editing this file. See apps/mobile/DESIGN.md for what each token is for.
 //
@@ -8,69 +8,71 @@ import type { TextStyle } from "react-native";
 
 // ---------------------------------------------------------------------------------------------------
 // Color. Semantic roles, one set per appearance. The app follows the phone's light/dark setting.
+// Built from Caleb's six greens: #071E15 (forest night), #2A3B2D, #284936 (forest), #26604A (emerald),
+// #435341 (olive) and #ADB499 (sage). Dark is the home appearance; light is sage paper with forest ink.
 // Contrast is enforced by src/theme/tokens.test.ts (body text 4.5:1, large text and controls 3:1).
 // ---------------------------------------------------------------------------------------------------
 export const palette = {
   light: {
-    /** Screen background: warm paper. */
-    background: "#F6F4EF",
+    /** Screen background: sage paper. */
+    background: "#E8EBDE",
     /** Cards, inputs, list groups. */
-    surface: "#FFFEFB",
+    surface: "#F4F6EE",
     /** Things that sit above a surface: selected segment, sheets. */
-    surfaceRaised: "#FFFFFF",
-    /** Recessed wells: segmented-control track, progress track. */
-    surfaceSunken: "#ECE9E2",
+    surfaceRaised: "#FBFCF8",
+    /** Recessed wells: segmented-control track, progress track, hollow blazes. */
+    surfaceSunken: "#D9DDCB",
     /** Pressed state for rows and quiet buttons. */
-    surfacePressed: "#EBE7DF",
-    text: "#1A1C19",
+    surfacePressed: "#DCE0CF",
+    text: "#071E15",
     /** Secondary text, captions, placeholders. Still meets 4.5:1 on every surface. */
-    textMuted: "#5C6059",
+    textMuted: "#435341",
     /** Hairlines and dividers (decorative, not a control boundary). */
-    border: "#E3DFD6",
+    border: "#C8CDB6",
     /** Control boundaries such as text-field outlines (3:1 against the surface). */
-    borderStrong: "#8A8B84",
-    /** The one brand color: primary actions, selection, links. */
-    accent: "#1D6A46",
-    accentPressed: "#165537",
-    onAccent: "#FFFFFF",
+    borderStrong: "#6B775C",
+    /** The one action colour: primary actions, selection, links, filled blazes. */
+    accent: "#26604A",
+    accentPressed: "#1D4D3B",
+    onAccent: "#F4F6EE",
     /** Tinted background for selected or highlighted things; put `accent` text on it. */
-    accentSoft: "#E3EDE5",
-    success: "#2A7247",
-    successSoft: "#E2F0E6",
-    warning: "#8A5A00",
-    warningSoft: "#F7ECD6",
-    danger: "#B3261E",
-    dangerPressed: "#8F1E18",
+    accentSoft: "#D3E0D2",
+    success: "#26604A",
+    successSoft: "#D3E0D2",
+    warning: "#7A5200",
+    warningSoft: "#F0E4C8",
+    danger: "#A3261E",
+    dangerPressed: "#821E18",
     onDanger: "#FFFFFF",
-    dangerSoft: "#F8E4E1",
+    dangerSoft: "#F3DEDA",
     /** Focus ring for the active text field. */
-    focus: "#1D6A46",
+    focus: "#26604A",
     /** Dims content behind a sheet or dialog. */
-    scrim: "rgba(26, 28, 25, 0.45)",
+    scrim: "rgba(7, 30, 21, 0.45)",
   },
   dark: {
-    background: "#121411",
-    surface: "#1A1D19",
-    surfaceRaised: "#22261F",
-    surfaceSunken: "#0C0E0B",
-    surfacePressed: "#2A2E27",
-    text: "#EEEDE8",
-    textMuted: "#A6A9A0",
-    border: "#2D312B",
-    borderStrong: "#6E7368",
-    accent: "#6FC59A",
-    accentPressed: "#5DB286",
-    onAccent: "#0E1A13",
-    accentSoft: "#1E3327",
-    success: "#7CCB9C",
-    successSoft: "#1B3124",
+    background: "#071E15",
+    surface: "#0F2A1E",
+    surfaceRaised: "#2A3B2D",
+    surfaceSunken: "#04140D",
+    surfacePressed: "#284936",
+    text: "#EEF0E6",
+    textMuted: "#ADB499",
+    border: "#2A3B2D",
+    borderStrong: "#7E8B6B",
+    accent: "#ADB499",
+    accentPressed: "#C3C9B1",
+    onAccent: "#071E15",
+    accentSoft: "#284936",
+    success: "#B9D9B4",
+    successSoft: "#284936",
     warning: "#E3B566",
     warningSoft: "#3A2E17",
     danger: "#F2B8B5",
     dangerPressed: "#E89C98",
     onDanger: "#3A0C0A",
     dangerSoft: "#3A1F1D",
-    focus: "#8FD5B0",
+    focus: "#ADB499",
     scrim: "rgba(0, 0, 0, 0.6)",
   },
 } as const;
@@ -79,45 +81,48 @@ export type ColorRole = keyof (typeof palette)["light"];
 export type Palette = { [K in ColorRole]: string };
 
 // ---------------------------------------------------------------------------------------------------
-// Type. One family (Inter, loaded at runtime in app/_layout.tsx). If it fails to load, text falls back
-// to the system font at the same sizes and weights. Numbers use tabular figures so timers and
-// scores do not jitter as digits change.
+// Type. Two families, loaded at runtime in app/_layout.tsx: a condensed routed-sign face (Barlow
+// Condensed) for titles and numbers, and Overpass (highway-sign lineage) for reading text and controls.
+// If they fail to load, text falls back to the system font at the same sizes and weights. Numbers use
+// tabular figures so timers and scores do not jitter as digits change.
 // ---------------------------------------------------------------------------------------------------
 
-/** Runtime font names registered by useFonts, one per weight the scale uses. */
+/** Runtime font names registered by useFonts, per family and weight. */
 export const fontFaces = {
-  "400": "Inter_400Regular",
-  "500": "Inter_500Medium",
-  "600": "Inter_600SemiBold",
+  display: { "500": "BarlowCondensed_500Medium", "600": "BarlowCondensed_600SemiBold", "700": "BarlowCondensed_700Bold" },
+  text: { "400": "Overpass_400Regular", "600": "Overpass_600SemiBold", "700": "Overpass_700Bold" },
 } as const;
 
-export type FontWeightToken = keyof typeof fontFaces;
+export type FontFamilyToken = keyof typeof fontFaces;
+export type FontWeightToken = "400" | "500" | "600" | "700";
 
-type TypeToken = TextStyle & { fontSize: number; lineHeight: number; fontWeight: FontWeightToken };
+type TypeToken = TextStyle & { fontSize: number; lineHeight: number; fontWeight: FontWeightToken; family: FontFamilyToken };
 
-// Existing names (title, body, label, small, metric) keep working; display, headline, button and
-// caption were added. All sizes scale with the phone's text-size setting (Dynamic Type).
+// All sizes scale with the phone's text-size setting (Dynamic Type). The condensed face runs a little
+// larger than a regular face at the same role.
 export const type = {
   /** The live workout timer only: readable at arm's length, mid-run. */
-  timer: { fontSize: 64, lineHeight: 72, fontWeight: "600", letterSpacing: -1.5, fontVariant: ["tabular-nums"] },
+  timer: { family: "display", fontSize: 76, lineHeight: 80, fontWeight: "600", letterSpacing: -0.5, fontVariant: ["tabular-nums"] },
   /** Hero numbers: a season total, a finished workout's points. */
-  display: { fontSize: 44, lineHeight: 52, fontWeight: "600", letterSpacing: -1, fontVariant: ["tabular-nums"] },
+  display: { family: "display", fontSize: 48, lineHeight: 52, fontWeight: "700", letterSpacing: -0.3, fontVariant: ["tabular-nums"] },
+  /** The squad's name and trail-sign captions: routed-sign caps. */
+  sign: { family: "display", fontSize: 32, lineHeight: 34, fontWeight: "700", letterSpacing: 0.6, textTransform: "uppercase" },
   /** Screen title. One per screen. */
-  title: { fontSize: 30, lineHeight: 36, fontWeight: "600", letterSpacing: -0.6 },
+  title: { family: "display", fontSize: 32, lineHeight: 36, fontWeight: "700", letterSpacing: 0 },
   /** Section heading inside a screen. */
-  headline: { fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.3 },
+  headline: { family: "display", fontSize: 23, lineHeight: 28, fontWeight: "600", letterSpacing: 0.2 },
   /** A number that matters: distance, pace, points, rank. */
-  metric: { fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -0.4, fontVariant: ["tabular-nums"] },
+  metric: { family: "display", fontSize: 30, lineHeight: 34, fontWeight: "700", letterSpacing: 0, fontVariant: ["tabular-nums"] },
   /** Default reading text. */
-  body: { fontSize: 17, lineHeight: 25, fontWeight: "400" },
+  body: { family: "text", fontSize: 17, lineHeight: 25, fontWeight: "400" },
   /** Field labels, card titles, row titles. */
-  label: { fontSize: 15, lineHeight: 20, fontWeight: "500" },
+  label: { family: "text", fontSize: 15, lineHeight: 20, fontWeight: "600" },
   /** Text inside buttons. */
-  button: { fontSize: 16, lineHeight: 20, fontWeight: "600" },
+  button: { family: "text", fontSize: 16, lineHeight: 20, fontWeight: "700" },
   /** Secondary lines, helper text. */
-  small: { fontSize: 14, lineHeight: 20, fontWeight: "400" },
+  small: { family: "text", fontSize: 14, lineHeight: 20, fontWeight: "400" },
   /** Footnotes, data sources, badges. The smallest size (12pt) in the app. */
-  caption: { fontSize: 12, lineHeight: 16, fontWeight: "500", letterSpacing: 0.2 },
+  caption: { family: "text", fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.3 },
 } satisfies Record<string, TypeToken>;
 
 export type TypeVariant = keyof typeof type;
@@ -127,10 +132,12 @@ export const monoFamily = { ios: "Menlo", default: "monospace" } as const;
 
 /** Turns a type token into a style that uses the loaded font face (or the system font). */
 export function resolveTextStyle(token: TypeToken, fontsLoaded: boolean): TextStyle {
-  if (!fontsLoaded) return token;
+  const { family, ...style } = token;
+  if (!fontsLoaded) return style;
   // A custom face already carries its weight. Also passing fontWeight makes Android fake a bolder cut.
-  const { fontWeight, ...rest } = token;
-  return { ...rest, fontFamily: fontFaces[fontWeight] };
+  const { fontWeight, ...rest } = style;
+  const faces: Partial<Record<FontWeightToken, string>> = fontFaces[family];
+  return { ...rest, fontFamily: faces[fontWeight] };
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -153,7 +160,8 @@ export const layout = {
   headingGap: space.sm + space.xs,
 } as const;
 
-export const radius = { sm: 8, md: 12, lg: 16, xl: 24, pill: 999 } as const;
+/** Small radii, like a routed trail sign: corners eased, never rounded into pills except tiny marks. */
+export const radius = { sm: 4, md: 6, lg: 8, xl: 16, pill: 999 } as const;
 
 export const borderWidth = { thin: 1, thick: 2 } as const;
 
@@ -186,7 +194,7 @@ export const size = {
 export const elevation = {
   light: {
     flat: { shadow: undefined, outline: false },
-    raised: { shadow: "0px 1px 2px rgba(31, 33, 28, 0.05), 0px 6px 18px rgba(31, 33, 28, 0.06)", outline: false },
+    raised: { shadow: "0px 1px 2px rgba(7, 30, 21, 0.06), 0px 6px 18px rgba(7, 30, 21, 0.07)", outline: false },
     overlay: { shadow: "0px 2px 6px rgba(31, 33, 28, 0.08), 0px 16px 40px rgba(31, 33, 28, 0.12)", outline: false },
     /** The selected thumb of a segmented control. */
     thumb: { shadow: "0px 1px 3px rgba(31, 33, 28, 0.12)", outline: false },

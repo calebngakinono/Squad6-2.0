@@ -6,6 +6,7 @@ import { Card } from "@/components/card";
 import { Progress } from "@/components/progress";
 import { T } from "@/components/screen-text";
 import { loadCity } from "@/features/cities/api";
+import { Blazes } from "@/features/goals/week-strip";
 import { useTheme } from "@/theme/theme";
 import { borderWidth, minTouch, radius, size, space } from "@/theme/tokens";
 import { gapView, planView } from "./view";
@@ -54,23 +55,15 @@ export function StepHeading({ title, body, large = false }: { title: string; bod
 }
 
 /**
- * Six seats: you (filled) and five teammates. The one picture of what Squad Six is, drawn as plain
- * geometry from the tokens.
+ * Six trails side by side: yours (brightest) and five teammates', each a short column of painted
+ * blazes on one baseline. The app's one picture of what Squad Six is, drawn from the tokens.
  */
 export function SquadSeats() {
-  const t = useTheme();
+  const heights = [4, 3, 4, 2, 3, 4];
   return (
     <View style={styles.seats} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      {Array.from({ length: 6 }, (_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.seat,
-            i === 0
-              ? { backgroundColor: t.color.accent, borderColor: t.color.accent }
-              : { backgroundColor: t.color.accentSoft, borderColor: t.color.accentSoft },
-          ]}
-        />
+      {heights.map((n, i) => (
+        <Blazes key={i} marks={Array.from({ length: n }, () => true)} bright={i === 0} vertical />
       ))}
     </View>
   );
@@ -189,7 +182,6 @@ export function ProItems({ items }: { items: Item[] }) {
   );
 }
 
-const SEAT = 28;
 
 const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: minTouch },
@@ -206,8 +198,7 @@ const styles = StyleSheet.create({
   heading: { gap: space.sm + space.xs },
   block: { gap: space.lg },
   welcome: { flexGrow: 1, justifyContent: "flex-end", gap: space.xl, paddingBottom: space.lg },
-  seats: { flexDirection: "row", gap: space.sm },
-  seat: { width: SEAT, height: SEAT, borderRadius: radius.pill, borderWidth: borderWidth.thick },
+  seats: { flexDirection: "row", alignItems: "flex-end", gap: space.md },
   figure: { gap: space.xxs },
   items: { gap: space.lg },
   item: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },

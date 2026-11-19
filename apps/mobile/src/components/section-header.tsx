@@ -22,7 +22,8 @@ export function SectionHeader({ title, subtitle, action, level = "section" }: Pr
   return (
     <View style={[styles.row, level === "screen" && styles.screenRow]}>
       <View style={styles.text}>
-        <T variant={level === "screen" ? "title" : "headline"} accessibilityRole="header">
+        {/* The home screen's title is the squad's sign: routed caps in sage. */}
+        <T variant={level === "screen" ? "sign" : "headline"} tone={level === "screen" ? "accent" : "text"} accessibilityRole="header">
           {title}
         </T>
         {subtitle ? (
