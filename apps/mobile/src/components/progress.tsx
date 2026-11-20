@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
 import { useTheme } from "@/theme/theme";
-import { radius, space } from "@/theme/tokens";
+import { space } from "@/theme/tokens";
 
 type Props = {
   /** Steps done so far, including the current one. */
@@ -20,7 +20,7 @@ export function Progress({ value, total, label }: Props) {
       accessibilityRole="progressbar"
       accessibilityLabel={label}
       accessibilityValue={{ min: 0, max: total, now: value, text: `Step ${value} of ${total}` }}
-      style={[styles.track, { backgroundColor: t.color.surfaceSunken }]}
+      style={[styles.track, { backgroundColor: t.color.track }]}
     >
       <View style={[styles.fill, { width: `${share * 100}%`, backgroundColor: t.color.accent }]} />
     </View>
@@ -28,6 +28,6 @@ export function Progress({ value, total, label }: Props) {
 }
 
 const styles = StyleSheet.create({
-  track: { height: space.xs, borderRadius: radius.pill, overflow: "hidden" },
-  fill: { height: "100%", borderRadius: radius.pill },
+  track: { height: space.xs + 1, borderRadius: 2, overflow: "hidden" },
+  fill: { height: "100%", borderRadius: 2 },
 });

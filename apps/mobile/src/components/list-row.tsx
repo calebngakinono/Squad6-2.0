@@ -66,7 +66,8 @@ export function ListRow({
         ) : null}
       </View>
       {value ? (
-        <T variant="label" tone={highlighted ? "accent" : "text"} numeric>
+        // Numbers on a row read like a sign's figures: condensed, in the accent.
+        <T variant="headline" tone="accent" numeric>
           {value}
         </T>
       ) : null}

@@ -28,6 +28,8 @@ const pairs: [fg: ColorRole, bg: ColorRole, min: number][] = [
   ["onDanger", "danger", TEXT],
   ["onDanger", "dangerPressed", TEXT],
   ["accent", "accentSoft", TEXT],
+  ["accent", "accentSoftPressed", TEXT],
+  ["text", "accentSoftPressed", TEXT],
   ["text", "accentSoft", TEXT],
   // Highlighted list rows ("your squad") put secondary text on accentSoft.
   ["textMuted", "accentSoft", TEXT],

@@ -28,7 +28,7 @@ export function OnboardingHeader({ value, total, onBack }: { value: number; tota
           accessibilityLabel="Back"
           onPress={onBack}
           hitSlop={space.sm}
-          style={({ pressed }) => [styles.back, { backgroundColor: pressed ? t.color.surfacePressed : t.color.surfaceSunken }]}
+          style={({ pressed }) => [styles.back, { borderColor: t.color.borderStrong, backgroundColor: pressed ? t.color.surfacePressed : "transparent" }]}
         >
           <View style={[styles.backChevron, { borderColor: t.color.text }]} />
         </Pressable>
@@ -185,7 +185,7 @@ export function ProItems({ items }: { items: Item[] }) {
 
 const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: minTouch },
-  back: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  back: { width: 40, height: 40, borderRadius: radius.sm, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
   backChevron: {
     width: size.chevron + 2,
     height: size.chevron + 2,
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   figure: { gap: space.xxs },
   items: { gap: space.lg },
   item: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
-  index: { width: 32, height: 32, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  index: { width: 32, height: 32, borderRadius: radius.sm, alignItems: "center", justifyContent: "center" },
   dot: { width: space.sm, height: space.sm, borderRadius: radius.pill, marginTop: space.sm, marginHorizontal: space.sm + space.xs },
   itemText: { flex: 1, gap: space.xxs },
   planRow: { gap: space.xxs, paddingVertical: space.sm + space.xs },

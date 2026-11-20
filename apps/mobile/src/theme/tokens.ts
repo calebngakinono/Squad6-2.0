@@ -37,6 +37,10 @@ export const palette = {
     onAccent: "#F4F6EE",
     /** Tinted background for selected or highlighted things; put `accent` text on it. */
     accentSoft: "#D3E0D2",
+    /** Pressed state of something on accentSoft (the trail sign). */
+    accentSoftPressed: "#C3D4C2",
+    /** Unfilled part of a progress track: visible against the background. */
+    track: "#C8CDB6",
     success: "#26604A",
     successSoft: "#D3E0D2",
     warning: "#7A5200",
@@ -64,6 +68,8 @@ export const palette = {
     accentPressed: "#C3C9B1",
     onAccent: "#071E15",
     accentSoft: "#284936",
+    accentSoftPressed: "#1C3829",
+    track: "#2A3B2D",
     success: "#B9D9B4",
     successSoft: "#284936",
     warning: "#E3B566",
@@ -195,9 +201,9 @@ export const elevation = {
   light: {
     flat: { shadow: undefined, outline: false },
     raised: { shadow: "0px 1px 2px rgba(7, 30, 21, 0.06), 0px 6px 18px rgba(7, 30, 21, 0.07)", outline: false },
-    overlay: { shadow: "0px 2px 6px rgba(31, 33, 28, 0.08), 0px 16px 40px rgba(31, 33, 28, 0.12)", outline: false },
+    overlay: { shadow: "0px 2px 6px rgba(7, 30, 21, 0.08), 0px 16px 40px rgba(7, 30, 21, 0.12)", outline: false },
     /** The selected thumb of a segmented control. */
-    thumb: { shadow: "0px 1px 3px rgba(31, 33, 28, 0.12)", outline: false },
+    thumb: { shadow: "0px 1px 3px rgba(7, 30, 21, 0.12)", outline: false },
   },
   dark: {
     flat: { shadow: undefined, outline: false },

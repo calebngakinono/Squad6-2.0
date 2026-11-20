@@ -46,7 +46,7 @@ export function WeekStrip({ rows, inSquad, error, onRetry, onPress }: Props) {
       style={({ pressed }) => [
         styles.card,
         // The trail sign: forest board with an olive edge.
-        { backgroundColor: pressed ? t.color.surfacePressed : t.color.accentSoft, borderColor: t.color.border },
+        { backgroundColor: pressed ? t.color.accentSoftPressed : t.color.accentSoft, borderColor: t.color.border },
         pressed && { transform: [{ scale: state.pressedScale }] },
       ]}
     >
@@ -56,7 +56,7 @@ export function WeekStrip({ rows, inSquad, error, onRetry, onPress }: Props) {
           {seats ? myGoalLine(me) || " " : " "}
         </T>
       </View>
-      <View style={[styles.seats, solo && styles.seatsSolo]}>
+      <View style={[styles.seats, solo && styles.seatsSolo, styles.rule, { borderTopColor: t.color.border }]}>
         {list.map((s) => (
           <SeatView key={s.key} seat={s} loading={!seats} solo={solo} />
         ))}
@@ -75,7 +75,14 @@ function SeatView({ seat, loading, solo }: { seat: Seat; loading: boolean; solo:
     // Open and loading seats are pictures only; the strip's line says what matters.
     return (
       <View style={[styles.seat, solo && styles.seatSolo]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <View style={[styles.face, loading ? { backgroundColor: t.color.surfaceSunken } : styles.openFace, !loading && { borderColor: t.color.textMuted }]} />
+        {!loading && (
+          // Trail still to come: two dashed blazes.
+          <View style={styles.blazesV}>
+            <View style={[styles.blazeV, styles.dashed, { borderColor: t.color.textMuted }]} />
+            <View style={[styles.blazeV, styles.dashed, { borderColor: t.color.textMuted }]} />
+          </View>
+        )}
+        <View style={[styles.face, loading ? { backgroundColor: t.color.track } : styles.openFace, !loading && { borderColor: t.color.textMuted }]} />
         <T variant="caption" tone="textMuted" numberOfLines={1}>
           {loading ? " " : "Open"}
         </T>
@@ -89,7 +96,8 @@ function SeatView({ seat, loading, solo }: { seat: Seat; loading: boolean; solo:
       </T>
       <Blazes marks={pips(seat.days, seat.goal)} bright={seat.isMe} vertical />
       <View style={[styles.face, { backgroundColor: seat.isMe ? t.color.accent : t.color.surfaceRaised }]}>
-        <T variant="caption" tone={seat.isMe ? "onAccent" : "accent"}>
+        {/* The circle is fixed, so initials stop growing at 1.3x text size instead of spilling out. */}
+        <T variant="caption" tone={seat.isMe ? "onAccent" : "accent"} maxFontSizeMultiplier={1.3}>
           {seat.initials}
         </T>
       </View>
@@ -139,10 +147,12 @@ const styles = StyleSheet.create({
   // Every seat stands on one shared baseline, so the six trails compare at a glance.
   seats: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: space.xs },
   seatsSolo: { justifyContent: "flex-start" },
+  rule: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.md },
   seat: { flex: 1, alignItems: "center", gap: space.xs + 1, minWidth: 0 },
   seatSolo: { flex: 0, minWidth: FACE + space.xl },
   face: { width: FACE, height: FACE, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", marginTop: space.xs },
   openFace: { borderWidth: 1.5, borderStyle: "dashed" },
+  dashed: { borderStyle: "dashed" },
   blazesV: { gap: 5, alignItems: "center" },
   blazeV: { width: 18, height: 10, borderRadius: 2, borderWidth: 1.5 },
   blazesH: { flexDirection: "row", gap: 4, alignItems: "center" },
