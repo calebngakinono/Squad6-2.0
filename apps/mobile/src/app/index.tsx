@@ -200,6 +200,7 @@ export default function HomeScreen() {
                 : "No points yet. They show once a workout is scored."
           }
           value={myPoints ? formatPoints(myPoints) : undefined}
+          figure
           accessibilityLabel={myPoints ? `Squad standings. Your ${season} points: ${formatPoints(myPoints)}, from Squad Six scoring` : undefined}
           onPress={() => router.push("/standings")}
         />

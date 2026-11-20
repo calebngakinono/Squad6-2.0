@@ -154,7 +154,8 @@ and controls. Always go through `T` or `useTheme().text(variant)`. Numbers use t
 
 - **Screen layout:** every screen is a `Screen` → optional title → blocks separated by `layout.sectionGap`
   → main action in `footer`. A section is a `SectionHeader` plus its content, `layout.headingGap` apart.
-- **Lists:** wrap `ListRow`s in a `ListGroup`. A row's `value` is a figure: condensed, in the accent.
+- **Lists:** wrap `ListRow`s in a `ListGroup`. Point totals pass `figure` (condensed, in the accent); text values
+  (a time zone, "In review") stay `label` in the text colour.
 - **The trail sign** (`features/goals/week-strip.tsx`), top of Home: a forest board with an olive edge; the
   goal line ("2 of 4 days this week", accent once reached); a hairline; then one column per member on one
   shared baseline: count, blazes (filled from the bottom), initials, name. Yours is brightest (`text`),
