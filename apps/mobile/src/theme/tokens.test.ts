@@ -28,6 +28,8 @@ const pairs: [fg: ColorRole, bg: ColorRole, min: number][] = [
   ["onDanger", "danger", TEXT],
   ["onDanger", "dangerPressed", TEXT],
   ["accent", "accentSoft", TEXT],
+  ["accent", "accentSoftPressed", TEXT],
+  ["text", "accentSoftPressed", TEXT],
   ["text", "accentSoft", TEXT],
   // Highlighted list rows ("your squad") put secondary text on accentSoft.
   ["textMuted", "accentSoft", TEXT],
@@ -55,16 +57,18 @@ test("controls meet the minimum touch size", () => {
 
 test("every type weight has a loaded face, and the smallest size is 12pt", () => {
   for (const token of Object.values(type)) {
-    expect(fontFaces[token.fontWeight]).toBeDefined();
+    expect((fontFaces[token.family] as Record<string, string>)[token.fontWeight]).toBeDefined();
     expect(token.fontSize).toBeGreaterThanOrEqual(12);
     expect(token.lineHeight).toBeGreaterThan(token.fontSize);
   }
 });
 
 test("resolveTextStyle swaps weight for a font face only when fonts loaded", () => {
-  expect(resolveTextStyle(type.label, false)).toEqual(type.label);
+  const { family: _family, ...plain } = type.label;
+  expect(resolveTextStyle(type.label, false)).toEqual(plain);
   const loaded = resolveTextStyle(type.label, true);
-  expect(loaded.fontFamily).toBe("Inter_500Medium");
+  expect(loaded.fontFamily).toBe("Overpass_600SemiBold");
+  expect(resolveTextStyle(type.title, true).fontFamily).toBe("BarlowCondensed_700Bold");
   expect(loaded.fontWeight).toBeUndefined();
   expect(loaded.fontSize).toBe(type.label.fontSize);
 });

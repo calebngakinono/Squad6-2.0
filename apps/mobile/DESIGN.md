@@ -1,88 +1,195 @@
-# Squad Six mobile design system
+---
+name: Squad Six
+description: Trail Blaze. Your squad is a trail party; every day trained is a blaze on your tree.
+colors:
+  forest-night: "#071E15"
+  forest-board: "#0F2A1E"
+  pine: "#2A3B2D"
+  forest: "#284936"
+  emerald: "#26604A"
+  olive: "#435341"
+  sage: "#ADB499"
+  bark-line: "#7E8B6B"
+  mist: "#EEF0E6"
+  sage-paper: "#E8EBDE"
+  paper-board: "#F4F6EE"
+typography:
+  timer:
+    fontFamily: "Barlow Condensed"
+    fontSize: "76px"
+    fontWeight: 600
+    lineHeight: "80px"
+  display:
+    fontFamily: "Barlow Condensed"
+    fontSize: "48px"
+    fontWeight: 700
+    lineHeight: "52px"
+  sign:
+    fontFamily: "Barlow Condensed"
+    fontSize: "32px"
+    fontWeight: 700
+    lineHeight: "34px"
+    letterSpacing: "0.6px"
+  title:
+    fontFamily: "Barlow Condensed"
+    fontSize: "32px"
+    fontWeight: 700
+    lineHeight: "36px"
+  headline:
+    fontFamily: "Barlow Condensed"
+    fontSize: "23px"
+    fontWeight: 600
+    lineHeight: "28px"
+  body:
+    fontFamily: "Overpass"
+    fontSize: "17px"
+    fontWeight: 400
+    lineHeight: "25px"
+  label:
+    fontFamily: "Overpass"
+    fontSize: "15px"
+    fontWeight: 600
+    lineHeight: "20px"
+  caption:
+    fontFamily: "Overpass"
+    fontSize: "12px"
+    fontWeight: 600
+    lineHeight: "16px"
+rounded:
+  sm: "4px"
+  md: "6px"
+  lg: "8px"
+  xl: "16px"
+spacing:
+  xs: "4px"
+  sm: "8px"
+  md: "16px"
+  lg: "24px"
+  xl: "32px"
+components:
+  button-primary:
+    backgroundColor: "{colors.sage}"
+    textColor: "{colors.forest-night}"
+    rounded: "{rounded.md}"
+    height: "52px"
+  button-secondary:
+    backgroundColor: "transparent"
+    textColor: "{colors.sage}"
+    rounded: "{rounded.md}"
+    height: "52px"
+  trail-sign:
+    backgroundColor: "{colors.forest}"
+    textColor: "{colors.mist}"
+    rounded: "{rounded.lg}"
+    padding: "20px"
+  list-group:
+    backgroundColor: "{colors.forest-board}"
+    textColor: "{colors.mist}"
+    rounded: "{rounded.lg}"
+---
 
-The look is **clean premium**: warm neutral backgrounds, one deep green accent, a calm sans-serif,
-plenty of space. It should feel like a premium wellness app, not a neon gym app. Light and dark mode
-are equal; the app follows the phone setting.
+# Squad Six mobile design system: Trail Blaze
 
-All values live in `src/theme/tokens.ts`. A designer can change the whole look by editing that one
-file. Components and screens never hard-code a color, size, radius, shadow or font.
+## Overview
 
-## Principles
+**Creative north star: the trail party.** A squad is six people on the same trail. Every day someone
+trains is a painted blaze on their tree, and you can see at a glance who has been out this week.
+The look is a forest-service trail sign: deep forest ground, olive board edges, sage paint, condensed
+routed letters. It should feel like walking into your team's space, not like a settings screen.
 
-1. **One thumb.** Design for one-handed use. The main action of a screen sits at the bottom in the
-   `Screen` footer. Every tappable thing is at least 48pt tall (`minTouch`).
-2. **One accent.** Green is for primary actions, selection and links. Do not use it for decoration.
-   Use the status colors (success, warning, danger) only for status.
-3. **Quiet surfaces.** Separate layers with space first, then surface color. In light mode a raised
-   card has a soft shadow; in dark mode it has a lighter surface and a hairline. Never both.
-4. **Considered numbers.** Timers, points, distances and ranks use tabular figures (`numeric`, or the
-   `display`/`metric` variants) so digits do not jump. Every fitness number says where it came from
-   (`Stat`'s `source`, see `docs/data-integrity.md`).
-5. **Text that scales.** Nothing has a fixed height that would clip larger text. Use `minHeight`.
-6. **Readable in both modes.** Body text is at least 4.5:1 against its background, large text and
-   control outlines at least 3:1. `src/theme/tokens.test.ts` checks every pairing below, so a palette
-   change that breaks contrast fails `pnpm test`.
+Chosen by Caleb on 2026-11-19 from a design round (direction contract: `.impeccable/surfaces/src-app-index-tsx.md`),
+built on his pinned palette. It replaces "clean premium" (warm off-white, Inter), which he found plain,
+pale and not premium. A Figma designer may replace it later: every value lives in `src/theme/tokens.ts`,
+so keep role names and change values.
 
-## Tokens (`src/theme/tokens.ts`)
+## Colors
 
-### Color roles (`palette.light` / `palette.dark`)
+Dark is the home appearance; light is sage paper with forest ink. The app follows the phone setting.
+Read colours with `useTheme().color`; never hard-code one outside `tokens.ts`.
 
-| Role | Use |
-|---|---|
-| `background` | Screen background (warm paper / warm near-black). |
-| `surface` | Cards, inputs, list groups. |
-| `surfaceRaised` | Above a surface: segmented thumb, sheets. |
-| `surfaceSunken` | Recessed wells: segmented track, `Card variant="sunken"`, neutral badge. |
-| `surfacePressed` | Pressed state of rows, secondary and ghost buttons. |
-| `text` / `textMuted` | Main and secondary text. `textMuted` also for placeholders. |
-| `border` | Hairlines and dividers (decorative). |
-| `borderStrong` | Outlines that define a control (text fields, unselected pills). |
-| `accent` / `accentPressed` / `onAccent` | Primary action fill, its pressed state, and text on it. |
-| `accentSoft` | Tinted background for highlighted things; put `accent` text on it. |
-| `success`, `warning`, `danger` (+ `…Soft`) | Status text, and soft backgrounds for badges. |
-| `dangerPressed` / `onDanger` | Destructive button. |
-| `focus` | Focused text field outline. |
-| `scrim` | Dims content behind a sheet or dialog. |
-
-Read colors with `useTheme().color` (or the older `usePalette()`, which returns the same object).
-
-### Type (`type`)
-
-One family, Inter, loaded at runtime in `app/_layout.tsx` (no native rebuild). If it fails to load,
-the same sizes and weights render in the system font. Always go through `T` or `useTheme().text(variant)`;
-using `type.x` directly in a style gets the system font.
-
-| Variant | Size / line | Weight | Use |
+| Role | Dark | Light | Use |
 |---|---|---|---|
-| `timer` | 64 / 72 | 600, tabular | The live workout timer only: read at arm's length, mid-run. |
-| `display` | 44 / 52 | 600, tabular | One hero number per screen (season total, a workout's points). |
-| `title` | 30 / 36 | 600 | Screen title. |
-| `headline` | 20 / 26 | 600 | Section heading, empty-state title. |
-| `metric` | 28 / 34 | 600, tabular | Numbers in a row of stats. |
-| `body` | 17 / 25 | 400 | Reading text, row titles. |
-| `label` | 15 / 20 | 500 | Field labels, card titles. |
-| `button` | 16 / 20 | 600 | Button text. |
-| `small` | 14 / 20 | 400 | Secondary lines, helper text. |
-| `caption` | 12 / 16 | 500 | Data sources, footnotes, badges. Smallest size in the app. |
+| `background` | forest night #071E15 | sage paper #E8EBDE | Screen ground. |
+| `surface` | forest board #0F2A1E | #F4F6EE | List groups, inputs, cards. |
+| `surfaceRaised` | pine #2A3B2D | #FBFCF8 | Above a surface; initials circles. |
+| `accent` | sage #ADB499 | emerald #26604A | The one action colour: primary buttons, links, filled blazes, row figures. |
+| `accentSoft` | forest #284936 | #D3E0D2 | The trail sign; highlighted rows. `accentSoftPressed` is its pressed state. |
+| `text` / `textMuted` | mist #EEF0E6 / sage | forest night / olive #435341 | Reading text / secondary text and hollow blazes. |
+| `border` / `borderStrong` | pine / bark line #7E8B6B | #C8CDB6 / #6B775C | Hairlines / control outlines (3:1). |
+| `track` | pine | #C8CDB6 | The unfilled part of a progress bar. |
+| `success`, `warning`, `danger` (+ `…Soft`) | | | Status only, never decoration. |
 
-### Space, shape, elevation, motion
+`src/theme/tokens.test.ts` checks every text pairing at 4.5:1 and every control outline at 3:1, so a
+palette change that breaks contrast fails `pnpm test`.
 
-- `space`: `xxs 2, xs 4, sm 8, md 16, lg 24, xl 32, xxl 48, xxxl 64`.
-- `layout`: `gutter` (screen side padding, 24), `sectionGap` (between blocks, 32), `cardPadding` (20),
-  `stackGap` (inside a card, 16), `headingGap` (a `SectionHeader` to the list or card it introduces, 12).
-- `radius`: `sm 8, md 12` (controls), `lg 16` (cards), `xl 24` (sheets), `pill`.
-- `size`: `control 52` (buttons, fields), `controlCompact 40` (pills, padded to 48 with hitSlop),
-  `row 56`, `chevron`, `leading 32` (rank column in a row), `tile 96` (activity tiles), `mark 22` /
-  `markDot 10` (radio and checkbox marks).
-- `monoFamily`: monospace, for raw diagnostic output only (the dev device-check report). Never UI text.
-- `borderWidth`: `thin 1`, `thick 2`.
-- `elevation`: `flat`, `raised`, `overlay`, `thumb`, each with a `shadow` (light) or `outline` (dark).
-  Apply with `elevationStyle(level, color)` from `src/theme/theme.tsx`.
-- `state`: `disabledOpacity`, `pressedScale`.
-- `motion.duration`: `instant 90, fast 150, base 220, slow 320` ms. Motion is short and ease-out.
-  Anything that slides or scales more than a press must respect Reduce Motion.
+## Typography
 
-## Components (`src/components/`)
+Two families, loaded at runtime in `app/_layout.tsx` (no native rebuild): **Barlow Condensed**, a
+routed-sign face, for titles and numbers; **Overpass**, from the highway-sign lineage, for reading text
+and controls. Always go through `T` or `useTheme().text(variant)`. Numbers use tabular figures.
+
+| Variant | Family | Size / line | Weight | Use |
+|---|---|---|---|---|
+| `timer` | Barlow Condensed | 76 / 80 | 600 | The live workout timer only. |
+| `display` | Barlow Condensed | 48 / 52 | 700 | One hero number or statement per screen. |
+| `sign` | Barlow Condensed | 32 / 34, caps | 700 | The squad's name on Home. Nothing else. |
+| `title` | Barlow Condensed | 32 / 36 | 700 | Screen title; onboarding questions. |
+| `headline` | Barlow Condensed | 23 / 28 | 600 | Section heading; the goal line; figures on list rows. |
+| `metric` | Barlow Condensed | 30 / 34 | 700 | Numbers in a row of stats. |
+| `body` | Overpass | 17 / 25 | 400 | Reading text, row titles. |
+| `label` | Overpass | 15 / 20 | 600 | Field labels, card titles. |
+| `button` | Overpass | 16 / 20 | 700 | Button text. |
+| `small` | Overpass | 14 / 20 | 400 | Secondary lines, helper text. |
+| `caption` | Overpass | 12 / 16 | 600 | Data sources, badges, initials. The smallest size. |
+
+## Layout
+
+- Spacing: 4-point scale (`space`: xxs 2, xs 4, sm 8, md 16, lg 24, xl 32, xxl 48, xxxl 64). `layout.gutter`
+  24 at the screen edges, `layout.sectionGap` 32 between blocks, `layout.cardPadding` 20.
+- One thumb: the screen's main action sits in the `Screen` footer. Everything tappable is at least 48pt.
+- Nothing has a fixed height that clips larger text; use `minHeight`. Initials in fixed circles stop
+  growing at 1.3x.
+
+### Patterns
+
+- **Screen layout:** every screen is a `Screen` → optional title → blocks separated by `layout.sectionGap`
+  → main action in `footer`. A section is a `SectionHeader` plus its content, `layout.headingGap` apart.
+- **Lists:** wrap `ListRow`s in a `ListGroup`. Point totals pass `figure` (condensed, in the accent); text values
+  (a time zone, "In review") stay `label` in the text colour.
+- **The trail sign** (`features/goals/week-strip.tsx`), top of Home: a forest board with an olive edge; the
+  goal line ("2 of 4 days this week", accent once reached); a hairline; then one column per member on one
+  shared baseline: count, blazes (filled from the bottom), initials, name. Yours is brightest (`text`),
+  teammates' blazes are `accent`, open seats show two dashed blazes and a dashed circle. No warning colours
+  on people; a reached goal is the accent, never a celebration.
+- **Home:** squad name as a sign + Settings → the trail sign → what needs action (Find your squad; captain:
+  Waiting to join) → one `ListGroup` of destinations (Squad standings with my season points as its figure,
+  Challenges, Squad activity, My workouts) → squad management. Footer: "<last activity> again" (primary)
+  beside "Other workout" (secondary), or "Start a workout" for someone with no workouts yet.
+- **Standings:** rank as `leading`, points as the row figure, `highlighted` plus a "You" badge for my squad.
+- **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are `Stat`s
+  in a `Grid` inside a `Card`, each with its `source`. Footer: `ButtonRow` (Pause/Resume | Finish) and a
+  `destructiveGhost` Discard.
+- **Onboarding:** square back button with an olive outline and a thin progress bar at the top (hidden on
+  the welcome and the Pro offer), the title, the answer controls, one primary button in the footer,
+  disabled until answered. The welcome shows six trails of blazes (yours brightest). Each screen fades in
+  once (`motion.duration.slow`).
+- **Loading / errors / empty:** `Loading` while waiting; `Notice` with "Try again" next to what failed;
+  `EmptyState` when there is nothing yet.
+
+## Elevation & Depth
+
+Dark mode separates layers with surface colour and a hairline, never a shadow. Light mode uses one soft
+forest-tinted shadow for raised groups (`elevation.light.raised`). The trail sign always uses its own
+olive edge instead. Apply elevation with `elevationStyle(level, color)` from `src/theme/theme.tsx`.
+
+## Shapes
+
+Small radii, like a routed sign: `radius.sm` 4 (badges, chips, back button, number badges), `md` 6
+(buttons, fields), `lg` 8 (cards, list groups, the trail sign), `xl` 16 (sheets). No pill buttons.
+Circles are reserved for people (initials). The blaze is the one mark: a small painted rectangle, 2pt
+corners, filled or hollow (1.5pt outline).
+
+## Components
 
 Import each from its own file, e.g. `import { Button } from "@/components/button"`.
 
@@ -113,50 +220,29 @@ Import each from its own file, e.g. `import { Button } from "@/components/button
 Feature-level pieces built from these: `ScoreCard` (`features/workout/score-card.tsx`, the server's score for
 one workout, used by the live summary and past workouts) and `SquadPanel` (`features/squads/squad-panel.tsx`).
 
-### Patterns
 
-- **Screen layout:** every screen is a `Screen` (no bare `SafeAreaView`/`ScrollView`) → optional title →
-  blocks separated by `layout.sectionGap` (automatic) → main action in `footer`. A section is a
-  `SectionHeader` plus its content, `layout.headingGap` apart.
-- **Lists:** wrap `ListRow`s in a `ListGroup`. Inside a `Card` (mixed content) set `divider={false}` on
-  the last row yourself.
-- **This week strip** (`features/goals/week-strip.tsx`): top of Home. Six seats (you first in the accent,
-  teammates on `surfaceSunken`, `accentSoft` once they reach their goal, dashed open seats), one pip per goal
-  day under each. No warning colors on people; a reached goal is the accent, never a celebration.
-- **Home:** in reading order: title row (squad name + Settings) → the this-week strip (primary) → what needs
-  action (no squad: Find your squad; captain: Waiting to join) → one `ListGroup` of destinations, the first
-  being Squad standings with my season points as its value → squad management (members, invite code, leave).
-  A new destination (e.g. Challenges) is one more `ListRow` in that group. The footer holds the workout
-  action: return to the one in progress, or "<last activity> again" (primary) beside "Other workout"
-  (secondary), or "Start a workout" for someone with no workouts yet.
-- **Standings:** `ListRow` in a `ListGroup` with the rank as `leading` (`<T numeric tone="textMuted">`),
-  points as `value`, and `highlighted` for the athlete's own squad.
-- **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are
-  `Stat`s in a `Grid` inside a `Card`, each with `source` ("Phone GPS", "Phone step counter",
-  "Synced from Apple Health"). Footer: `ButtonRow` (Pause/Resume | Finish) and a `destructiveGhost` Discard.
-- **Onboarding** (`app/onboarding.tsx`, `features/onboarding/layouts.tsx`): back chevron and a thin
-  progress bar at the top (hidden on the welcome and the Pro offer), the title (`display` on statement
-  screens, `title` on questions), the answer controls, and one primary button in the footer that stays
-  disabled until the question is answered. Each screen fades in once (`motion.duration.slow`). The
-  six-seat row (you filled, five teammates soft) is the only picture. Days-a-week questions use the
-  number-key grid with the chosen number shown large.
-- **Loading / errors / empty:** `Loading` while waiting; `Notice` (with a "Try again" action when a load
-  failed) next to what failed, naming the problem and the fix; `EmptyState` when there is nothing yet.
+Button looks: `primary` is a sage fill with forest-night text; `secondary` is transparent with a 1.5pt
+`borderStrong` outline and an accent label; `ghost` is an accent label only.
 
-## Words
+## Do's and Don'ts
 
-- **Counted workout**: a workout Squad Six scored and accepted (not discarded, expired, rejected or waiting for
-  review). Never "accepted workout" in the UI.
-- **Where a number came from** (`Stat` `source`): "Phone GPS", "Phone step counter", "Squad Six timer",
-  "Synced from Apple Health", "Phone GPS or Apple Health", and "Squad Six scoring" for points and counted
-  workouts. No "calculated / scored / awarded by" variants.
+- **Do** use the blaze (filled / hollow rectangle) for anything that counts days or steps toward a goal.
+- **Do** keep sage for actions and highlights only; status colours only for status.
+- **Do** show where every fitness number came from (`Stat` `source`); missing data shows as not recorded.
+- **Don't** put a small caps label (kicker) above a heading; the heading speaks for itself.
+- **Don't** use gradients, glows, pill buttons or rounded "app" cards; this is a sign, not a bubble.
+- **Don't** use warning or danger colours on people (a teammate who hasn't trained is not an alert).
+
+### Words
+
+- **Counted workout**: a workout Squad Six scored and accepted. Never "accepted workout" in the UI.
+- **Where a number came from**: "Phone GPS", "Phone step counter", "Squad Six timer", "Synced from Apple
+  Health", "Phone GPS or Apple Health", and "Squad Six scoring" for points and counted workouts.
 - **Not scored yet**: say when points appear ("Points show here once it's scored"), never that scoring is
-  switched off, launching, or done "by the server".
+  switched off or launching.
 
 ## Not done yet
 
-- No icon library. Rows draw their chevron, and `Choice` its check mark, with borders. If icons are needed, add `expo-symbols`
-  (SF Symbols on iOS) with `npx expo install`; it needs a new development build.
-- The splash screen and Android icon background in `app.json` use `#1F6F4A`; the refined accent is
-  `#1D6A46`. Update them with the next native build.
-- Final visuals come from Figma later. Replace values in `tokens.ts`; keep the role names.
+- No icon library; chevrons and check marks are drawn with borders. Icons wait for the Figma designer.
+- The splash screen and Android icon background use #071E15; they change with the next native build.
+- Final visuals may come from Figma later. Replace values in `tokens.ts`; keep the role names.
