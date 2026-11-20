@@ -38,7 +38,9 @@ select lives_ok($$select public.create_squad('Red Rocks', 5546220)$$, 'a squad i
 select is((select city || '/' || city_id from public.squads where name = 'Red Rocks'), 'Saint George, Utah/5546220', 'the squad stores the city and its label');
 
 -- Onboarding runs before sign-up, so a visitor can search the (public) city list, but not change anything.
+-- A real visitor has no signed-in user: drop the claims set above, or auth.uid() would still be "a".
 set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
 select is(pg_temp.found('denv'), 'Denver, Colorado (US) | Denville, New Jersey (US)', 'visitors can search the city list');
 select is((select name from public.cities where id = 5419384), 'Denver', 'visitors can read a chosen city');
 select throws_ok($$update public.profiles set city_id = 5419384$$, '42501', null, 'visitors cannot set a city on any profile');
