@@ -22,11 +22,12 @@ export function SectionHeader({ title, subtitle, action, level = "section" }: Pr
   return (
     <View style={[styles.row, level === "screen" && styles.screenRow]}>
       <View style={styles.text}>
-        <T variant={level === "screen" ? "title" : "headline"} accessibilityRole="header">
+        {/* The home screen's title is the squad's sign: routed caps in sage. */}
+        <T variant={level === "screen" ? "sign" : "headline"} tone={level === "screen" ? "accent" : "text"} accessibilityRole="header">
           {title}
         </T>
         {subtitle ? (
-          <T variant={level === "screen" ? "body" : "small"} tone="textMuted">
+          <T variant="small" tone="textMuted">
             {subtitle}
           </T>
         ) : null}
@@ -68,5 +69,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   // Centers the 48pt tap area on the title's first line.
-  screenAction: { marginBottom: 0, marginTop: -(minTouch - type.title.lineHeight) / 2 },
+  screenAction: { marginBottom: 0, marginTop: -(minTouch - type.sign.lineHeight) / 2 },
 });
