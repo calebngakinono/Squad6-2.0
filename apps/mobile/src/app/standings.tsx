@@ -146,6 +146,7 @@ function StandingRow({ rank, squad }: { rank: string; squad: SquadStanding }) {
       titleLines={1}
       subtitle={subtitle}
       value={value}
+      figure
       highlighted={squad.is_mine}
       trailing={squad.is_mine ? <Badge label="You" tone="accent" /> : undefined}
       accessibilityLabel={`${rank === "–" ? "Not ranked" : `Rank ${rank}`}, ${title}${squad.is_mine ? ", your squad" : ""}, ${subtitle}, ${value} points`}

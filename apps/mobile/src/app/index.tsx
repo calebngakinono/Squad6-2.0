@@ -200,11 +200,12 @@ export default function HomeScreen() {
                 : "No points yet. They show once a workout is scored."
           }
           value={myPoints ? formatPoints(myPoints) : undefined}
+          figure
           accessibilityLabel={myPoints ? `Squad standings. Your ${season} points: ${formatPoints(myPoints)}, from Squad Six scoring` : undefined}
           onPress={() => router.push("/standings")}
         />
-        {squad && <ListRow title="Squad activity" subtitle="This week and recent workouts" onPress={() => router.push("/squad-activity")} />}
         <ListRow title="Challenges" subtitle="Weekly bonus points for your regular workouts" onPress={() => router.push("/challenges")} />
+        {squad && <ListRow title="Squad activity" subtitle="This week and recent workouts" onPress={() => router.push("/squad-activity")} />}
         <ListRow title="My workouts" subtitle="Past workouts and their points" onPress={() => router.push("/history")} />
         {__DEV__ && <ListRow title="Device check" subtitle="Development builds only" onPress={() => router.push("/device-check")} />}
       </ListGroup>

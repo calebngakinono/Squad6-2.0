@@ -13,7 +13,8 @@
     "doctor": "expo-doctor"
   },
   "dependencies": {
-    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/barlow-condensed": "^0.4.1",
+    "@expo-google-fonts/overpass": "^0.4.2",
     "@kingstinct/react-native-healthkit": "^16.2.0",
     "@react-native-google-signin/google-signin": "^17.0.0",
     "@squad-six/shared": "workspace:*",

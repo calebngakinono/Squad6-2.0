@@ -1,0 +1,17 @@
+{
+  "name": "Squad Six",
+  "northStar": "The trail party: every day trained is a painted blaze on your tree.",
+  "source": "src/theme/tokens.ts",
+  "elevation": {
+    "light": { "raised": "0px 1px 2px rgba(7, 30, 21, 0.06), 0px 6px 18px rgba(7, 30, 21, 0.07)", "overlay": "0px 2px 6px rgba(7, 30, 21, 0.08), 0px 16px 40px rgba(7, 30, 21, 0.12)" },
+    "dark": { "raised": "surface colour + hairline, no shadow", "overlay": "0px 16px 40px rgba(0, 0, 0, 0.5) + hairline" }
+  },
+  "motion": { "durationMs": { "instant": 90, "fast": 150, "base": 220, "slow": 320 }, "rule": "short ease-out; one fade-in per onboarding screen; honor Reduce Motion" },
+  "signature": { "blaze": { "vertical": "18x10, 2pt corners, 1.5pt outline", "horizontal": "12x8, 2pt corners, 1.5pt outline", "filled": "accent (yours: text)", "hollow": "textMuted outline" } },
+  "rules": [
+    "Sage (dark) / emerald (light) is the only action colour.",
+    "Circles only for people; everything else has small radii (4-8).",
+    "No kicker labels above headings, no gradients, no pill buttons.",
+    "No warning or danger colours on people."
+  ]
+}

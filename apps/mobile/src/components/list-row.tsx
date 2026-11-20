@@ -13,6 +13,8 @@ type Props = {
   trailing?: ReactNode;
   /** Short trailing text, set in tabular figures (points, distance, time). */
   value?: string;
+  /** Sets `value` as a figure (condensed, in the accent): point totals only. Text values stay quiet. */
+  figure?: boolean;
   /** Makes the row tappable. */
   onPress?: () => void;
   /** Shows a chevron. Defaults to true when the row navigates (has onPress). */
@@ -41,6 +43,7 @@ export function ListRow({
   leading,
   trailing,
   value,
+  figure = false,
   onPress,
   chevron = !!onPress,
   highlighted = false,
@@ -66,7 +69,8 @@ export function ListRow({
         ) : null}
       </View>
       {value ? (
-        <T variant="label" tone={highlighted ? "accent" : "text"} numeric>
+        // Point totals read like a sign's figures; text values (a time zone, "In review") stay quiet.
+        <T variant={figure ? "headline" : "label"} tone={figure || highlighted ? "accent" : "text"} numeric>
           {value}
         </T>
       ) : null}

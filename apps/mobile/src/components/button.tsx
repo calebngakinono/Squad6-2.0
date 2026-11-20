@@ -1,6 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/theme/theme";
-import { borderWidth, radius, size, space, state, type ColorRole } from "@/theme/tokens";
+import { radius, size, space, state, type ColorRole } from "@/theme/tokens";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive" | "destructiveGhost";
 
@@ -26,7 +26,8 @@ type Look = { bg: ColorRole | null; pressedBg: ColorRole | null; fg: ColorRole; 
 
 const looks: Record<ButtonVariant, Look> = {
   primary: { bg: "accent", pressedBg: "accentPressed", fg: "onAccent", outline: false },
-  secondary: { bg: "surface", pressedBg: "surfacePressed", fg: "text", outline: true },
+  // Outlined, like a sign board edge: transparent fill, a control-strength outline, accent label.
+  secondary: { bg: null, pressedBg: "surfacePressed", fg: "accent", outline: true },
   ghost: { bg: null, pressedBg: "surfacePressed", fg: "accent", outline: false },
   destructive: { bg: "danger", pressedBg: "dangerPressed", fg: "onDanger", outline: false },
   destructiveGhost: { bg: null, pressedBg: "dangerSoft", fg: "danger", outline: false },
@@ -59,8 +60,8 @@ export function Button({
         styles.base,
         {
           backgroundColor: pressed && look.pressedBg ? t.color[look.pressedBg] : look.bg ? t.color[look.bg] : "transparent",
-          borderColor: t.color.border,
-          borderWidth: look.outline ? borderWidth.thin : 0,
+          borderColor: t.color.borderStrong,
+          borderWidth: look.outline ? 1.5 : 0,
           opacity: disabled && !busy ? state.disabledOpacity : 1,
           transform: [{ scale: pressed ? state.pressedScale : 1 }],
         },
