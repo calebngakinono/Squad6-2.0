@@ -4,7 +4,10 @@ import { supabase } from "@/lib/supabase";
 
 // Reads use RLS-filtered tables; every change goes through a database function (the server enforces rules).
 
-export type Member = { userId: string; name: string | null; role: "captain" | "member"; joinedAt: string };
+/** A teammate: name and city only (never a precise location). */
+export type Member = { userId: string; name: string | null; city: string | null; role: "captain" | "member"; joinedAt: string };
+/** Where the squad competes this season, and a planned change from a later season. */
+export type HomeCity = { city: string | null; cityId: number | null; next: { city: string; cityId: number; fromSeason: number } | null };
 /** A pending request as the captain sees it. Season figures are the server's records. */
 export type JoinRequest = {
   id: string;
@@ -25,6 +28,8 @@ export type MySquad = {
   city: string;
   description: string | null;
   myRole: "captain" | "member";
+  /** This season's home city and any planned change; null if it couldn't be read. */
+  homeCity: HomeCity | null;
   members: Member[];
   inviteCode: string | null;
   requests: JoinRequest[]; // Only filled for the captain.
@@ -35,11 +40,26 @@ export type SquadHome =
   | { kind: "in-squad"; squad: MySquad }
   | { kind: "no-squad"; pending: MyPendingRequest[] };
 
-async function names(userIds: string[]): Promise<Map<string, string | null>> {
+async function people(userIds: string[]): Promise<Map<string, { name: string | null; city: string | null }>> {
   if (userIds.length === 0) return new Map();
-  const { data, error } = await supabase.from("profiles").select("id, display_name").in("id", userIds);
+  const { data, error } = await supabase.from("profiles").select("id, display_name, city").in("id", userIds);
   if (error) throw error;
-  return new Map(data.map((p) => [p.id, p.display_name]));
+  return new Map(data.map((p) => [p.id, { name: p.display_name, city: p.city }]));
+}
+
+/** My squad's home city this season and any planned change (members only). */
+export async function loadHomeCity(): Promise<HomeCity> {
+  const { data, error } = await supabase.rpc("my_squad_home_city");
+  if (error) throw error;
+  const row = data?.[0];
+  return {
+    city: row?.city ?? null,
+    cityId: row?.city_id ?? null,
+    next:
+      row?.next_city && row.next_city_id != null && row.next_from_season != null
+        ? { city: row.next_city, cityId: row.next_city_id, fromSeason: row.next_from_season }
+        : null,
+  };
 }
 
 export async function loadSquadHome(userId: string): Promise<SquadHome> {
@@ -89,20 +109,23 @@ export async function loadSquadHome(userId: string): Promise<SquadHome> {
 
   const memberRows = membersRes.data ?? [];
   const requestRows = joinRequestDetailSchema.array().parse(reqRes.data ?? []);
-  const nameMap = await names(memberRows.map((m) => m.user_id));
+  const [peopleMap, home] = await Promise.all([people(memberRows.map((m) => m.user_id)), loadHomeCity().catch(() => null)]);
 
   return {
     kind: "in-squad",
     squad: {
       id: squadRes.data!.id,
       name: squadRes.data!.name,
-      city: squadRes.data!.city,
+      // The home city for this season (it can differ from the founding city from a later season on).
+      city: home?.city ?? squadRes.data!.city,
+      homeCity: home,
       description: squadRes.data!.description,
       myRole: isCaptain ? "captain" : "member",
       inviteCode: codeRes.data?.code ?? null,
       members: memberRows.map((m) => ({
         userId: m.user_id,
-        name: nameMap.get(m.user_id) ?? null,
+        name: peopleMap.get(m.user_id)?.name ?? null,
+        city: peopleMap.get(m.user_id)?.city ?? null,
         role: m.role === "captain" ? "captain" : "member",
         joinedAt: m.joined_at,
       })),
@@ -130,6 +153,8 @@ async function call<T>(promise: PromiseLike<{ data: T; error: { message: string 
 }
 
 export const squadApi = {
+  /** Captain: the squad's home city from next season (choosing the current one cancels a plan). */
+  setHomeCity: (cityId: number) => call(supabase.rpc("set_squad_home_city", { new_city: cityId })),
   create: (name: string, cityId: number, description: string) =>
     call(supabase.rpc("create_squad", { squad_name: name, squad_city_id: cityId, squad_description: description })),
   preview: async (code: string) => (await call(supabase.rpc("preview_squad", { invite_code: code })))?.[0] ?? null,

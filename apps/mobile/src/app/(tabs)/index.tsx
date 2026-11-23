@@ -220,6 +220,7 @@ const squadActions = {
   remove: squadApi.remove,
   makeCaptain: squadApi.makeCaptain,
   newInviteCode: squadApi.newInviteCode,
+  setHomeCity: squadApi.setHomeCity,
   leave: squadApi.leave,
 };
 
