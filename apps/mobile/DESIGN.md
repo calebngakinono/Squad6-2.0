@@ -104,7 +104,8 @@ so keep role names and change values.
 
 ## Colors
 
-Dark is the home appearance; light is sage paper with forest ink. The app follows the phone setting.
+Dark is the home appearance; light is sage paper with forest ink. The app follows the phone setting unless
+the person picks Light or Dark in Settings > Appearance (saved on that phone, applied before the splash screen hides).
 Read colours with `useTheme().color`; never hard-code one outside `tokens.ts`.
 
 | Role | Dark | Light | Use |
@@ -114,6 +115,7 @@ Read colours with `useTheme().color`; never hard-code one outside `tokens.ts`.
 | `surfaceRaised` | pine #2A3B2D | #FBFCF8 | Above a surface; initials circles. |
 | `accent` | sage #ADB499 | emerald #26604A | The one action colour: primary buttons, links, filled blazes, row figures. |
 | `accentSoft` | forest #284936 | #D3E0D2 | The trail sign; highlighted rows. `accentSoftPressed` is its pressed state. |
+| `signEdge` | bark line #7E8B6B | sage #ADB499 | The trail sign's 1.5pt board edge. (Olive was too close to the board to show.) |
 | `text` / `textMuted` | mist #EEF0E6 / sage | forest night / olive #435341 | Reading text / secondary text and hollow blazes. |
 | `border` / `borderStrong` | pine / bark line #7E8B6B | #C8CDB6 / #6B775C | Hairlines / control outlines (3:1). |
 | `track` | pine | #C8CDB6 | The unfilled part of a progress bar. |
@@ -127,6 +129,9 @@ palette change that breaks contrast fails `pnpm test`.
 Two families, loaded at runtime in `app/_layout.tsx` (no native rebuild): **Barlow Condensed**, a
 routed-sign face, for titles and numbers; **Overpass**, from the highway-sign lineage, for reading text
 and controls. Always go through `T` or `useTheme().text(variant)`. Numbers use tabular figures.
+Everything follows the iOS text size. The already-large variants stop growing at a cap set in `T`
+(`timer` 1.3x, `display` 1.4x, `sign` and `title` 1.5x); reading text is never capped. The timer also stays
+on one line and shrinks to fit.
 
 | Variant | Family | Size / line | Weight | Use |
 |---|---|---|---|---|
@@ -156,19 +161,32 @@ and controls. Always go through `T` or `useTheme().text(variant)`. Numbers use t
   → main action in `footer`. A section is a `SectionHeader` plus its content, `layout.headingGap` apart.
 - **Lists:** wrap `ListRow`s in a `ListGroup`. Point totals pass `figure` (condensed, in the accent); text values
   (a time zone, "In review") stay `label` in the text colour.
-- **The trail sign** (`features/goals/week-strip.tsx`), top of Home: a forest board with an olive edge; the
+- **Tab bar:** the native iOS tab bar (`app/(tabs)/_layout.tsx`, Liquid Glass on iOS 26), sage tint, SF
+  Symbols: Home · Squad · Standings · Challenges · Me. Tasks that need the whole screen or are short detours
+  (live workout, Start a workout, past workout, Join, Create squad, Settings) open over the tabs from the
+  root Stack. Squad, Standings, Challenges and Me each have their own Stack for the native header.
+- **The trail sign** (`features/goals/week-strip.tsx`), top of Home: a forest board with a `signEdge` edge; the
   goal line ("2 of 4 days this week", accent once reached); a hairline; then one column per member on one
   shared baseline: count, blazes (filled from the bottom), initials, name. Yours is brightest (`text`),
   teammates' blazes are `accent`, open seats show two dashed blazes and a dashed circle. No warning colours
   on people; a reached goal is the accent, never a celebration.
-- **Home:** squad name as a sign + Settings → the trail sign → what needs action (Find your squad; captain:
-  Waiting to join) → one `ListGroup` of destinations (Squad standings with my season points as its figure,
-  Challenges, Squad activity, My workouts) → squad management. Footer: "<last activity> again" (primary)
-  beside "Other workout" (secondary), or "Start a workout" for someone with no workouts yet.
+- **Home:** squad name as a sign → the trail sign (opens the Squad tab) → what needs action (Find your squad;
+  captain: Waiting to join) → one row with my season points as its figure (opens Standings). Footer:
+  "<last activity> again" (primary) beside "Other workout" (secondary), or "Start a workout" for someone
+  with no workouts yet.
+- **Squad tab:** this week (one row per member, blazes as the trailing mark), recent workouts, then members,
+  invite code and Leave squad. Without a squad: an `EmptyState` with Join, plus "Start a squad".
+- **Me tab:** my workouts, Settings in the header.
+- **Challenges:** a card per challenge. Not joined: what it is, the next level, the join note and button.
+  Joined: progress `Stat`s first, then the next level ("Next: Silver"); the description and all levels open
+  from one ghost toggle.
 - **Standings:** rank as `leading`, points as the row figure, `highlighted` plus a "You" badge for my squad.
 - **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are `Stat`s
   in a `Grid` inside a `Card`, each with its `source`. Footer: `ButtonRow` (Pause/Resume | Finish) and a
-  `destructiveGhost` Discard.
+  `destructiveGhost` Discard. Once finished and synced, the top of the summary is `FinishTrail`
+  (`features/goals/finish-trail.tsx`): the trail sign again, with today's blaze painted in when this workout
+  added a new day (compared with the count read before the finish), and one line ("Today's blaze is on your
+  trail. Your squad sees it on their Home screen."). Then the `ScoreCard`. No celebration beyond the blaze.
 - **Onboarding:** square back button with an olive outline and a thin progress bar at the top (hidden on
   the welcome and the Pro offer), the title, the answer controls, one primary button in the footer,
   disabled until answered. The welcome shows six trails of blazes (yours brightest). Each screen fades in
@@ -180,7 +198,7 @@ and controls. Always go through `T` or `useTheme().text(variant)`. Numbers use t
 
 Dark mode separates layers with surface colour and a hairline, never a shadow. Light mode uses one soft
 forest-tinted shadow for raised groups (`elevation.light.raised`). The trail sign always uses its own
-olive edge instead. Apply elevation with `elevationStyle(level, color)` from `src/theme/theme.tsx`.
+`signEdge` edge instead. Apply elevation with `elevationStyle(level, color)` from `src/theme/theme.tsx`.
 
 ## Shapes
 
@@ -243,6 +261,7 @@ Button looks: `primary` is a sage fill with forest-night text; `secondary` is tr
 
 ## Not done yet
 
-- No icon library; chevrons and check marks are drawn with borders. Icons wait for the Figma designer.
+- No icon library; chevrons and check marks are drawn with borders. The tab bar uses SF Symbols (part of
+  iOS, no dependency). Other icons wait for the Figma designer.
 - The splash screen and Android icon background use #071E15; they change with the next native build.
 - Final visuals may come from Figma later. Replace values in `tokens.ts`; keep the role names.

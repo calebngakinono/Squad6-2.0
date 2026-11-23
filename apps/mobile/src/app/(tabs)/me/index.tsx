@@ -1,8 +1,8 @@
+import { SEP } from "@squad-six/shared";
 import type { MyWorkout } from "@squad-six/shared";
 import { router, Stack, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { RefreshControl } from "react-native";
-import { Button } from "@/components/button";
+import { Pressable, RefreshControl, StyleSheet } from "react-native";
 import { EmptyState } from "@/components/empty-state";
 import { ListGroup } from "@/components/list-group";
 import { ListRow } from "@/components/list-row";
@@ -13,9 +13,10 @@ import { T } from "@/components/screen-text";
 import { loadMyWorkouts } from "@/features/history/api";
 import { activityLabel, dayLabel, outcomeLabel } from "@/features/history/view";
 import { formatDuration } from "@/features/workout/machine";
+import { minTouch, space, state } from "@/theme/tokens";
 
-// My past workouts, newest first. Tap one for its breakdown.
-export default function HistoryScreen() {
+// The Me tab: my past workouts, newest first (tap one for its breakdown), and Settings in the header.
+export default function MeScreen() {
   const [workouts, setWorkouts] = useState<MyWorkout[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -41,7 +42,6 @@ export default function HistoryScreen() {
   return (
     <Screen
       header
-      footer={hasWorkouts ? <Button label="Start a workout" onPress={() => router.push("/start-workout")} /> : undefined}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -53,7 +53,7 @@ export default function HistoryScreen() {
         />
       }
     >
-      <Stack.Screen options={{ headerShown: true, title: "My workouts" }} />
+      <Stack.Screen options={{ headerShown: true, title: "My workouts", headerRight: () => <SettingsButton /> }} />
       {error && <Notice message={error} action={{ label: "Try again", onPress: () => void load() }} />}
       {workouts === null && !error && <Loading label="Loading workouts" />}
       {workouts?.length === 0 && (
@@ -69,12 +69,17 @@ export default function HistoryScreen() {
             <ListRow
               key={w.id}
               title={activityLabel(w.activity)}
-              subtitle={`${dayLabel(w.local_date, today)} · ${formatDuration(w.active_seconds ?? 0)}`}
+              subtitle={`${dayLabel(w.local_date, today)}${SEP}${formatDuration(w.active_seconds ?? 0)}`}
               value={outcomeLabel(w.state === "expired" ? "expired" : w.workout_scores?.status, w.workout_scores?.total ?? 0)}
               chevron
               onPress={() => router.push({ pathname: "/past-workout/[id]", params: { id: w.id } })}
             />
           ))}
+        </ListGroup>
+      )}
+      {__DEV__ && (
+        <ListGroup>
+          <ListRow title="Device check" subtitle="Development builds only" onPress={() => router.push("/device-check")} />
         </ListGroup>
       )}
       {workouts && workouts.length >= 100 && (
@@ -85,3 +90,23 @@ export default function HistoryScreen() {
     </Screen>
   );
 }
+
+// iOS 26 and later already draws a glass button around header items, so this is the label alone.
+function SettingsButton() {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push("/settings")}
+      hitSlop={space.sm}
+      style={({ pressed }) => [styles.headerButton, pressed && { opacity: state.pressedOpacity }]}
+    >
+      <T variant="label" tone="accent">
+        Settings
+      </T>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  headerButton: { minHeight: minTouch, justifyContent: "center" },
+});

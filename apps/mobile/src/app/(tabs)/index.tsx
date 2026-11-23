@@ -1,6 +1,7 @@
+import { SEP } from "@squad-six/shared";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, RefreshControl, StyleSheet, View } from "react-native";
+import { Alert, RefreshControl, Share, StyleSheet, View } from "react-native";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { ListGroup } from "@/components/list-group";
@@ -17,6 +18,7 @@ import { WeekStrip } from "@/features/goals/week-strip";
 import type { WeekGoalRow } from "@squad-six/shared";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
+import { inviteMessage, inviteReason } from "@/features/squads/invite";
 import { loadMySeasonPoints } from "@/features/standings/api";
 import { formatPoints, seasonYears } from "@/features/standings/view";
 import { ACTIVITIES, activityInfo, stateOf, type Activity } from "@/features/workout/machine";
@@ -27,8 +29,9 @@ import { useWorkout } from "@/features/workout/use-workout";
 import { SquadPanel } from "@/features/squads/squad-panel";
 import { space } from "@/theme/tokens";
 
-// Home. Top to bottom: who you train with, your season so far, where to go next, then the squad
-// itself. The one main action (start or return to a workout) is pinned at the bottom, in thumb reach.
+// Home tab. Top to bottom: the squad's sign, this week's trail, anything waiting on you, your season
+// points. The one main action (start or return to a workout) is pinned at the bottom, in thumb reach.
+// Everything else has its own tab; the squad's members and invite code are on the Squad tab.
 export default function HomeScreen() {
   const { session } = useSession();
   const userId = session!.user.id;
@@ -141,8 +144,7 @@ export default function HomeScreen() {
         <SectionHeader
           level="screen"
           title={squad?.name ?? "Squad Six"}
-          subtitle={squad ? `${squad.city} · ${squad.members.length} of 6 members` : undefined}
-          action={{ label: "Settings", onPress: () => router.push("/settings") }}
+          subtitle={squad ? `${squad.city}${SEP}${squad.members.length} of 6 members` : undefined}
         />
         {squad?.description ? <T tone="textMuted">{squad.description}</T> : null}
       </View>
@@ -154,7 +156,7 @@ export default function HomeScreen() {
         inSquad={home?.kind !== "no-squad"}
         error={goalsError}
         onRetry={() => void loadGoals()}
-        onPress={squad ? () => router.push("/squad-activity") : undefined}
+        onPress={squad ? () => router.navigate("/squad") : undefined}
       />
       {home === null && !loadError && <Loading label="Loading your squad" />}
 
@@ -165,7 +167,7 @@ export default function HomeScreen() {
             <ListRow
               key={r.id}
               title={r.squadName}
-              subtitle={r.city ? `${r.city} · waiting for the captain` : "Waiting for the captain"}
+              subtitle={r.city ? `${r.city}${SEP}waiting for the captain` : "Waiting for the captain"}
               trailing={
                 <Button
                   label="Cancel"
@@ -187,30 +189,26 @@ export default function HomeScreen() {
       {/* Needs the captain's decision, so it comes before anything to browse. */}
       {squad && <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="requests" actions={squadActions} />}
 
-      {/* Where to go next. Add a destination as one more ListRow; the group handles dividers.
-          My season points live on the standings row: one place for "how are we doing this season". */}
+      {/* My season so far. The standings themselves are a tab; this row is the number, with a way there.
+          While the squad has open seats, inviting comes first: the squad is the product. */}
       <ListGroup>
+        {squad?.inviteCode && inviteReason(squad.name, squad.members.length) ? (
+          <ListRow
+            title="Invite your squad"
+            subtitle={inviteReason(squad.name, squad.members.length)!}
+            accessibilityHint="Opens the share sheet with your invite code"
+            onPress={() => Share.share({ message: inviteMessage(squad.name, squad.inviteCode!) })}
+          />
+        ) : null}
         <ListRow
-          title="Squad standings"
-          subtitle={
-            myPoints === undefined
-              ? "Squads in your city, country and the world"
-              : myPoints > 0
-                ? `Your ${season} points · Squad Six scoring`
-                : "No points yet. They show once a workout is scored."
-          }
+          title={`Your ${season} points`}
+          subtitle={myPoints === 0 ? "No points yet. They show once a workout is scored." : `Squad Six scoring${SEP}see the standings`}
           value={myPoints ? formatPoints(myPoints) : undefined}
           figure
-          accessibilityLabel={myPoints ? `Squad standings. Your ${season} points: ${formatPoints(myPoints)}, from Squad Six scoring` : undefined}
-          onPress={() => router.push("/standings")}
+          accessibilityLabel={myPoints ? `Your ${season} points: ${formatPoints(myPoints)}, from Squad Six scoring. Opens the standings` : undefined}
+          onPress={() => router.navigate("/standings")}
         />
-        <ListRow title="Challenges" subtitle="Weekly bonus points for your regular workouts" onPress={() => router.push("/challenges")} />
-        {squad && <ListRow title="Squad activity" subtitle="This week and recent workouts" onPress={() => router.push("/squad-activity")} />}
-        <ListRow title="My workouts" subtitle="Past workouts and their points" onPress={() => router.push("/history")} />
-        {__DEV__ && <ListRow title="Device check" subtitle="Development builds only" onPress={() => router.push("/device-check")} />}
       </ListGroup>
-
-      {squad && <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="manage" actions={squadActions} />}
     </Screen>
   );
 }

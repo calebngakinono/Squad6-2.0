@@ -9,7 +9,7 @@ import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { TextField } from "@/components/text-field";
-import { JOIN_NOTE_MAX } from "@squad-six/shared";
+import { JOIN_NOTE_MAX, SEP } from "@squad-six/shared";
 import { squadApi } from "@/features/squads/api";
 import { normalizeInviteCode, squadErrorMessage } from "@/features/squads/errors";
 import { space } from "@/theme/tokens";
@@ -116,7 +116,7 @@ export default function JoinScreen() {
                 {preview.is_full && <Badge label="Full" tone="warning" />}
               </View>
               <T tone="textMuted">
-                {preview.city} · {preview.member_count} of 6 members
+                {preview.city}{SEP}{preview.member_count} of 6 members
               </T>
               {preview.is_full && <T tone="textMuted">This squad is full, so it can&apos;t take new members right now.</T>}
             </Card>

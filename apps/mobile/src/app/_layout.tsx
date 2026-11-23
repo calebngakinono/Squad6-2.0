@@ -10,10 +10,12 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ThemeProvider, useTheme } from "@/theme/theme";
+import { useStackOptions } from "@/theme/navigation";
 import { fontFaces } from "@/theme/tokens";
 import { OnboardingStatusProvider, useOnboardingStatus } from "@/features/onboarding/status";
+import { restoreAppearance } from "@/features/settings/appearance";
 import { SessionProvider, useSession } from "@/lib/session";
 // Register the background location tasks at startup (required by expo-task-manager).
 import "@/features/workout/tracking/device";
@@ -21,14 +23,16 @@ import "@/spike/location-task";
 
 SplashScreen.preventAutoHideAsync();
 
-function RootNavigator({ fontsSettled }: { fontsSettled: boolean }) {
+function RootNavigator({ fontsSettled, appearanceSettled }: { fontsSettled: boolean; appearanceSettled: boolean }) {
   const { session, loading } = useSession();
   const { status } = useOnboardingStatus();
   const t = useTheme();
+  const stackOptions = useStackOptions();
   const signedIn = !!session;
   // While signed in, wait for the onboarding check so the wrong screen never flashes.
   // Also wait for the font (loaded or failed) so text never re-flows after the splash hides.
-  const ready = fontsSettled && !loading && (!signedIn || status !== "loading");
+  // And for the saved Appearance setting, so the wrong light/dark look never flashes.
+  const ready = fontsSettled && appearanceSettled && !loading && (!signedIn || status !== "loading");
 
   // The window behind every screen follows the theme, so transitions never flash white in dark mode.
   useEffect(() => {
@@ -45,35 +49,17 @@ function RootNavigator({ fontsSettled }: { fontsSettled: boolean }) {
   const needsOnboarding = signedIn && status === "needed";
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        headerStyle: { backgroundColor: t.color.background },
-        headerTintColor: t.color.accent,
-        headerTitleStyle: {
-          color: t.color.text,
-          fontFamily: t.text("button").fontFamily,
-          fontSize: t.text("button").fontSize,
-          fontWeight: t.text("button").fontWeight,
-        },
-        headerShadowVisible: false,
-        // Back arrow only: the previous screen's title next to it crowds the centered title.
-        headerBackButtonDisplayMode: "minimal",
-        contentStyle: { backgroundColor: t.color.background },
-      }}
-    >
+    <Stack screenOptions={stackOptions}>
       <Stack.Protected guard={signedIn && !needsOnboarding}>
-        <Stack.Screen name="index" />
+        {/* The five tabs. Everything below opens over them, without the tab bar: a live workout
+            needs the whole screen, and the others are short tasks with their own way back. */}
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="create-squad" />
         <Stack.Screen name="join" />
         <Stack.Screen name="start-workout" />
         <Stack.Screen name="workout" />
-        <Stack.Screen name="standings" />
-        <Stack.Screen name="challenges" />
         <Stack.Screen name="settings" />
-        <Stack.Screen name="history" />
         <Stack.Screen name="past-workout/[id]" />
-        <Stack.Screen name="squad-activity" />
         <Stack.Protected guard={__DEV__}>
           <Stack.Screen name="device-check" />
         </Stack.Protected>
@@ -102,13 +88,18 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontError) console.warn("Brand font failed to load; using the system font.", fontError);
   }, [fontError]);
+  // Settings > Appearance (System, Light or Dark), saved on this phone.
+  const [appearanceSettled, setAppearanceSettled] = useState(false);
+  useEffect(() => {
+    restoreAppearance().finally(() => setAppearanceSettled(true));
+  }, []);
 
   return (
     <ThemeProvider fontsLoaded={fontsLoaded}>
       <SessionProvider>
         <OnboardingStatusProvider>
           <StatusBar style="auto" />
-          <RootNavigator fontsSettled={fontsLoaded || !!fontError} />
+          <RootNavigator fontsSettled={fontsLoaded || !!fontError} appearanceSettled={appearanceSettled} />
         </OnboardingStatusProvider>
       </SessionProvider>
     </ThemeProvider>

@@ -10,3 +10,4 @@ export * from "./cities";
 export * from "./activity";
 export * from "./challenges";
 export * from "./squads";
+export * from "./text";

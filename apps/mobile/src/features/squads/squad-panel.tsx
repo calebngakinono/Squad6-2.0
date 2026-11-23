@@ -1,3 +1,4 @@
+import { SEP } from "@squad-six/shared";
 import { Alert, Share, StyleSheet, View } from "react-native";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
@@ -9,7 +10,7 @@ import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
 import { layout, space } from "@/theme/tokens";
 import type { Member, MySquad } from "./api";
-import { inviteLink } from "./errors";
+import { inviteMessage, inviteReason, RANKED_AT, SQUAD_MAX } from "./invite";
 import { requestMemberSince, requestPlace, requestSeason } from "./request-view";
 
 type Props = {
@@ -19,9 +20,10 @@ type Props = {
   act: (fn: () => Promise<unknown>) => void;
   /**
    * requests: the captain's "Waiting to join" list, which needs action, so Home shows it near the top.
-   * manage: members, invite code and leave, at the bottom of Home.
+   * invite: the invite code card on its own, first on the Squad tab while the squad is too small to rank.
+   * manage: members, invite code (unless shown first) and leave, at the bottom of the Squad tab.
    */
-  part: "requests" | "manage";
+  part: "requests" | "invite" | "manage";
   actions: {
     decide: (id: string, approve: boolean) => Promise<unknown>;
     remove: (userId: string) => Promise<unknown>;
@@ -31,11 +33,14 @@ type Props = {
   };
 };
 
-const SQUAD_MAX = 6;
 const displayName = (name: string | null) => name ?? "Athlete (no name yet)";
 
-// The squad parts of the home screen: join requests (captain), then members, invite code, leave.
-// The squad's name and city are the home screen's title, so they are not repeated here.
+// The squad parts of two tabs: join requests (captain) near the top of Home; members, invite code and
+// leave at the bottom of the Squad tab.
+// The squad's name and city are already the title on both, so they are not repeated here.
+/** The Squad tab shows the invite card first while the squad still needs members to be ranked. */
+export const inviteFirst = (squad: MySquad) => !!squad.inviteCode && squad.members.length < RANKED_AT;
+
 export function SquadPanel({ squad, myUserId, busy, act, part, actions }: Props) {
   const isCaptain = squad.myRole === "captain";
   const others = squad.members.filter((m) => m.userId !== myUserId);
@@ -79,6 +84,48 @@ export function SquadPanel({ squad, myUserId, busy, act, part, actions }: Props)
     ]);
   }
 
+  const reason = inviteReason(squad.name, squad.members.length);
+  const inviteCard = squad.inviteCode ? (
+    <Card>
+      <View style={styles.code}>
+        <T variant="label" tone="textMuted">
+          Invite code
+        </T>
+        <T variant="title" numeric selectable accessibilityLabel={`Invite code ${squad.inviteCode.split("").join(" ")}`}>
+          {squad.inviteCode}
+        </T>
+      </View>
+      {reason && squad.members.length < RANKED_AT ? <T variant="label">{reason}</T> : null}
+      <T variant="small" tone="textMuted">
+        {full
+          ? "The squad is full, so new requests can't be approved."
+          : "People who use this code ask to join. The captain approves each request."}
+      </T>
+      <Button
+        label="Share invite"
+        // While the squad is too small to rank, inviting is the thing to do here.
+        variant={part === "invite" ? "primary" : "secondary"}
+        disabled={full}
+        onPress={() => Share.share({ message: inviteMessage(squad.name, squad.inviteCode!) })}
+      />
+      {isCaptain && (
+        <Button
+          label="Get a new code"
+          variant="ghost"
+          disabled={busy}
+          onPress={() =>
+            Alert.alert("Replace the invite code?", "The old code stops working right away.", [
+              { text: "Cancel", style: "cancel" },
+              { text: "Replace", onPress: () => act(actions.newInviteCode) },
+            ])
+          }
+        />
+      )}
+    </Card>
+  ) : null;
+
+  if (part === "invite") return inviteCard;
+
   if (part === "requests") {
     if (!isCaptain || squad.requests.length === 0) return null;
     return (
@@ -93,7 +140,7 @@ export function SquadPanel({ squad, myUserId, busy, act, part, actions }: Props)
               <View style={styles.requestInfo}>
                 <T variant="label">{displayName(r.name)}</T>
                 <T variant="small" tone="textMuted">
-                  {requestPlace(r)} · {requestMemberSince(r)}
+                  {requestPlace(r)}{SEP}{requestMemberSince(r)}
                 </T>
                 <T variant="small" tone="textMuted">
                   {requestSeason(r)}
@@ -152,46 +199,7 @@ export function SquadPanel({ squad, myUserId, busy, act, part, actions }: Props)
         </ListGroup>
       </View>
 
-      {squad.inviteCode && (
-        <Card>
-          <View style={styles.code}>
-            <T variant="label" tone="textMuted">
-              Invite code
-            </T>
-            <T variant="title" numeric selectable accessibilityLabel={`Invite code ${squad.inviteCode.split("").join(" ")}`}>
-              {squad.inviteCode}
-            </T>
-          </View>
-          <T variant="small" tone="textMuted">
-            {full
-              ? "The squad is full, so new requests can't be approved."
-              : "People who use this code ask to join. The captain approves each request."}
-          </T>
-          <Button
-            label="Share invite"
-            variant="secondary"
-            disabled={full}
-            onPress={() =>
-              Share.share({
-                message: `Join my squad "${squad.name}" on Squad Six. Code: ${squad.inviteCode}\n${inviteLink(squad.inviteCode!)}`,
-              })
-            }
-          />
-          {isCaptain && (
-            <Button
-              label="Get a new code"
-              variant="ghost"
-              disabled={busy}
-              onPress={() =>
-                Alert.alert("Replace the invite code?", "The old code stops working right away.", [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Replace", onPress: () => act(actions.newInviteCode) },
-                ])
-              }
-            />
-          )}
-        </Card>
-      )}
+      {!inviteFirst(squad) && inviteCard}
 
       <Button label="Leave squad" variant="destructiveGhost" disabled={busy} onPress={confirmLeave} />
     </View>
