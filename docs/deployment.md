@@ -116,6 +116,21 @@ About or Settings screen, and the marketing site footer) **before release**. To 
 merged one). Profiles and squads created before the list existed keep their old typed city as a label but have
 no `city_id`, so they do not appear in city or country standings until a city is chosen.
 
+## Password reset email
+
+The app resets passwords with a 6-digit code (Sign in > Forgot password?), so it never depends on an email link
+opening the app. The reset email must therefore contain the code. Locally this comes from
+`supabase/templates/recovery.html` (wired up in `supabase/config.toml`). On **staging and production**, set it once
+in the dashboard: Authentication → **Emails** → **Reset password**:
+
+- Subject: `Your Squad Six code`
+- Body: the contents of `supabase/templates/recovery.html` (the important part is `{{ .Token }}`, the code).
+
+**Before launch: send email through your own SMTP provider.** Supabase's built-in sender is meant for testing:
+it sends only a few emails an hour and may only deliver to your project team's addresses. Sign-up confirmations
+and password resets for real people need a provider (for example Resend, Postmark or Amazon SES), set under
+Authentication → Emails → SMTP settings on the production project.
+
 ## TestFlight builds
 
 TestFlight builds are store-signed builds of the iPhone app that testers install from Apple's TestFlight app.
