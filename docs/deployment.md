@@ -90,6 +90,23 @@ reversed by deciding again (the latest one wins). `review_workout` also works on
 automatically, for example after a report from a squad. Nothing notifies you when a workout is flagged yet, so
 check the list regularly once scoring is on.
 
+## Reviewing reported chat messages
+
+Members can report a squad-chat message (once each). Nothing notifies you yet, so check the queue regularly.
+In the environment's SQL editor:
+
+```sql
+-- 1. What is waiting:
+select * from public.chat_reports_awaiting_review;
+
+-- 2. Remove a message for everyone (keeps a "Message deleted" placeholder), then close its reports:
+update public.squad_messages set body = null, workout = case when kind = 'workout' then '{}'::jsonb end,
+  workout_session_id = null, deleted_at = now() where id = '<message_id>';
+update public.squad_message_reports set resolved_at = now() where message_id = '<message_id>';
+```
+
+A captain can also delete any message in their own squad from the app.
+
 ## City list
 
 Cities come from GeoNames (`cities15000`, licensed CC BY 4.0), loaded by the `*_cities.sql` migration. The

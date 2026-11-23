@@ -1,9 +1,11 @@
 import { SEP } from "@squad-six/shared";
+import { useState } from "react";
 import { Alert, Share, StyleSheet, View } from "react-native";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { ButtonRow } from "@/components/button-row";
 import { Card } from "@/components/card";
+import { CityPicker } from "@/components/city-picker";
 import { ListGroup } from "@/components/list-group";
 import { ListRow } from "@/components/list-row";
 import { T } from "@/components/screen-text";
@@ -30,6 +32,7 @@ type Props = {
     makeCaptain: (userId: string) => Promise<unknown>;
     newInviteCode: () => Promise<unknown>;
     leave: () => Promise<unknown>;
+    setHomeCity: (cityId: number) => Promise<unknown>;
   };
 };
 
@@ -181,7 +184,8 @@ export function SquadPanel({ squad, myUserId, busy, act, part, actions }: Props)
               <ListRow
                 key={m.userId}
                 title={displayName(m.name)}
-                accessibilityLabel={[displayName(m.name), isMe && "you", m.role === "captain" && "captain"].filter(Boolean).join(", ")}
+                subtitle={m.city ?? undefined}
+                accessibilityLabel={[displayName(m.name), m.city, isMe && "you", m.role === "captain" && "captain"].filter(Boolean).join(", ")}
                 trailing={
                   isMe || m.role === "captain" ? (
                     <View style={styles.badges}>
@@ -199,6 +203,8 @@ export function SquadPanel({ squad, myUserId, busy, act, part, actions }: Props)
         </ListGroup>
       </View>
 
+      <HomeCityCard squad={squad} isCaptain={isCaptain} busy={busy} act={act} setHomeCity={actions.setHomeCity} />
+
       {!inviteFirst(squad) && inviteCard}
 
       <Button label="Leave squad" variant="destructiveGhost" disabled={busy} onPress={confirmLeave} />
@@ -214,3 +220,75 @@ const styles = StyleSheet.create({
   badges: { flexDirection: "row", gap: space.xs },
   code: { gap: space.xxs },
 });
+
+/**
+ * Where the squad competes this season, and any change planned for next season. Members can live
+ * anywhere; the squad ranks in one city per season. Only the captain can plan a change, and it takes
+ * effect on January 1, so a squad can't hop to a weaker city mid-season.
+ */
+function HomeCityCard({
+  squad,
+  isCaptain,
+  busy,
+  act,
+  setHomeCity,
+}: {
+  squad: MySquad;
+  isCaptain: boolean;
+  busy: boolean;
+  act: (fn: () => Promise<unknown>) => void;
+  setHomeCity: (cityId: number) => Promise<unknown>;
+}) {
+  const [choosing, setChoosing] = useState(false);
+  const home = squad.homeCity;
+  const nextSeason = home?.next?.fromSeason ?? new Date().getFullYear() + 1;
+
+  return (
+    <Card>
+      <View style={styles.code}>
+        <T variant="label" tone="textMuted">
+          Home city
+        </T>
+        <T variant="headline">{home?.city ?? squad.city}</T>
+      </View>
+      <T variant="small" tone="textMuted">
+        Your squad ranks here this season. Members can live anywhere.
+      </T>
+      {home?.next ? <T variant="label">{`From ${home.next.fromSeason}: ${home.next.city}`}</T> : null}
+
+      {isCaptain && !choosing && (
+        <Button
+          label={home?.next ? "Change the plan" : `Change home city for ${nextSeason}`}
+          variant="ghost"
+          disabled={busy}
+          onPress={() => setChoosing(true)}
+        />
+      )}
+      {isCaptain && !choosing && home?.next && home.cityId !== null && (
+        <Button
+          label={`Stay in ${home.city ?? "this city"}`}
+          variant="ghost"
+          disabled={busy}
+          onPress={() => act(() => setHomeCity(home.cityId!))}
+        />
+      )}
+      {isCaptain && choosing && (
+        <View style={styles.request}>
+          <CityPicker
+            label={`Home city from ${nextSeason}`}
+            value={null}
+            onChange={(cityId) => {
+              if (cityId === null) return;
+              setChoosing(false);
+              act(() => setHomeCity(cityId));
+            }}
+          />
+          <T variant="small" tone="textMuted">
+            {`It takes effect on January 1, ${nextSeason}. Points stay where they were earned, and you can change or cancel the plan until then.`}
+          </T>
+          <Button label="Cancel" variant="ghost" onPress={() => setChoosing(false)} />
+        </View>
+      )}
+    </Card>
+  );
+}

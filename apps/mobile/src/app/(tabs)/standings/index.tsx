@@ -1,4 +1,4 @@
-import type { SquadStanding, StandingsPlace, StandingsScope } from "@squad-six/shared";
+import type { AthleteStanding, SquadStanding, StandingsPlace, StandingsScope } from "@squad-six/shared";
 import { Stack, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, StyleSheet, View } from "react-native";
@@ -12,42 +12,70 @@ import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
 import { Segmented } from "@/components/segmented";
-import { loadMyStandingsPlace, loadSquadStandings } from "@/features/standings/api";
+import { loadSquadHome } from "@/features/squads/api";
+import {
+  loadAthleteStandings,
+  loadMyAthletePlace,
+  loadMyStandingsPlace,
+  loadSquadStandings,
+} from "@/features/standings/api";
 import { formatPoints, seasonYears, squadSubtitle } from "@/features/standings/view";
+import { useSession } from "@/lib/session";
 import { layout } from "@/theme/tokens";
 
+type Board = "squads" | "people";
 // `key` says which selection the rows belong to, so a stale list is never shown under new filters.
-type Loaded = { key: string; rows: SquadStanding[] };
+type Loaded = { key: string; squads: SquadStanding[] | null; people: AthleteStanding[] | null };
+// undefined: not read yet. null: no city yet.
+type Places = { squads: StandingsPlace | null; people: StandingsPlace | null };
 
-// Squad standings for the season: in my city, my country, or the world. Only squads are ranked.
+// Standings for the season: squads by their home city, people by their own city (Caleb, 2026-11-22).
+// City, country or the world. Someone without a squad starts on People, the board they are on.
 export default function StandingsScreen() {
+  const { session } = useSession();
+  const userId = session!.user.id;
   const years = seasonYears(new Date());
   const [season, setSeason] = useState(years[0]);
+  const [board, setBoard] = useState<Board | null>(null);
   const [scope, setScope] = useState<StandingsScope>("world");
-  // undefined: not loaded yet. null: the athlete has no city yet.
-  const [place, setPlace] = useState<StandingsPlace | null | undefined>(undefined);
+  const [places, setPlaces] = useState<Places | undefined>(undefined);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Where each board is centred, and which board to open on. Nothing loads until this is known, so
+  // the list never jumps from the world to the city.
   useEffect(() => {
-    loadMyStandingsPlace()
-      .then((p) => {
-        setPlace(p);
-        if (p) setScope("city"); // start with the board closest to home
-      })
-      .catch(() => setPlace(null));
-  }, []);
+    Promise.all([
+      loadMyStandingsPlace().catch(() => null),
+      loadMyAthletePlace().catch(() => null),
+      loadSquadHome(userId).catch(() => null),
+    ]).then(([squads, people, home]) => {
+      const start: Board = home?.kind === "in-squad" ? "squads" : "people";
+      setPlaces({ squads, people });
+      setBoard(start);
+      if ((start === "squads" ? squads : people) !== null) setScope("city");
+    });
+  }, [userId]);
 
-  const key = `${season}|${scope}`;
+  const place = places && board ? places[board] : undefined;
+  // A board without a city falls back to the world.
+  const shownScope: StandingsScope = place ? scope : "world";
+  const key = `${board}|${season}|${shownScope}`;
+
   const load = useCallback(async () => {
+    if (!board) return;
     try {
-      setLoaded({ key, rows: await loadSquadStandings(season, scope) });
+      const rows =
+        board === "squads"
+          ? { squads: await loadSquadStandings(season, shownScope), people: null }
+          : { squads: null, people: await loadAthleteStandings(season, shownScope) };
+      setLoaded({ key, ...rows });
       setError(null);
     } catch {
       setError("Couldn't load the standings. Check your connection, then try again.");
     }
-  }, [key, season, scope]);
+  }, [board, key, season, shownScope]);
 
   // Loads on open, whenever the selection changes, and again when the screen comes back into view.
   useFocusEffect(
@@ -56,10 +84,13 @@ export default function StandingsScreen() {
     }, [load]),
   );
 
-  const rows = loaded?.key === key ? loaded.rows : null;
-  const ranked = rows?.filter((r) => r.is_ranked) ?? [];
-  const unranked = rows?.filter((r) => !r.is_ranked) ?? [];
-  const area = scope === "city" ? place?.city : scope === "country" ? place?.country : "the world";
+  const current = loaded?.key === key ? loaded : null;
+  const squads = current?.squads ?? null;
+  const people = current?.people ?? null;
+  const ranked = squads?.filter((r) => r.is_ranked) ?? [];
+  const unranked = squads?.filter((r) => !r.is_ranked) ?? [];
+  const area = shownScope === "city" ? place?.city : shownScope === "country" ? place?.country : "the world";
+  const empty = board === "squads" ? squads?.length === 0 : people?.filter((p) => !p.is_me || p.points > 0).length === 0;
 
   return (
     <Screen
@@ -76,35 +107,61 @@ export default function StandingsScreen() {
       }
     >
       <Stack.Screen options={{ headerShown: true, title: `${season} season` }} />
-      <View style={styles.controls}>
-        {place && (
+      {!board && <Loading label="Loading standings" />}
+      {board && (
+        <View style={styles.controls}>
           <Segmented
-            label="Squads in"
-            value={scope}
-            onChange={setScope}
+            label="Rank"
+            value={board}
+            onChange={(b) => {
+              setBoard(b);
+              setScope(places?.[b] ? "city" : "world");
+            }}
             options={[
-              { value: "city", label: place.city },
-              { value: "country", label: place.country },
-              { value: "world", label: "World" },
+              { value: "squads", label: "Squads" },
+              { value: "people", label: "People" },
             ]}
           />
-        )}
-        {place === null && (
-          <Notice
-            tone="info"
-            message="Showing squads worldwide. City and country standings appear once you have chosen a city or joined a squad."
-          />
-        )}
-        {years.length > 1 && (
-          <Segmented label="Season" value={season} onChange={setSeason} options={years.map((y) => ({ value: y, label: String(y) }))} />
-        )}
-      </View>
+          {place && (
+            <Segmented
+              label={board === "squads" ? "Squads in" : "People in"}
+              value={shownScope}
+              onChange={setScope}
+              options={[
+                { value: "city", label: place.city },
+                { value: "country", label: place.country },
+                { value: "world", label: "World" },
+              ]}
+            />
+          )}
+          {place === null && (
+            <Notice
+              tone="info"
+              message={
+                board === "squads"
+                  ? "Showing squads worldwide. City and country standings appear once you've joined a squad or chosen a city."
+                  : "Showing people worldwide. City and country rankings appear once you've chosen a city in Settings."
+              }
+            />
+          )}
+          {years.length > 1 && (
+            <Segmented label="Season" value={season} onChange={setSeason} options={years.map((y) => ({ value: y, label: String(y) }))} />
+          )}
+        </View>
+      )}
 
       {error && <Notice message={error} action={{ label: "Try again", onPress: () => void load() }} />}
-      {rows === null && !error && <Loading label="Loading standings" />}
+      {board && !current && !error && <Loading label="Loading standings" />}
 
-      {rows?.length === 0 && (
-        <EmptyState title="No squad has points here yet" message={`Squads in ${area} appear once their members' workouts have been scored.`} />
+      {empty && (
+        <EmptyState
+          title={board === "squads" ? "No squad has points here yet" : "No one has points here yet"}
+          message={
+            board === "squads"
+              ? `Squads in ${area} appear once their members' workouts have been scored.`
+              : `People in ${area} appear once a workout of theirs counts. Yours could be the first.`
+          }
+        />
       )}
 
       {ranked.length > 0 && (
@@ -126,10 +183,19 @@ export default function StandingsScreen() {
         </View>
       )}
 
-      {rows && rows.length > 0 && (
+      {people && people.length > 0 && !empty && (
+        <ListGroup>
+          {people.map((p, i) => (
+            <PersonRow key={`${p.rank ?? "me"}-${i}`} person={p} />
+          ))}
+        </ListGroup>
+      )}
+
+      {current && !empty && (
         <T variant="small" tone="textMuted">
-          A squad&apos;s score is every point its members earned while in it. A squad is ranked once it has four members,
-          and keeps everything it earned before that.
+          {board === "squads"
+            ? "A squad's score is every point its members earned while in it. A squad is ranked once it has four members, and keeps everything it earned before that."
+            : "Everyone's counted points this season, from workouts and challenges. Unverified workouts don't count."}
         </T>
       )}
     </Screen>
@@ -152,6 +218,28 @@ function StandingRow({ rank, squad }: { rank: string; squad: SquadStanding }) {
       accessibilityLabel={`${rank === "–" ? "Not ranked" : `Rank ${rank}`}, ${title}${squad.is_mine ? ", your squad" : ""}, ${subtitle}, ${value} points`}
       leading={
         <T variant="label" tone={squad.is_mine ? "accent" : "textMuted"} numeric align="right">
+          {rank}
+        </T>
+      }
+    />
+  );
+}
+
+function PersonRow({ person }: { person: AthleteStanding }) {
+  const name = person.is_me ? "You" : (person.display_name?.trim() || "Athlete");
+  const rank = person.rank === null ? "–" : String(person.rank);
+  const value = formatPoints(person.points);
+  return (
+    <ListRow
+      title={name}
+      titleLines={1}
+      subtitle={person.city ?? undefined}
+      value={value}
+      figure
+      highlighted={person.is_me}
+      accessibilityLabel={`${person.rank === null ? "Not ranked yet" : `Rank ${rank}`}, ${name}${person.city ? `, ${person.city}` : ""}, ${value} points`}
+      leading={
+        <T variant="label" tone={person.is_me ? "accent" : "textMuted"} numeric align="right">
           {rank}
         </T>
       }

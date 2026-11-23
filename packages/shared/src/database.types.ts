@@ -229,6 +229,30 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"squad_messages": {
+                  Row: {
+                    "body": string | null,"created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"kind": string,"squad_id": string,"user_id": string,"workout": Json | null,"workout_session_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"kind"?: string,"squad_id": string,"user_id": string,"workout"?: Json | null,"workout_session_id"?: string | null
+                  }
+                  Update: {
+                    "body"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"kind"?: string,"squad_id"?: string,"user_id"?: string,"workout"?: Json | null,"workout_session_id"?: string | null
+                  }
+                  Relationships: []
+                },"squad_message_reactions": {
+                  Row: {
+                    "created_at": string,"message_id": string,"reaction": string,"squad_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"message_id": string,"reaction": string,"squad_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"message_id"?: string,"reaction"?: string,"squad_id"?: string,"user_id"?: string
+                  }
+                  Relationships: []
                 },"squad_invite_codes": {
                   Row: {
                     "code": string,"created_at": string,"squad_id": string
@@ -800,6 +824,21 @@ isOneToOne: true
 "my_season_points":
 { Args: { "season": number }; Returns: number
                            },
+"my_athlete_place":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "city": string,"city_id": number,"country": string,"country_code": string
+            }[]
+                           },
+"my_progress":
+{ Args: { "season": number }; Returns: {
+              "all_time_workouts": number,"best_streak": number,"counted_workouts": number,"goal_streak": number,"season_points": number,"season_workouts": number,"weekly_goal": number | null,"weeks": Json
+            }[]
+                           },
+"my_squad_home_city":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "city": string | null,"city_id": number | null,"next_city": string | null,"next_city_id": number | null,"next_from_season": number | null
+            }[]
+                           },
 "my_standings_place":
 { Args: Record<PropertyKey, never>; Returns: {
               "city": string,"city_id": number,"country": string,"country_code": string
@@ -876,6 +915,34 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
+"rescore_my_workout":
+{ Args: { "target": string }; Returns: undefined
+                           },
+"send_squad_message":
+{ Args: { "body": string }; Returns: {
+              "body": string | null,"created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"kind": string,"squad_id": string,"user_id": string,"workout": Json | null,"workout_session_id": string | null
+            }
+                           },
+"share_workout_to_squad":
+{ Args: { "body"?: string,"target": string }; Returns: {
+              "body": string | null,"created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"kind": string,"squad_id": string,"user_id": string,"workout": Json | null,"workout_session_id": string | null
+            }
+                           },
+"delete_squad_message":
+{ Args: { "target": string }; Returns: undefined
+                           },
+"toggle_squad_reaction":
+{ Args: { "reaction": string,"target": string }; Returns: boolean
+                           },
+"report_squad_message":
+{ Args: { "reason"?: string,"target": string }; Returns: undefined
+                           },
+"mark_squad_chat_read":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"my_squad_chat_unread":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "review_workout":
 { Args: { "decision": string,"reason": string,"reviewer": string,"target": string }; Returns: {
               "base": number,
@@ -939,6 +1006,16 @@ isOneToOne: true
 "squad_week_goals":
 { Args: Record<PropertyKey, never>; Returns: {
               "days_this_week": number,"display_name": string | null,"is_me": boolean,"user_id": string,"week_start": string,"weekly_goal": number | null
+            }[]
+                           },
+"athlete_standings":
+{ Args: { "max_rows"?: number,"scope"?: string,"season": number }; Returns: {
+              "city": string | null,"display_name": string | null,"is_me": boolean,"points": number,"rank": number | null
+            }[]
+                           },
+"set_squad_home_city":
+{ Args: { "new_city": number }; Returns: {
+              "city": string,"from_season": number
             }[]
                            },
 "squad_standings":
