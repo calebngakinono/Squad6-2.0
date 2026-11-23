@@ -238,30 +238,33 @@ export default function SettingsScreen() {
             </View>
           )}
 
-          <View style={styles.section}>
-            <SectionHeader title="Account" />
-            <ListGroup>
-              <ListRow title="Email" value={settings.email ?? "–"} />
-            </ListGroup>
-            <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />
-            <Button label="Delete account" variant="destructiveGhost" busy={saving === "delete"} onPress={confirmDelete} />
-          </View>
-
-          <View style={styles.section}>
-            <SectionHeader title="About" />
-            {website && (
-              <ListGroup>
-                <ListRow title="Privacy policy" chevron onPress={() => Linking.openURL(`${website}/privacy`)} />
-                <ListRow title="Terms of use" chevron onPress={() => Linking.openURL(`${website}/terms`)} />
-                <ListRow title="Help and support" chevron onPress={() => Linking.openURL(`${website}/support`)} />
-              </ListGroup>
-            )}
-            <T variant="caption" tone="textMuted">
-              Squad Six {Constants.expoConfig?.version ?? ""}. City data © GeoNames (geonames.org), CC BY 4.0.
-            </T>
-          </View>
         </>
       )}
+
+      {/* Always available, even when the rest of Settings cannot load (offline, or a server problem):
+          nobody should be stuck signed in. */}
+      <View style={styles.section}>
+        <SectionHeader title="Account" />
+        <ListGroup>
+          <ListRow title="Email" value={session?.user.email ?? settings?.email ?? "–"} />
+        </ListGroup>
+        <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />
+        <Button label="Delete account" variant="destructiveGhost" busy={saving === "delete"} onPress={confirmDelete} />
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader title="About" />
+        {website && (
+          <ListGroup>
+            <ListRow title="Privacy policy" chevron onPress={() => Linking.openURL(`${website}/privacy`)} />
+            <ListRow title="Terms of use" chevron onPress={() => Linking.openURL(`${website}/terms`)} />
+            <ListRow title="Help and support" chevron onPress={() => Linking.openURL(`${website}/support`)} />
+          </ListGroup>
+        )}
+        <T variant="caption" tone="textMuted">
+          Squad Six {Constants.expoConfig?.version ?? ""}. City data © GeoNames (geonames.org), CC BY 4.0.
+        </T>
+      </View>
     </Screen>
   );
 }
