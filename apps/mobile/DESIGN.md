@@ -176,8 +176,9 @@ on one line and shrinks to fit.
   squad: after the person's own progress, never instead of it). Footer:
   "<last activity> again" (primary) beside "Other workout" (secondary), or "Start a workout" for someone
   with no workouts yet.
-- **Squad tab:** this week (one row per member, blazes as the trailing mark), recent workouts, then members,
-  invite code and Leave squad. Without a squad: an `EmptyState` with Join, plus "Start a squad".
+- **Squad tab:** this week (one row per member, blazes as the trailing mark), recent workouts, then members
+  (each with their own city, never more precise), the **Home city** card (where the squad ranks this season,
+  any change planned for next season; captain: change or cancel the plan), invite code and Leave squad. Without a squad: an `EmptyState` with Join, plus "Start a squad".
 - **Me tab:** my workouts, Settings in the header.
 - **Challenges:** a card per challenge. Not joined: what it is, the next level, the join note and button.
   Joined: progress `Stat`s first, then the next level ("Next: Silver"); the description and all levels open
