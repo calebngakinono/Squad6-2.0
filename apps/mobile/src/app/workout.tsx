@@ -12,6 +12,7 @@ import { T } from "@/components/screen-text";
 import { splitUnit, Stat } from "@/components/stat";
 import { FinishTrail } from "@/features/goals/finish-trail";
 import { activityInfo, formatDuration, stateOf } from "@/features/workout/machine";
+import { ShareWorkoutButton } from "@/features/chat/share-workout-button";
 import { OutcomeCard } from "@/features/workout/outcome-card";
 import { SetLogger } from "@/features/workout/set-logger";
 import { checkHealthEvidence, clearFinishedWorkout, connectAppleHealth, liveSeconds, transitionWorkout } from "@/features/workout/store";
@@ -206,6 +207,9 @@ export default function WorkoutScreen() {
           retrying={result.retrying}
           retryFailed={result.retryFailed}
         />
+      )}
+      {finished && synced && server && result.outcome && result.outcome.kind !== "scoring" && result.outcome.kind !== "stuck" && (
+        <ShareWorkoutButton sessionId={server.id} />
       )}
 
       {finished && !synced && (
