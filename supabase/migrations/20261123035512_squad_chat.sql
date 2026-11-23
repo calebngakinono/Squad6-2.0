@@ -110,10 +110,11 @@ security definer
 set search_path = ''
 as $$
 declare
+  uid uuid := public.require_user_uid();
   squad uuid;
 begin
   select m.squad_id into squad from public.squad_members m
-    where m.user_id = public.require_user_uid() and m.left_at is null;
+    where m.user_id = uid and m.left_at is null;
   if squad is null then
     raise exception 'not_in_squad' using errcode = 'P0001';
   end if;
