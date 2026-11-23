@@ -256,8 +256,13 @@ Button looks: `primary` is a sage fill with forest-night text; `secondary` is tr
 - **Counted workout**: a workout Squad Six scored and accepted. Never "accepted workout" in the UI.
 - **Where a number came from**: "Phone GPS", "Phone step counter", "Squad Six timer", "Synced from Apple
   Health", "Phone GPS or Apple Health", and "Squad Six scoring" for points and counted workouts.
-- **Not scored yet**: say when points appear ("Points show here once it's scored"), never that scoring is
-  switched off or launching.
+- **Workout outcomes** (`workoutOutcome` in packages/shared, shown by `OutcomeCard`): every finished workout
+  has one, so nothing waits on "Scoring…" for more than a minute (then: "hasn't been scored yet" + Try again).
+  - **Unverified**: only the timer recorded it. "Saved. It counts for your week." + why + "To earn points next
+    time" tips for that activity. It counts for the weekly goal and history, never for points or rankings.
+  - **Not scored**: started before points were being awarded ("It started before points were being awarded, so
+    it isn't scored"). Only pre-launch test workouts see this.
+  - Never punish: a workout that earned nothing still counts for the person's week, and the copy says so first.
 
 ## Not done yet
 
