@@ -72,6 +72,9 @@ function RootNavigator({ fontsSettled, appearanceSettled }: { fontsSettled: bool
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="sign-in" />
       </Stack.Protected>
+      {/* Outside both groups: the recovery code signs the person in partway through, and the screen
+          still has to save their new password after that. */}
+      <Stack.Screen name="reset-password" />
     </Stack>
   );
 }
