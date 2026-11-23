@@ -12,10 +12,11 @@ import { T } from "@/components/screen-text";
 import { splitUnit, Stat } from "@/components/stat";
 import { FinishTrail } from "@/features/goals/finish-trail";
 import { activityInfo, formatDuration, stateOf } from "@/features/workout/machine";
-import { ScoreCard } from "@/features/workout/score-card";
+import { OutcomeCard } from "@/features/workout/outcome-card";
 import { SetLogger } from "@/features/workout/set-logger";
 import { checkHealthEvidence, clearFinishedWorkout, connectAppleHealth, liveSeconds, transitionWorkout } from "@/features/workout/store";
 import { formatDistance, formatPace, formatSpeed, usesMiles } from "@/features/workout/tracking/track";
+import { useOutcome } from "@/features/workout/use-outcome";
 import { useNow, useWorkout } from "@/features/workout/use-workout";
 import { space } from "@/theme/tokens";
 
@@ -31,6 +32,9 @@ export default function WorkoutScreen() {
   const { workout, server, pending, syncing, notice, tracking, health, score } = useWorkout();
   const state = workout ? stateOf(workout.events) : null;
   const now = useNow(state === "active");
+  // What happened to the workout once it is on the server (read again while it is being scored).
+  const finishedOnServer = state === "finished" && pending === 0 && server && server.state !== "active" && server.state !== "paused";
+  const result = useOutcome(finishedOnServer ? server : null, score);
 
   if (!workout || !state) {
     return (
@@ -192,18 +196,22 @@ export default function WorkoutScreen() {
         />
       )}
 
-      {finished && score && synced && (
-        <ScoreCard score={score} footnote="Squad Six scoring, from what was measured. It can still change for 24 hours if Apple Health adds a matching workout." />
+      {finished && synced && result.outcome && (
+        <OutcomeCard
+          outcome={result.outcome}
+          score={result.score}
+          activity={workout.activity}
+          healthConnected={health.connected}
+          retry={() => void result.retry()}
+          retrying={result.retrying}
+          retryFailed={result.retryFailed}
+        />
       )}
 
-      {finished && !(score && synced) && (
+      {finished && !synced && (
         <Card>
-          <T variant="headline">{synced ? "Workout saved" : "Saved on this phone"}</T>
-          <T tone="textMuted">
-            {synced
-              ? "Your points show here once it's scored. You can leave this screen."
-              : "It uploads as soon as you're back online."}
-          </T>
+          <T variant="headline">Saved on this phone</T>
+          <T tone="textMuted">It uploads as soon as you&apos;re back online. You can leave this screen.</T>
         </Card>
       )}
 

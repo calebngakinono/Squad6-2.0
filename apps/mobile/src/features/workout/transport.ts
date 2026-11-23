@@ -1,5 +1,6 @@
 import {
   attachedEvidenceSchema,
+  scoringStart,
   workoutMetricSchema,
   workoutScoreSchema,
   type AttachedEvidence,
@@ -148,4 +149,27 @@ export async function fetchWorkoutScore(serverSessionId: string): Promise<Workou
   if (error) throw classify(error);
   const parsed = workoutScoreSchema.safeParse(data);
   return parsed.success ? parsed.data : null;
+}
+
+let scoringStartPromise: Promise<string | null> | null = null;
+/**
+ * When points started being awarded in this environment (the earliest switched-on rule), or null when
+ * scoring is off. Read once per app run; on failure it is read again next time.
+ */
+export function fetchScoringStart(): Promise<string | null> {
+  scoringStartPromise ??= (async () => {
+    const { data, error } = await supabase.from("scoring_rule_versions").select("active_from");
+    if (error) {
+      scoringStartPromise = null;
+      throw classify(error);
+    }
+    return scoringStart(data ?? []);
+  })();
+  return scoringStartPromise;
+}
+
+/** Try again: asks the server to score one of my finished workouts. Never awards points twice. */
+export async function rescoreWorkout(serverSessionId: string): Promise<void> {
+  const { error } = await supabase.rpc("rescore_my_workout", { target: serverSessionId });
+  if (error) throw classify(error);
 }
