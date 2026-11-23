@@ -1,4 +1,4 @@
-import type { OutcomeKind, SquadActivityRow } from "@squad-six/shared";
+import type { SquadActivityRow } from "@squad-six/shared";
 import { ACTIVITIES } from "../workout/machine";
 
 // Display helpers for history and squad activity. Pure, so they are unit-tested.
@@ -32,37 +32,7 @@ export function outcomeLabel(status: string | null | undefined, points: number):
     case "expired":
       return "Expired";
     default:
-      // No score row: not scored (yet). Never "Scoring…", which would never end on its own.
-      return "Not scored";
-  }
-}
-
-/** The word next to one of my workouts in My workouts, from its outcome. */
-export function outcomeWord(kind: OutcomeKind, points: number): string {
-  switch (kind) {
-    case "counted":
-      return `${points.toLocaleString("en-US")} pts`;
-    case "unverified":
-      return "Unverified";
-    case "not_counted":
-      return "0 pts";
-    case "in_review":
-      return "In review";
-    case "merged":
-      return "Merged";
-    case "scoring":
       return "Scoring…";
-    case "stuck":
-    case "not_scored":
-      return "Not scored";
-    case "expired":
-      return "Expired";
-    case "rejected":
-      return "Not counted";
-    case "in_progress":
-      return "In progress";
-    case "discarded":
-      return "Discarded";
   }
 }
 

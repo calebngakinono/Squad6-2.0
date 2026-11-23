@@ -876,9 +876,6 @@ isOneToOne: true
         isOneToOne: true
         isSetofReturn: false
       } },
-"rescore_my_workout":
-{ Args: { "target": string }; Returns: undefined
-                           },
 "review_workout":
 { Args: { "decision": string,"reason": string,"reviewer": string,"target": string }; Returns: {
               "base": number,

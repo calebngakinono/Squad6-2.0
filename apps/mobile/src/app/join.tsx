@@ -12,7 +12,6 @@ import { TextField } from "@/components/text-field";
 import { JOIN_NOTE_MAX, SEP } from "@squad-six/shared";
 import { squadApi } from "@/features/squads/api";
 import { normalizeInviteCode, squadErrorMessage } from "@/features/squads/errors";
-import { clearPendingInvite } from "@/features/squads/pending-invite";
 import { space } from "@/theme/tokens";
 
 type Preview = { name: string; city: string; member_count: number; is_full: boolean };
@@ -43,11 +42,10 @@ export default function JoinScreen() {
     }
   }
 
-  // An invite link fills in the code; look it up straight away. The saved copy has done its job.
+  // An invite link fills in the code; look it up straight away.
   const linkCode = params.code ? normalizeInviteCode(params.code) : null;
   useEffect(() => {
     if (!linkCode) return;
-    void clearPendingInvite();
     let active = true;
     squadApi
       .preview(linkCode)

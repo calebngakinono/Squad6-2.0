@@ -11,11 +11,9 @@ import { splitUnit, Stat } from "@/components/stat";
 import { loadMyWorkout } from "@/features/history/api";
 import { activityLabel, dayLabel } from "@/features/history/view";
 import { formatDuration } from "@/features/workout/machine";
-import { OutcomeCard } from "@/features/workout/outcome-card";
+import { ScoreCard } from "@/features/workout/score-card";
 import { formatDistance, usesMiles } from "@/features/workout/tracking/track";
 import { fetchWorkoutMetrics, fetchWorkoutScore } from "@/features/workout/transport";
-import { useOutcome } from "@/features/workout/use-outcome";
-import { useWorkout } from "@/features/workout/use-workout";
 
 type Loaded = {
   workout: NonNullable<Awaited<ReturnType<typeof loadMyWorkout>>>;
@@ -28,8 +26,6 @@ export default function PastWorkoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { health } = useWorkout();
-  const result = useOutcome(loaded?.workout ?? null, loaded?.score ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,16 +68,16 @@ export default function PastWorkoutScreen() {
             {dayLabel(loaded.workout.local_date, new Date())}
           </T>
 
-          {result.outcome && (
-            <OutcomeCard
-              outcome={result.outcome}
-              score={result.score}
-              activity={loaded.workout.activity}
-              healthConnected={health.connected}
-              retry={() => void result.retry()}
-              retrying={result.retrying}
-              retryFailed={result.retryFailed}
-            />
+          {loaded.score ? (
+            <ScoreCard score={loaded.score} />
+          ) : (
+            <Card variant="sunken">
+              <T tone="textMuted">
+                {loaded.workout.state === "expired"
+                  ? "This workout was left running for more than 12 hours, so it was closed and not scored."
+                  : "Not scored yet. Points show here once it's scored."}
+              </T>
+            </Card>
           )}
 
           <Card>

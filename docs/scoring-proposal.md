@@ -256,23 +256,6 @@ values. Nothing is advertised until a campaign is funded.
 7. ~~Average per member, minimum 3 members, seats weighted by time in squad~~ **Replaced on 2026-11-12:** plain total,
    squads ranked from 4 members, squad-only boards for city, country and world, no individual ranking.
 
-**Decisions of 2026-11-22 (Caleb):**
-
-8. **Unverified workouts** (nothing beyond the timer) stay at 0 competitive points, as decision 4 says, and never
-   count for rankings or prizes. They do count for the person's weekly goal, consistency and history, and the app
-   says why they earned nothing and what would count next time for that activity. A "where did you train?"
-   answer only picks the tip; it never earns points.
-9. **No watch required:** yoga, swimming and indoor cycling verify through any app or device that saves workouts
-   to Apple Health (platform record, heart rate), the same checks as everyone else.
-10. **Try again:** `rescore_my_workout()` reruns the scorer for one of the caller's finished workouts. It changes
-    no rule and cannot award points twice (scores update in place; the ledger settles to the total).
-11. **Weekly tiers open to everyone** (with or without a squad), same points and 250 cap; Squad week stays
-    squad-only. No points for reaching a personal weekly goal.
-12. **Individual rankings** (city, country, world) are added alongside squad rankings. This reverses "no
-    individual ranking" in decision 7.
-13. **Squad home city:** one per squad per season, set at creation; a change takes effect on January 1, at most
-    once a season. Members keep their own cities.
-
 ## 9. What the engine implements today (2026-11-11)
 
 Built in `supabase/migrations/20261112030000_scoring_engine.sql`; the scenario tests are

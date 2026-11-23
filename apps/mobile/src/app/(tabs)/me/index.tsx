@@ -1,4 +1,4 @@
-import { SEP, workoutOutcome } from "@squad-six/shared";
+import { SEP } from "@squad-six/shared";
 import type { MyWorkout } from "@squad-six/shared";
 import { router, Stack, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
@@ -11,8 +11,7 @@ import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { loadMyWorkouts } from "@/features/history/api";
-import { activityLabel, dayLabel, outcomeWord } from "@/features/history/view";
-import { fetchScoringStart } from "@/features/workout/transport";
+import { activityLabel, dayLabel, outcomeLabel } from "@/features/history/view";
 import { formatDuration } from "@/features/workout/machine";
 import { minTouch, space, state } from "@/theme/tokens";
 
@@ -21,12 +20,9 @@ export default function MeScreen() {
   const [workouts, setWorkouts] = useState<MyWorkout[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  // When points started being awarded here; undefined until read (labels wait for it).
-  const [scoringFrom, setScoringFrom] = useState<string | null | undefined>(undefined);
 
   const load = useCallback(async () => {
     try {
-      fetchScoringStart().then(setScoringFrom, () => setScoringFrom(null));
       setWorkouts(await loadMyWorkouts());
       setError(null);
     } catch {
@@ -74,21 +70,7 @@ export default function MeScreen() {
               key={w.id}
               title={activityLabel(w.activity)}
               subtitle={`${dayLabel(w.local_date, today)}${SEP}${formatDuration(w.active_seconds ?? 0)}`}
-              value={
-                scoringFrom === undefined
-                  ? undefined
-                  : (() => {
-                      const o = workoutOutcome({
-                        state: w.state,
-                        startedAt: w.started_at,
-                        endedAt: w.ended_at,
-                        score: w.workout_scores,
-                        scoringFrom,
-                        now: today,
-                      });
-                      return outcomeWord(o.kind, o.points);
-                    })()
-              }
+              value={outcomeLabel(w.state === "expired" ? "expired" : w.workout_scores?.status, w.workout_scores?.total ?? 0)}
               chevron
               onPress={() => router.push({ pathname: "/past-workout/[id]", params: { id: w.id } })}
             />

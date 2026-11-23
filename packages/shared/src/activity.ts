@@ -24,15 +24,7 @@ export const myWorkoutSchema = z.object({
   ended_at: z.string().nullable(),
   active_seconds: z.number().int().nullable(),
   local_date: z.string(),
-  workout_scores: z
-    .object({
-      status: z.string(),
-      total: z.number().int(),
-      categories: z.array(z.string()).default([]),
-      verification: z.number().int().optional(),
-      detail: z.object({ reason: z.string().optional() }).loose().nullable().optional(),
-    })
-    .nullable(),
+  workout_scores: z.object({ status: z.string(), total: z.number().int() }).nullable(),
 });
 export type MyWorkout = z.infer<typeof myWorkoutSchema>;
 

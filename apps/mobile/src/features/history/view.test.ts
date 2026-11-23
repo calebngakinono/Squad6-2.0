@@ -1,6 +1,6 @@
 import type { SquadActivityRow } from "@squad-six/shared";
 import { describe, expect, it } from "vitest";
-import { activityLabel, dayLabel, memberWeek, outcomeLabel, outcomeWord } from "./view";
+import { activityLabel, dayLabel, memberWeek, outcomeLabel } from "./view";
 
 const now = new Date(2026, 10, 17, 12, 0, 0);
 const row = (user: string, hoursAgo: number, points: number): SquadActivityRow => ({
@@ -22,7 +22,7 @@ describe("labels", () => {
     expect(activityLabel("unknown")).toBe("Workout");
     expect(outcomeLabel("accepted", 1214)).toBe("1,214 pts");
     expect(outcomeLabel("needs_review", 0)).toBe("In review");
-    expect(outcomeLabel(null, 0)).toBe("Not scored");
+    expect(outcomeLabel(null, 0)).toBe("Scoring…");
   });
 
   it("says today and yesterday, then a short date", () => {
@@ -45,15 +45,5 @@ describe("memberWeek", () => {
       { userId: "me", name: "Me", isMe: true, workouts: 1, points: 200 },
       { userId: "ben", name: "Athlete", isMe: false, workouts: 0, points: 0 },
     ]);
-  });
-});
-
-describe("outcomeWord", () => {
-  it("says what happened, never an endless Scoring…", () => {
-    expect(outcomeWord("counted", 1215)).toBe("1,215 pts");
-    expect(outcomeWord("unverified", 0)).toBe("Unverified");
-    expect(outcomeWord("stuck", 0)).toBe("Not scored");
-    expect(outcomeWord("not_scored", 0)).toBe("Not scored");
-    expect(outcomeWord("scoring", 0)).toBe("Scoring…");
   });
 });

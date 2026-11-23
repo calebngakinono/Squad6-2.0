@@ -13,7 +13,6 @@ import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
 import { useSession } from "@/lib/session";
 import { takeRouteAfterOnboarding } from "@/features/onboarding/next-route";
-import { readPendingInvite } from "@/features/squads/pending-invite";
 import { loadWeekGoals } from "@/features/goals/api";
 import { WeekStrip } from "@/features/goals/week-strip";
 import type { WeekGoalRow } from "@squad-six/shared";
@@ -74,14 +73,10 @@ export default function HomeScreen() {
     }
   }, [userId, season, loadGoals]);
 
-  // Straight after onboarding or sign-in: an invite link that opened the app comes first (its code
-  // was saved before the account existed); otherwise Join or Start a squad if that's what they chose.
+  // Straight after onboarding: open Join or Start a squad if that's what the person chose.
   useEffect(() => {
     const next = takeRouteAfterOnboarding();
-    readPendingInvite().then((code) => {
-      if (code) router.push({ pathname: "/join", params: { code } });
-      else if (next === "/join" || next === "/create-squad") router.push(next);
-    });
+    if (next === "/join" || next === "/create-squad") router.push(next);
   }, []);
 
   useFocusEffect(
