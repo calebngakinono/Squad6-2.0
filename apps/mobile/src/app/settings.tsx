@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { Stack, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Linking, Platform, StyleSheet, View } from "react-native";
+import { Alert, Linking, Platform, StyleSheet, Switch, View } from "react-native";
 import { Badge, Pill } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
@@ -24,16 +24,18 @@ import { useWorkout } from "@/features/workout/use-workout";
 import { getWebsiteUrl } from "@/lib/env";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
-import { layout, space } from "@/theme/tokens";
+import { useTheme } from "@/theme/theme";
+import { layout, minTouch, space } from "@/theme/tokens";
 
 const GOAL_DAYS = [1, 2, 3, 4, 5, 6, 7];
 
-type SaveKey = "name" | "city" | "goal" | "tz";
+type SaveKey = "name" | "city" | "goal" | "tz" | "rankings";
 
 export default function SettingsScreen() {
   const { session } = useSession();
   const userId = session!.user.id;
   const { health } = useWorkout();
+  const t = useTheme();
   const [settings, setSettings] = useState<AccountSettings | null>(null);
   const [name, setName] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -194,6 +196,33 @@ export default function SettingsScreen() {
             </View>
           )}
 
+          <View style={styles.section}>
+            <SectionHeader title="Rankings" />
+            <View style={styles.switchRow}>
+              <View style={styles.switchText}>
+                <T variant="label" nativeID="rankings-label">
+                  Show me on the People rankings
+                </T>
+                <T variant="small" tone="textMuted">
+                  {settings.hideFromRankings
+                    ? "You're hidden: others don't see you on the People board. Your points still count, and your squad still ranks."
+                    : "Others see your name, city and points on the People board. Turn this off to stay off it; your points still count."}
+                </T>
+              </View>
+              <Switch
+                accessibilityLabelledBy="rankings-label"
+                accessibilityLabel="Show me on the People rankings"
+                value={!settings.hideFromRankings}
+                disabled={saving === "rankings"}
+                trackColor={{ true: t.color.accent, false: t.color.track }}
+                onValueChange={(show) =>
+                  save("rankings", () => settingsApi.setHideFromRankings(userId, !show), show ? "You're back on the People rankings." : "You're hidden from the People rankings.")
+                }
+              />
+            </View>
+            {feedback("rankings")}
+          </View>
+
           {appearance && (
             <View style={styles.section}>
               <SectionHeader title="Appearance" subtitle="System follows your phone's light or dark setting." />
@@ -238,6 +267,8 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  switchRow: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: minTouch },
+  switchText: { flex: 1, gap: space.xxs },
   section: { gap: layout.stackGap },
   field: { gap: space.xs },
   pills: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },

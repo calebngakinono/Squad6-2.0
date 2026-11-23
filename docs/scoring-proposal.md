@@ -272,6 +272,11 @@ values. Nothing is advertised until a campaign is funded.
     individual ranking" in decision 7.
 13. **Squad home city:** one per squad per season, set at creation; a change takes effect on January 1, at most
     once a season. Members keep their own cities.
+14. **Hide me from rankings** (2026-11-23): a private setting leaves someone off the People board for everyone else.
+    Their points are unchanged and still count for their squad; they still see their own row, unranked, and a
+    hidden person never shifts anyone else's rank.
+15. **Past weeks** (2026-11-23) are judged against the person's *current* weekly goal (streaks, "goal reached in N of
+    the last 12 weeks"). No per-week goal history.
 
 ## 9. What the engine implements today (2026-11-11)
 
