@@ -16,6 +16,7 @@ import { SectionHeader } from "@/components/section-header";
 import { Segmented } from "@/components/segmented";
 import { TextField } from "@/components/text-field";
 import { deviceTimeZone } from "@/features/onboarding/api";
+import { ChangePassword } from "@/features/auth/change-password";
 import { loadSettings, settingsApi, settingsErrorMessage, type AccountSettings } from "@/features/settings/api";
 import { loadAppearance, setAppearance } from "@/features/settings/appearance";
 import { APPEARANCE_CHOICES, type AppearanceChoice } from "@/features/settings/appearance-choice";
@@ -248,6 +249,8 @@ export default function SettingsScreen() {
         <ListGroup>
           <ListRow title="Email" value={session?.user.email ?? settings?.email ?? "–"} />
         </ListGroup>
+        {/* Only accounts that sign in with email have a password to change. */}
+        {session?.user.identities?.some((i) => i.provider === "email") && <ChangePassword />}
         <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />
         <Button label="Delete account" variant="destructiveGhost" busy={saving === "delete"} onPress={confirmDelete} />
       </View>
