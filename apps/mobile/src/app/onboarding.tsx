@@ -29,6 +29,7 @@ import {
   WelcomeLayout,
 } from "@/features/onboarding/layouts";
 import { clearProgress, readProgress, writeProgress } from "@/features/onboarding/local";
+import { readPendingInvite } from "@/features/squads/pending-invite";
 import { setRouteAfterOnboarding } from "@/features/onboarding/next-route";
 import { useOnboardingStatus } from "@/features/onboarding/status";
 import { StepInput } from "@/features/onboarding/step-input";
@@ -65,9 +66,11 @@ export default function OnboardingScreen() {
     let active = true;
     (async () => {
       const f = await loadFlow();
-      const saved = await readProgress(f.version);
+      const [saved, invite] = await Promise.all([readProgress(f.version), readPendingInvite()]);
       if (!active) return;
       const a = saved?.answers ?? {};
+      // Arrived through an invite link: "I have an invite code" is already true (still changeable).
+      if (invite && a.squad === undefined && f.steps.some((s) => s.id === "squad")) a.squad = "code";
       const path = pathFor(f, a);
       let start = saved && path.includes(saved.stepId) ? saved.stepId : path[0];
       // Just created the account on the sign-up step: carry on to the next one.

@@ -11,3 +11,6 @@ export * from "./activity";
 export * from "./challenges";
 export * from "./squads";
 export * from "./text";
+export * from "./outcome";
+export * from "./progress";
+export * from "./chat";

@@ -7,7 +7,7 @@ const FINISHED = ["submitted", "accepted", "needs_review", "rejected", "expired"
 export async function loadMyWorkouts(limit = 100): Promise<MyWorkout[]> {
   const { data, error } = await supabase
     .from("workout_sessions")
-    .select("id, activity, state, started_at, ended_at, active_seconds, local_date, workout_scores!workout_scores_session_id_fkey(status, total)")
+    .select("id, activity, state, started_at, ended_at, active_seconds, local_date, workout_scores!workout_scores_session_id_fkey(status, total, categories, verification, detail)")
     .in("state", FINISHED)
     .order("started_at", { ascending: false })
     .limit(limit);
@@ -22,7 +22,7 @@ export async function loadMyWorkouts(limit = 100): Promise<MyWorkout[]> {
 export async function loadMyWorkout(id: string): Promise<MyWorkout | null> {
   const { data, error } = await supabase
     .from("workout_sessions")
-    .select("id, activity, state, started_at, ended_at, active_seconds, local_date, workout_scores!workout_scores_session_id_fkey(status, total)")
+    .select("id, activity, state, started_at, ended_at, active_seconds, local_date, workout_scores!workout_scores_session_id_fkey(status, total, categories, verification, detail)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;

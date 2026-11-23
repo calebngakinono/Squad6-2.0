@@ -170,17 +170,26 @@ on one line and shrinks to fit.
   shared baseline: count, blazes (filled from the bottom), initials, name. Yours is brightest (`text`),
   teammates' blazes are `accent`, open seats show two dashed blazes and a dashed circle. No warning colours
   on people; a reached goal is the accent, never a celebration.
-- **Home:** squad name as a sign → the trail sign (opens the Squad tab) → what needs action (Find your squad;
-  captain: Waiting to join) → one row with my season points as its figure (opens Standings). Footer:
+- **Home:** squad name as a sign → the trail sign (opens the Squad tab) → captain's Waiting to join → "Invite
+  your squad" while there are open seats → **Your season** (`features/progress/season-card.tsx`: points,
+  workouts verified or not, goal streak, the last 12 weeks as blazes, next milestone) → Find your squad (no
+  squad: after the person's own progress, never instead of it). Footer:
   "<last activity> again" (primary) beside "Other workout" (secondary), or "Start a workout" for someone
   with no workouts yet.
-- **Squad tab:** this week (one row per member, blazes as the trailing mark), recent workouts, then members,
-  invite code and Leave squad. Without a squad: an `EmptyState` with Join, plus "Start a squad".
+- **Squad tab:** this week (one row per member, blazes as the trailing mark), recent workouts, then members
+  (each with their own city, never more precise), the **Home city** card (where the squad ranks this season,
+  any change planned for next season; captain: change or cancel the plan), invite code and Leave squad. Without a squad: an `EmptyState` with Join, plus "Start a squad".
 - **Me tab:** my workouts, Settings in the header.
+- **Squad chat** (`app/chat.tsx`, over the tabs): newest at the bottom; mine on `accentSoft`, teammates' on
+  `surface`, small radius (no pill bubbles); a teammate's name above their first message in a run. A shared
+  workout shows the server's numbers ("Run ∙ 30 min", "214 pts" + "Squad Six scoring", or "Unverified").
+  Long press (or VoiceOver custom actions): react, delete (sender or captain), report. Reactions are a fixed
+  set of four. The Squad tab carries the unread badge; its first row opens the chat.
 - **Challenges:** a card per challenge. Not joined: what it is, the next level, the join note and button.
   Joined: progress `Stat`s first, then the next level ("Next: Silver"); the description and all levels open
   from one ghost toggle.
-- **Standings:** rank as `leading`, points as the row figure, `highlighted` plus a "You" badge for my squad.
+- **Standings:** Squads | People. Squads rank by their home city, people by their own city; city, country,
+  world. Rank as `leading`, points as the row figure, `highlighted` for mine. Someone without a squad opens on People.
 - **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are `Stat`s
   in a `Grid` inside a `Card`, each with its `source`. Footer: `ButtonRow` (Pause/Resume | Finish) and a
   `destructiveGhost` Discard. Once finished and synced, the top of the summary is `FinishTrail`
@@ -256,8 +265,13 @@ Button looks: `primary` is a sage fill with forest-night text; `secondary` is tr
 - **Counted workout**: a workout Squad Six scored and accepted. Never "accepted workout" in the UI.
 - **Where a number came from**: "Phone GPS", "Phone step counter", "Squad Six timer", "Synced from Apple
   Health", "Phone GPS or Apple Health", and "Squad Six scoring" for points and counted workouts.
-- **Not scored yet**: say when points appear ("Points show here once it's scored"), never that scoring is
-  switched off or launching.
+- **Workout outcomes** (`workoutOutcome` in packages/shared, shown by `OutcomeCard`): every finished workout
+  has one, so nothing waits on "Scoring…" for more than a minute (then: "hasn't been scored yet" + Try again).
+  - **Unverified**: only the timer recorded it. "Saved. It counts for your week." + why + "To earn points next
+    time" tips for that activity. It counts for the weekly goal and history, never for points or rankings.
+  - **Not scored**: started before points were being awarded ("It started before points were being awarded, so
+    it isn't scored"). Only pre-launch test workouts see this.
+  - Never punish: a workout that earned nothing still counts for the person's week, and the copy says so first.
 
 ## Not done yet
 

@@ -13,14 +13,16 @@ import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
 import { useSession } from "@/lib/session";
 import { takeRouteAfterOnboarding } from "@/features/onboarding/next-route";
+import { readPendingInvite } from "@/features/squads/pending-invite";
 import { loadWeekGoals } from "@/features/goals/api";
 import { WeekStrip } from "@/features/goals/week-strip";
-import type { WeekGoalRow } from "@squad-six/shared";
+import type { Progress, WeekGoalRow } from "@squad-six/shared";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
 import { inviteMessage, inviteReason } from "@/features/squads/invite";
-import { loadMySeasonPoints } from "@/features/standings/api";
-import { formatPoints, seasonYears } from "@/features/standings/view";
+import { loadMyProgress } from "@/features/progress/api";
+import { SeasonCard } from "@/features/progress/season-card";
+import { seasonYears } from "@/features/standings/view";
 import { ACTIVITIES, activityInfo, stateOf, type Activity } from "@/features/workout/machine";
 import { loadMyWorkouts } from "@/features/history/api";
 import { ButtonRow } from "@/components/button-row";
@@ -40,8 +42,8 @@ export default function HomeScreen() {
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const season = seasonYears(new Date())[0];
-  // The athlete's own season total; undefined until loaded (or if it couldn't be loaded).
-  const [myPoints, setMyPoints] = useState<number | undefined>(undefined);
+  // My own season (points, workouts, goal streak, last 12 weeks); null until loaded or if it failed.
+  const [progress, setProgress] = useState<Progress | null>(null);
   // This week's goal progress for me and my squad (null while loading).
   const [goals, setGoals] = useState<WeekGoalRow[] | null>(null);
   const [goalsError, setGoalsError] = useState<string | null>(null);
@@ -67,16 +69,20 @@ export default function HomeScreen() {
     try {
       setHome(await loadSquadHome(userId));
       setLoadError(null);
-      setMyPoints(await loadMySeasonPoints(season).catch(() => undefined));
+      setProgress(await loadMyProgress(season).catch(() => null));
     } catch {
       setLoadError("Couldn't load your squad. Check your connection, then try again.");
     }
   }, [userId, season, loadGoals]);
 
-  // Straight after onboarding: open Join or Start a squad if that's what the person chose.
+  // Straight after onboarding or sign-in: an invite link that opened the app comes first (its code
+  // was saved before the account existed); otherwise Join or Start a squad if that's what they chose.
   useEffect(() => {
     const next = takeRouteAfterOnboarding();
-    if (next === "/join" || next === "/create-squad") router.push(next);
+    readPendingInvite().then((code) => {
+      if (code) router.push({ pathname: "/join", params: { code } });
+      else if (next === "/join" || next === "/create-squad") router.push(next);
+    });
   }, []);
 
   useFocusEffect(
@@ -160,6 +166,25 @@ export default function HomeScreen() {
       />
       {home === null && !loadError && <Loading label="Loading your squad" />}
 
+      {/* Needs the captain's decision, so it comes before anything to browse. */}
+      {squad && <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="requests" actions={squadActions} />}
+
+      {/* While the squad has open seats, inviting comes first: the squad is the product. */}
+      {squad?.inviteCode && inviteReason(squad.name, squad.members.length) ? (
+        <ListGroup>
+          <ListRow
+            title="Invite your squad"
+            subtitle={inviteReason(squad.name, squad.members.length)!}
+            accessibilityHint="Opens the share sheet with your invite code"
+            onPress={() => Share.share({ message: inviteMessage(squad.name, squad.inviteCode!) })}
+          />
+        </ListGroup>
+      ) : null}
+
+      {/* My own season, squad or no squad: the app is useful from the first workout. */}
+      {progress && <SeasonCard progress={progress} season={season} />}
+
+      {/* Without a squad, finding one comes after the person's own progress, not instead of it. */}
       {home?.kind === "no-squad" && (
         <Card>
           <SectionHeader title="Find your squad" subtitle="Train with up to five other people who are counting on you." />
@@ -186,29 +211,6 @@ export default function HomeScreen() {
         </Card>
       )}
 
-      {/* Needs the captain's decision, so it comes before anything to browse. */}
-      {squad && <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="requests" actions={squadActions} />}
-
-      {/* My season so far. The standings themselves are a tab; this row is the number, with a way there.
-          While the squad has open seats, inviting comes first: the squad is the product. */}
-      <ListGroup>
-        {squad?.inviteCode && inviteReason(squad.name, squad.members.length) ? (
-          <ListRow
-            title="Invite your squad"
-            subtitle={inviteReason(squad.name, squad.members.length)!}
-            accessibilityHint="Opens the share sheet with your invite code"
-            onPress={() => Share.share({ message: inviteMessage(squad.name, squad.inviteCode!) })}
-          />
-        ) : null}
-        <ListRow
-          title={`Your ${season} points`}
-          subtitle={myPoints === 0 ? "No points yet. They show once a workout is scored." : `Squad Six scoring${SEP}see the standings`}
-          value={myPoints ? formatPoints(myPoints) : undefined}
-          figure
-          accessibilityLabel={myPoints ? `Your ${season} points: ${formatPoints(myPoints)}, from Squad Six scoring. Opens the standings` : undefined}
-          onPress={() => router.navigate("/standings")}
-        />
-      </ListGroup>
     </Screen>
   );
 }
@@ -218,6 +220,7 @@ const squadActions = {
   remove: squadApi.remove,
   makeCaptain: squadApi.makeCaptain,
   newInviteCode: squadApi.newInviteCode,
+  setHomeCity: squadApi.setHomeCity,
   leave: squadApi.leave,
 };
 

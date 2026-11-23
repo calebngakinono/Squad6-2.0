@@ -1,8 +1,34 @@
-import { squadStandingSchema, standingsPlaceSchema, type SquadStanding, type StandingsPlace, type StandingsScope } from "@squad-six/shared";
+import {
+  athleteStandingSchema,
+  squadStandingSchema,
+  standingsPlaceSchema,
+  type AthleteStanding,
+  type SquadStanding,
+  type StandingsPlace,
+  type StandingsScope,
+} from "@squad-six/shared";
 import { supabase } from "@/lib/supabase";
 
 // Standings are computed by the server from the points ledger; the app only reads them.
-// Only squads are ranked. An athlete sees their own season total, never a ranking of individuals.
+// Squads rank by their home city, people by their own city.
+
+/** People ranked by their own season points (name, city and points only). */
+export async function loadAthleteStandings(season: number, scope: StandingsScope, maxRows = 50): Promise<AthleteStanding[]> {
+  const { data, error } = await supabase.rpc("athlete_standings", { season, scope, max_rows: maxRows });
+  if (error) throw error;
+  return (data ?? []).flatMap((row) => {
+    const parsed = athleteStandingSchema.safeParse(row);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
+
+/** Where the athlete's own (individual) standings are centred: their own city; null without one. */
+export async function loadMyAthletePlace(): Promise<StandingsPlace | null> {
+  const { data, error } = await supabase.rpc("my_athlete_place");
+  if (error) throw error;
+  const parsed = standingsPlaceSchema.safeParse(data?.[0]);
+  return parsed.success ? parsed.data : null;
+}
 
 export async function loadSquadStandings(season: number, scope: StandingsScope, maxRows = 50): Promise<SquadStanding[]> {
   const { data, error } = await supabase.rpc("squad_standings", { season, scope, max_rows: maxRows });
