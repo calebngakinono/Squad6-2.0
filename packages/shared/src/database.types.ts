@@ -171,14 +171,14 @@ isOneToOne: false
                   ]
                 },"profile_private": {
                   Row: {
-                    "created_at": string,"home_timezone": string | null,"home_timezone_changed_at": string | null,"onboarding_answers": NonNullable<Json>,"onboarding_completed_at": string | null,"onboarding_flow_version": number | null,"onboarding_step": string | null,"updated_at": string,"user_id": string,"weekly_commitment": number | null
+                    "created_at": string,"home_timezone": string | null,"hide_from_rankings": boolean,"home_timezone_changed_at": string | null,"onboarding_answers": NonNullable<Json>,"onboarding_completed_at": string | null,"onboarding_flow_version": number | null,"onboarding_step": string | null,"updated_at": string,"user_id": string,"weekly_commitment": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"home_timezone"?: string | null,"home_timezone_changed_at"?: string | null,"onboarding_answers"?: NonNullable<Json>,"onboarding_completed_at"?: string | null,"onboarding_flow_version"?: number | null,"onboarding_step"?: string | null,"updated_at"?: string,"user_id": string,"weekly_commitment"?: number | null
+                    "created_at"?: string,"home_timezone"?: string | null,"hide_from_rankings"?: boolean,"home_timezone_changed_at"?: string | null,"onboarding_answers"?: NonNullable<Json>,"onboarding_completed_at"?: string | null,"onboarding_flow_version"?: number | null,"onboarding_step"?: string | null,"updated_at"?: string,"user_id": string,"weekly_commitment"?: number | null
                   }
                   Update: {
-                    "created_at"?: string,"home_timezone"?: string | null,"home_timezone_changed_at"?: string | null,"onboarding_answers"?: NonNullable<Json>,"onboarding_completed_at"?: string | null,"onboarding_flow_version"?: number | null,"onboarding_step"?: string | null,"updated_at"?: string,"user_id"?: string,"weekly_commitment"?: number | null
+                    "created_at"?: string,"home_timezone"?: string | null,"hide_from_rankings"?: boolean,"home_timezone_changed_at"?: string | null,"onboarding_answers"?: NonNullable<Json>,"onboarding_completed_at"?: string | null,"onboarding_flow_version"?: number | null,"onboarding_step"?: string | null,"updated_at"?: string,"user_id"?: string,"weekly_commitment"?: number | null
                   }
                   Relationships: [
                     {
