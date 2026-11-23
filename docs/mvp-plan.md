@@ -15,14 +15,15 @@ squad's standing on the season leaderboard. Teammates see the activity. Nothing 
 | Priority | Feature | By Dec 9 |
 |---|---|---|
 | 1 | **Live workout sessions**: server state machine, timer, GPS for outdoor activities, set/rep logging, pause/resume, recovery, offline queue, device-neutral events (watch-ready) | ✅ |
-| 2 | **Scoring, ledger, seasons, leaderboards**: Base + Verification + Performance ([proposal](scoring-proposal.md)), daily rules, no double awards, transparent workout summary, squad standings by city / country / world (no individual ranking; each athlete sees their own season total), year selector | ✅ (rules approved; production switch-on needs sign-off) |
+| 2 | **Scoring, ledger, seasons, leaderboards**: Base + Verification + Performance ([proposal](scoring-proposal.md)), daily rules, no double awards, transparent workout summary, squad standings by home city / country / world **and individual rankings by the person's own city / country / world** (Caleb, 2026-11-22), year selector | ✅ (rules approved; production switch-on needs sign-off) |
 | 3 | **HealthKit evidence** (post-workout matching, provider-independent design) | ✅ high priority |
 | 3 | **Health Connect evidence** | ✅ once the Android device arrives; otherwise first item after Dec 9 |
 | 4 | **Squads**: create, invite link, join request + approval, max six, roles, member activity | ✅ |
 | 5 | **Challenges (official)**: individual tiered and squad participation challenges, evidence requirements, awards in the ledger, history | ✅ core types built 2026-11-18 (weekly tiers + squad week, explicit Join, 250/week cap; [scoring-proposal §10](scoring-proposal.md)). Deferred: activity-specific, squad collective km, seasonal/monthly events, ranked city events, Pro custom challenges, a past-weeks history screen |
 | 6 | **Auth and profiles**: email, Sign in with Apple, Google; public/private profile split; account deletion | ✅ |
 | 7 | **Onboarding**: configurable, resumable, branching flow that runs before sign-up (15 screens: questions, personal gap and plan, account on 14, Pro offer on 15); no invented stats or reviews | ✅ v3 flow 2026-11-19; final visuals from the designer |
-| 8 | Squad chat (basic) | stretch; activity feed is the fallback |
+| 8 | **Squad chat** (Caleb, 2026-11-22): realtime text, reactions, workout-summary shares, report/delete, in-app unread | ✅ at launch; photos, short videos and push notifications right after launch |
+| 8b | **Solo experience** (Caleb, 2026-11-22): personal season card (points, workouts, goal streak, 12 weeks, milestones), Weekly tiers without a squad, People rankings | ✅ |
 | 9 | Marketing site (one page) plus privacy policy, terms and support pages (App Store needs the privacy and support URLs) | ✅ built 2026-11-17 (`apps/web`) |
 | 10 | Pro: entitlements table, server checks, RevenueCat sandbox | stretch; no live purchases |
 | Later | Progress Intelligence, Squad Leadership, Athlete Legacy, achievements beyond streaks, BLE heart-rate, watchOS app, cloud wearable APIs, camera verification, season prizes and monthly drawings (need funding and legal review), organization accounts, sponsored challenges | ❌ documented, not built |

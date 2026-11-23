@@ -170,8 +170,10 @@ on one line and shrinks to fit.
   shared baseline: count, blazes (filled from the bottom), initials, name. Yours is brightest (`text`),
   teammates' blazes are `accent`, open seats show two dashed blazes and a dashed circle. No warning colours
   on people; a reached goal is the accent, never a celebration.
-- **Home:** squad name as a sign → the trail sign (opens the Squad tab) → what needs action (Find your squad;
-  captain: Waiting to join) → one row with my season points as its figure (opens Standings). Footer:
+- **Home:** squad name as a sign → the trail sign (opens the Squad tab) → captain's Waiting to join → "Invite
+  your squad" while there are open seats → **Your season** (`features/progress/season-card.tsx`: points,
+  workouts verified or not, goal streak, the last 12 weeks as blazes, next milestone) → Find your squad (no
+  squad: after the person's own progress, never instead of it). Footer:
   "<last activity> again" (primary) beside "Other workout" (secondary), or "Start a workout" for someone
   with no workouts yet.
 - **Squad tab:** this week (one row per member, blazes as the trailing mark), recent workouts, then members,
@@ -180,7 +182,8 @@ on one line and shrinks to fit.
 - **Challenges:** a card per challenge. Not joined: what it is, the next level, the join note and button.
   Joined: progress `Stat`s first, then the next level ("Next: Silver"); the description and all levels open
   from one ghost toggle.
-- **Standings:** rank as `leading`, points as the row figure, `highlighted` plus a "You" badge for my squad.
+- **Standings:** Squads | People. Squads rank by their home city, people by their own city; city, country,
+  world. Rank as `leading`, points as the row figure, `highlighted` for mine. Someone without a squad opens on People.
 - **Workout:** the timer is `T variant="timer"` under a state `Badge`; distance, pace and steps are `Stat`s
   in a `Grid` inside a `Card`, each with its `source`. Footer: `ButtonRow` (Pause/Resume | Finish) and a
   `destructiveGhost` Discard. Once finished and synced, the top of the summary is `FinishTrail`

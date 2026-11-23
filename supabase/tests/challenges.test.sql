@@ -1,5 +1,5 @@
 begin;
-select plan(65);
+select plan(66);
 
 -- Official challenges (supabase/migrations/*_challenges.sql, docs/scoring-proposal.md §5).
 -- Week under test: Monday 2026-06-01 to Sunday 2026-06-07, athletes in UTC unless stated.
@@ -78,6 +78,9 @@ select is(pg_temp.cpoints(1), 0, 'two accepted workouts: no tier yet');
 select pg_temp.workout(1, 2);
 select is(pg_temp.tier(1), 'bronze', 'three accepted workouts: bronze');
 select is(pg_temp.cpoints(1), 40, 'bronze pays 40');
+-- Athlete 1 is in no squad: weekly tiers are open to everyone (Caleb, 2026-11-22). Squad week is not.
+select is((select squad_id from public.challenge_participants where user_id = pg_temp.uid(1) and challenge_id = 'weekly-tiers-v1'), null,
+  'weekly tiers work without a squad');
 select pg_temp.workout(1, 3);
 select pg_temp.workout(1, 4);
 select is(pg_temp.tier(1), 'silver', 'five accepted workouts: silver');
