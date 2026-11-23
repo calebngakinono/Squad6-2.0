@@ -1,3 +1,5 @@
+-- destructive-ok: DELETEs run only inside the chat functions at a member's request (taking a reaction back, clearing
+-- the reactions of a message being deleted). This migration removes no existing data when it runs.
 -- Squad chat (Caleb, 2026-11-22): every squad has a private group chat. At launch: text, reactions,
 -- shared workout summaries, delete and report, and an unread count. Photos, short videos and push
 -- notifications come after launch.

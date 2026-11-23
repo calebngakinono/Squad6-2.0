@@ -1,3 +1,5 @@
+-- destructive-ok: the only DELETE runs inside set_squad_home_city(), removing the captain's own pending next-season plan
+-- when they cancel it. This migration removes no existing data when it runs.
 -- Home cities per season, for squads and for people (Caleb, 2026-11-22).
 --
 -- Squads: a squad competes in one home city per season. It is set at creation (squads.city_id, the
