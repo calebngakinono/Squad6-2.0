@@ -10,12 +10,14 @@ export type AccountSettings = {
   city: string | null;
   homeTimezone: string | null;
   weeklyCommitment: number | null;
+  /** Off the People rankings for everyone else (points still count). */
+  hideFromRankings: boolean;
 };
 
 export async function loadSettings(userId: string): Promise<AccountSettings> {
   const [profile, priv, user] = await Promise.all([
     supabase.from("profiles").select("display_name, city_id, city").eq("id", userId).single(),
-    supabase.from("profile_private").select("home_timezone, weekly_commitment").eq("user_id", userId).single(),
+    supabase.from("profile_private").select("home_timezone, weekly_commitment, hide_from_rankings").eq("user_id", userId).single(),
     supabase.auth.getUser(),
   ]);
   if (profile.error) throw profile.error;
@@ -27,6 +29,7 @@ export async function loadSettings(userId: string): Promise<AccountSettings> {
     city: profile.data.city,
     homeTimezone: priv.data.home_timezone,
     weeklyCommitment: priv.data.weekly_commitment,
+    hideFromRankings: priv.data.hide_from_rankings,
   };
 }
 
@@ -40,6 +43,8 @@ export const settingsApi = {
   setCity: (userId: string, cityId: number) => check(supabase.from("profiles").update({ city_id: cityId }).eq("id", userId)),
   setWeeklyCommitment: (userId: string, days: number) =>
     check(supabase.from("profile_private").update({ weekly_commitment: days }).eq("user_id", userId)),
+  setHideFromRankings: (userId: string, hide: boolean) =>
+    check(supabase.from("profile_private").update({ hide_from_rankings: hide }).eq("user_id", userId)),
   setHomeTimezone: (tz: string) => check(supabase.rpc("set_home_timezone", { tz })),
   /** Deletes the account and everything personal on the server, then signs out on this phone. */
   deleteAccount: async () => {
