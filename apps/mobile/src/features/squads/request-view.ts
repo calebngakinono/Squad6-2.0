@@ -1,3 +1,4 @@
+import { SEP } from "@squad-six/shared";
 import { formatPoints } from "@/features/standings/view";
 import type { JoinRequest } from "./api";
 
@@ -18,7 +19,7 @@ export function requestMemberSince(r: Pick<JoinRequest, "memberSince">): string 
   return `On Squad Six since ${d.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`;
 }
 
-/** "2026 season: 12 counted workouts · 2,040 points". */
+/** "2026 season: 12 counted workouts ∙ 2,040 points". */
 export function requestSeason(r: Pick<JoinRequest, "season" | "seasonWorkouts" | "seasonPoints">): string {
-  return `${r.season} season: ${plural(r.seasonWorkouts, "counted workout")} · ${plural(r.seasonPoints, "point")}`;
+  return `${r.season} season: ${plural(r.seasonWorkouts, "counted workout")}${SEP}${plural(r.seasonPoints, "point")}`;
 }

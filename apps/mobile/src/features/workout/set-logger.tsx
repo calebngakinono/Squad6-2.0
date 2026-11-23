@@ -1,3 +1,4 @@
+import { SEP } from "@squad-six/shared";
 import { useMemo, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { Pill } from "@/components/badge";
@@ -72,7 +73,7 @@ export function SetLogger({ sets, editable }: { sets: LocalSet[]; editable: bool
                 </T>
               }
               title={s.exercise}
-              subtitle={`${s.reps} reps${s.weightKg != null ? ` · ${s.weightKg} kg` : ""}`}
+              subtitle={`${s.reps} reps${s.weightKg != null ? `${SEP}${s.weightKg} kg` : ""}`}
               divider={i < listed.length - 1}
               trailing={
                 editable ? (

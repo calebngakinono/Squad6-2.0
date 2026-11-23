@@ -8,7 +8,7 @@ describe("cities", () => {
   });
 
   it("tells apart cities with the same name", () => {
-    expect(cityDetail({ region: "Illinois", country: "United States" })).toBe("Illinois · United States");
+    expect(cityDetail({ region: "Illinois", country: "United States" })).toBe("Illinois \u2219 United States");
     expect(cityDetail({ region: null, country: "Brazil" })).toBe("Brazil");
   });
 

@@ -10,6 +10,7 @@ import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { splitUnit, Stat } from "@/components/stat";
+import { FinishTrail } from "@/features/goals/finish-trail";
 import { activityInfo, formatDuration, stateOf } from "@/features/workout/machine";
 import { ScoreCard } from "@/features/workout/score-card";
 import { SetLogger } from "@/features/workout/set-logger";
@@ -162,6 +163,9 @@ export default function WorkoutScreen() {
         <T
           variant="timer"
           align="center"
+          // Always one line ("1:02:33"), shrinking to fit at the largest text sizes rather than wrapping.
+          numberOfLines={1}
+          adjustsFontSizeToFit
           accessibilityRole="timer"
           accessibilityLabel={`Active time ${Math.floor(seconds / 60)} minutes ${seconds % 60} seconds`}
         >
@@ -176,6 +180,9 @@ export default function WorkoutScreen() {
       </View>
 
       {notice && <Notice message={notice} />}
+
+      {/* The peak of the loop: today's blaze on the squad's trail, before the points. */}
+      {(open || finished) && <FinishTrail open={open} counted={finished && synced} />}
 
       {gpsNote && (
         <Notice

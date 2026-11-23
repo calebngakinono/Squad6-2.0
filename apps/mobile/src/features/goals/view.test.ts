@@ -1,6 +1,6 @@
 import type { WeekGoalRow } from "@squad-six/shared";
 import { describe, expect, it } from "vitest";
-import { goalLabel, initials, myGoalLine, pips, weekSeats } from "./view";
+import { finishTrailLine, goalLabel, initials, isNewDay, myGoalLine, pips, weekSeats } from "./view";
 
 const row = (over: Partial<WeekGoalRow>): WeekGoalRow => ({
   user_id: "u1",
@@ -60,5 +60,23 @@ describe("pips", () => {
     expect(pips(5, 4)).toEqual([true, true, true, true]);
     expect(pips(3, null)).toEqual([true, true, true]);
     expect(pips(0, null)).toEqual([]);
+  });
+});
+
+describe("isNewDay", () => {
+  it("is true only when my day count went up since before the finish", () => {
+    expect(isNewDay(2, row({ is_me: true, days_this_week: 3 }))).toBe(true);
+    expect(isNewDay(3, row({ is_me: true, days_this_week: 3 }))).toBe(false);
+    expect(isNewDay(null, row({ is_me: true, days_this_week: 3 }))).toBe(false);
+    expect(isNewDay(2, undefined)).toBe(false);
+  });
+});
+
+describe("finishTrailLine", () => {
+  it("mentions the squad only when there are teammates, and says nothing when unknown", () => {
+    expect(finishTrailLine(true, 3)).toMatch(/Your squad sees it/);
+    expect(finishTrailLine(true, 0)).toBe("Today's blaze is on your trail.");
+    expect(finishTrailLine(false, 3)).toBe("Today was already on your trail.");
+    expect(finishTrailLine(null, 3)).toBeNull();
   });
 });

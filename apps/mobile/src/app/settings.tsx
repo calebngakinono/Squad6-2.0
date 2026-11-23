@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import { Stack, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Linking, Platform, StyleSheet, View } from "react-native";
 import { Badge, Pill } from "@/components/badge";
 import { Button } from "@/components/button";
@@ -13,9 +13,12 @@ import { Notice } from "@/components/notice";
 import { Screen } from "@/components/screen";
 import { T } from "@/components/screen-text";
 import { SectionHeader } from "@/components/section-header";
+import { Segmented } from "@/components/segmented";
 import { TextField } from "@/components/text-field";
 import { deviceTimeZone } from "@/features/onboarding/api";
 import { loadSettings, settingsApi, settingsErrorMessage, type AccountSettings } from "@/features/settings/api";
+import { loadAppearance, setAppearance } from "@/features/settings/appearance";
+import { APPEARANCE_CHOICES, type AppearanceChoice } from "@/features/settings/appearance-choice";
 import { connectAppleHealth } from "@/features/workout/store";
 import { useWorkout } from "@/features/workout/use-workout";
 import { getWebsiteUrl } from "@/lib/env";
@@ -38,6 +41,11 @@ export default function SettingsScreen() {
   // Which change the message is about, so it shows next to that control rather than at the top of
   // the screen where it may be scrolled out of view.
   const [message, setMessage] = useState<{ key: SaveKey; text: string; error: boolean } | null>(null);
+  // Light or dark for this phone; null until the saved choice is read.
+  const [appearance, setAppearanceChoice] = useState<AppearanceChoice | null>(null);
+  useEffect(() => {
+    loadAppearance().then(setAppearanceChoice);
+  }, []);
   const website = getWebsiteUrl();
   const phoneZone = deviceTimeZone();
 
@@ -183,6 +191,21 @@ export default function SettingsScreen() {
                 </T>
                 {!health.connected && <Button label="Connect Apple Health" variant="secondary" onPress={() => void connectAppleHealth()} />}
               </Card>
+            </View>
+          )}
+
+          {appearance && (
+            <View style={styles.section}>
+              <SectionHeader title="Appearance" subtitle="System follows your phone's light or dark setting." />
+              <Segmented
+                label="Appearance"
+                options={APPEARANCE_CHOICES}
+                value={appearance}
+                onChange={(choice) => {
+                  setAppearanceChoice(choice);
+                  void setAppearance(choice);
+                }}
+              />
             </View>
           )}
 
