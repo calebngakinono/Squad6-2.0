@@ -13,3 +13,4 @@ export * from "./squads";
 export * from "./text";
 export * from "./outcome";
 export * from "./progress";
+export * from "./chat";

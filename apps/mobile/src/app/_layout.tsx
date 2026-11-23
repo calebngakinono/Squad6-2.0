@@ -59,6 +59,7 @@ function RootNavigator({ fontsSettled, appearanceSettled }: { fontsSettled: bool
         <Stack.Screen name="start-workout" />
         <Stack.Screen name="workout" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="chat" />
         <Stack.Screen name="past-workout/[id]" />
         <Stack.Protected guard={__DEV__}>
           <Stack.Screen name="device-check" />

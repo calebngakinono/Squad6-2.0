@@ -180,6 +180,11 @@ on one line and shrinks to fit.
   (each with their own city, never more precise), the **Home city** card (where the squad ranks this season,
   any change planned for next season; captain: change or cancel the plan), invite code and Leave squad. Without a squad: an `EmptyState` with Join, plus "Start a squad".
 - **Me tab:** my workouts, Settings in the header.
+- **Squad chat** (`app/chat.tsx`, over the tabs): newest at the bottom; mine on `accentSoft`, teammates' on
+  `surface`, small radius (no pill bubbles); a teammate's name above their first message in a run. A shared
+  workout shows the server's numbers ("Run ∙ 30 min", "214 pts" + "Squad Six scoring", or "Unverified").
+  Long press (or VoiceOver custom actions): react, delete (sender or captain), report. Reactions are a fixed
+  set of four. The Squad tab carries the unread badge; its first row opens the chat.
 - **Challenges:** a card per challenge. Not joined: what it is, the next level, the join note and button.
   Joined: progress `Stat`s first, then the next level ("Next: Silver"); the description and all levels open
   from one ghost toggle.

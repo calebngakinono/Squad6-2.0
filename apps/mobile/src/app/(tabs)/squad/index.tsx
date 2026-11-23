@@ -20,6 +20,7 @@ import { GoalPips } from "@/features/goals/week-strip";
 import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
 import { squadErrorMessage } from "@/features/squads/errors";
 import { inviteFirst, SquadPanel } from "@/features/squads/squad-panel";
+import { useUnread } from "@/features/chat/unread";
 import { useSession } from "@/lib/session";
 import { layout } from "@/theme/tokens";
 
@@ -34,6 +35,7 @@ export default function SquadScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const unread = useUnread();
 
   const load = useCallback(async () => {
     try {
@@ -104,6 +106,18 @@ export default function SquadScreen() {
           />
           <Button label="Start a squad" variant="ghost" onPress={() => router.push("/create-squad")} />
         </View>
+      )}
+
+      {/* The squad's private chat, first: it's where the squad is most alive. */}
+      {squad && (
+        <ListGroup>
+          <ListRow
+            title="Squad chat"
+            subtitle={unread > 0 ? `${unread} new ${unread === 1 ? "message" : "messages"}` : "Talk with your squad, share workouts"}
+            highlighted={unread > 0}
+            onPress={() => router.push("/chat")}
+          />
+        </ListGroup>
       )}
 
       {/* Too few members to be ranked: getting people in comes before everything else here. */}

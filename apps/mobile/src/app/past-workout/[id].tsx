@@ -11,6 +11,7 @@ import { splitUnit, Stat } from "@/components/stat";
 import { loadMyWorkout } from "@/features/history/api";
 import { activityLabel, dayLabel } from "@/features/history/view";
 import { formatDuration } from "@/features/workout/machine";
+import { ShareWorkoutButton } from "@/features/chat/share-workout-button";
 import { OutcomeCard } from "@/features/workout/outcome-card";
 import { formatDistance, usesMiles } from "@/features/workout/tracking/track";
 import { fetchWorkoutMetrics, fetchWorkoutScore } from "@/features/workout/transport";
@@ -82,6 +83,9 @@ export default function PastWorkoutScreen() {
               retrying={result.retrying}
               retryFailed={result.retryFailed}
             />
+          )}
+          {result.outcome && ["counted", "unverified", "not_counted", "in_review", "not_scored"].includes(result.outcome.kind) && (
+            <ShareWorkoutButton sessionId={loaded.workout.id} />
           )}
 
           <Card>

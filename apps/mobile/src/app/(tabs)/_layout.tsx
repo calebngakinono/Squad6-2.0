@@ -1,4 +1,5 @@
 import { NativeTabs } from "expo-router/native-tabs";
+import { useUnread } from "@/features/chat/unread";
 import { useTheme } from "@/theme/theme";
 
 // The five places in the app, on the native iOS tab bar (Liquid Glass on iOS 26): sage tint, Overpass
@@ -6,6 +7,8 @@ import { useTheme } from "@/theme/theme";
 // Stack instead.
 export default function TabsLayout() {
   const t = useTheme();
+  // Unread squad-chat messages, as a badge on the Squad tab.
+  const unread = useUnread();
   const label = t.text("caption");
   // Our Screen already pads for the safe area (which, inside a tab, includes the tab bar), so the
   // automatic scroll-view insets are turned off to avoid padding twice.
@@ -20,6 +23,7 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="squad" {...shared}>
         <NativeTabs.Trigger.Label>Squad</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: "person.3", selected: "person.3.fill" }} md="group" />
+        {unread > 0 ? <NativeTabs.Trigger.Badge>{unread > 99 ? "99+" : String(unread)}</NativeTabs.Trigger.Badge> : null}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="standings" {...shared}>
         <NativeTabs.Trigger.Label>Standings</NativeTabs.Trigger.Label>

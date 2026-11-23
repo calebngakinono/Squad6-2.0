@@ -229,6 +229,30 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"squad_messages": {
+                  Row: {
+                    "body": string | null,"created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"kind": string,"squad_id": string,"user_id": string,"workout": Json | null,"workout_session_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"kind"?: string,"squad_id": string,"user_id": string,"workout"?: Json | null,"workout_session_id"?: string | null
+                  }
+                  Update: {
+                    "body"?: string | null,"created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"kind"?: string,"squad_id"?: string,"user_id"?: string,"workout"?: Json | null,"workout_session_id"?: string | null
+                  }
+                  Relationships: []
+                },"squad_message_reactions": {
+                  Row: {
+                    "created_at": string,"message_id": string,"reaction": string,"squad_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"message_id": string,"reaction": string,"squad_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"message_id"?: string,"reaction"?: string,"squad_id"?: string,"user_id"?: string
+                  }
+                  Relationships: []
                 },"squad_invite_codes": {
                   Row: {
                     "code": string,"created_at": string,"squad_id": string
@@ -893,6 +917,31 @@ isOneToOne: true
       } },
 "rescore_my_workout":
 { Args: { "target": string }; Returns: undefined
+                           },
+"send_squad_message":
+{ Args: { "body": string }; Returns: {
+              "body": string | null,"created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"kind": string,"squad_id": string,"user_id": string,"workout": Json | null,"workout_session_id": string | null
+            }
+                           },
+"share_workout_to_squad":
+{ Args: { "body"?: string,"target": string }; Returns: {
+              "body": string | null,"created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"kind": string,"squad_id": string,"user_id": string,"workout": Json | null,"workout_session_id": string | null
+            }
+                           },
+"delete_squad_message":
+{ Args: { "target": string }; Returns: undefined
+                           },
+"toggle_squad_reaction":
+{ Args: { "reaction": string,"target": string }; Returns: boolean
+                           },
+"report_squad_message":
+{ Args: { "reason"?: string,"target": string }; Returns: undefined
+                           },
+"mark_squad_chat_read":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"my_squad_chat_unread":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "review_workout":
 { Args: { "decision": string,"reason": string,"reviewer": string,"target": string }; Returns: {
