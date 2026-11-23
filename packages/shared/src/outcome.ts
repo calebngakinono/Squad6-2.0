@@ -54,7 +54,8 @@ const MAX_VERIFICATION = 30;
 export function workoutOutcome(i: OutcomeInput): Outcome {
   const base = { points: 0, reason: i.score?.detail?.reason ?? null, evidenceOpenUntil: null, personal: false };
   if (i.state === "active" || i.state === "paused") return { ...base, kind: "in_progress" };
-  if (i.state === "cancelled") return { ...base, kind: "discarded" };
+  // The server calls a discarded workout "abandoned"; the phone's own state machine says "cancelled".
+  if (i.state === "abandoned" || i.state === "cancelled") return { ...base, kind: "discarded" };
   if (i.state === "expired") return { ...base, kind: "expired" };
   if (i.state === "rejected") return { ...base, kind: "rejected" };
   if (!FINISHED.includes(i.state)) return { ...base, kind: "stuck" };

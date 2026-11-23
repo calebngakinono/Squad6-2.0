@@ -59,6 +59,7 @@ describe("workoutOutcome", () => {
     expect(workoutOutcome(input({ score: score("merged") })).kind).toBe("merged");
     expect(workoutOutcome(input({ state: "active", endedAt: null })).kind).toBe("in_progress");
     expect(workoutOutcome(input({ state: "cancelled" })).kind).toBe("discarded");
+    expect(workoutOutcome(input({ state: "abandoned" })).kind).toBe("discarded");
     expect(workoutOutcome(input({ state: "expired" })).kind).toBe("expired");
     expect(workoutOutcome(input({ state: "rejected" })).personal).toBe(false);
   });

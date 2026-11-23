@@ -800,6 +800,16 @@ isOneToOne: true
 "my_season_points":
 { Args: { "season": number }; Returns: number
                            },
+"my_athlete_place":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "city": string,"city_id": number,"country": string,"country_code": string
+            }[]
+                           },
+"my_progress":
+{ Args: { "season": number }; Returns: {
+              "all_time_workouts": number,"best_streak": number,"counted_workouts": number,"goal_streak": number,"season_points": number,"season_workouts": number,"weekly_goal": number | null,"weeks": Json
+            }[]
+                           },
 "my_standings_place":
 { Args: Record<PropertyKey, never>; Returns: {
               "city": string,"city_id": number,"country": string,"country_code": string
@@ -942,6 +952,11 @@ isOneToOne: true
 "squad_week_goals":
 { Args: Record<PropertyKey, never>; Returns: {
               "days_this_week": number,"display_name": string | null,"is_me": boolean,"user_id": string,"week_start": string,"weekly_goal": number | null
+            }[]
+                           },
+"athlete_standings":
+{ Args: { "max_rows"?: number,"scope"?: string,"season": number }; Returns: {
+              "city": string | null,"display_name": string | null,"is_me": boolean,"points": number,"rank": number | null
             }[]
                            },
 "squad_standings":

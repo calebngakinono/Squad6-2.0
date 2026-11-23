@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// Season standings as returned by squad_standings() (supabase/migrations/*_standings.sql).
-// Only squads are ranked (city, country, world); an athlete sees their own season total and no ranking.
+// Season standings as returned by squad_standings() and athlete_standings() (supabase/migrations).
+// Squads rank by their home city; athletes by their own city (Caleb, 2026-11-22). City, country or world.
 // Totals are derived from the points ledger on the server.
 
 export const STANDINGS_SCOPES = ["city", "country", "world"] as const;
@@ -21,6 +21,17 @@ export const squadStandingSchema = z.object({
   is_mine: z.boolean(),
 });
 export type SquadStanding = z.infer<typeof squadStandingSchema>;
+
+/** One athlete on the individual board: a name, a city and points only (never a user id). */
+export const athleteStandingSchema = z.object({
+  /** Null for the caller's own row while they have no points yet. */
+  rank: z.number().int().nullable(),
+  display_name: z.string().nullable(),
+  city: z.string().nullable(),
+  points: z.number().int(),
+  is_me: z.boolean(),
+});
+export type AthleteStanding = z.infer<typeof athleteStandingSchema>;
 
 /** The city and country the caller's standings are centred on. */
 export const standingsPlaceSchema = z.object({
