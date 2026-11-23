@@ -116,6 +116,31 @@ About or Settings screen, and the marketing site footer) **before release**. To 
 merged one). Profiles and squads created before the list existed keep their old typed city as a label but have
 no `city_id`, so they do not appear in city or country standings until a city is chosen.
 
+## TestFlight builds
+
+TestFlight builds are store-signed builds of the iPhone app that testers install from Apple's TestFlight app.
+They point at **staging** until the production database is released.
+
+- Profile `testflight` in `apps/mobile/eas.json`: extends `production` (App Store distribution, build number
+  increased automatically) but uses the EAS **preview** environment.
+- The EAS **preview** environment holds `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  (staging) and `EXPO_PUBLIC_WEBSITE_URL`, all plain text because they ship inside the app anyway. A store
+  build bundles the code on EAS's servers, where `.env.local` never goes, so without these the app has no
+  server to talk to. Check them with `npx eas-cli@latest env:list preview`.
+- The `production` environment is still empty on purpose: fill it with the production values when production
+  is released, and use the `production` profile for the App Store release.
+
+Run it from `apps/mobile` in your own terminal (the first run asks for your Apple ID and creates the signing
+certificate and, if needed, the app in App Store Connect):
+
+```bash
+npx eas-cli@latest build --profile testflight --platform ios --auto-submit
+```
+
+After Apple finishes processing (usually 10–30 minutes), add yourself as an **internal tester** in App Store
+Connect → TestFlight. Internal testing needs no review. External testers need a short beta review, and Apple
+asks what the app does with Health data and for the privacy policy URL.
+
 ## Testing on staging
 
 Staging is the online copy of the whole system, with its own database, used with test accounts before
@@ -131,10 +156,21 @@ production. To use it after a promotion:
    ```
    Never run this on production. On production, run `insert ... values ('production')` instead.
 4. **Load the demo data** (optional, repeatable): paste `supabase/demo/staging-demo.sql` into the staging SQL editor
-   and run it. It refuses to run unless step 3 was done. It switches scoring on for staging and adds 7 demo squads
-   with 34 demo athletes and about 330 scored workouts (details at the top of the file). Everything is labelled
-   "Demo", the accounts cannot sign in, and the points come from the real scoring engine. Removing the demo data
-   later is a delete on a shared database, so it is a separate, deliberate step: ask first.
+   and run it. It refuses to run unless step 3 was done. It switches scoring on for staging and adds 8 demo squads
+   and 40 demo athletes, 8 weeks of workouts up to today, this week's challenges, squad chat with shared workouts
+   and reactions, a planned home-city move and one athlete hidden from rankings (details at the top of the file).
+   Everything is labelled "Demo", the demo accounts cannot sign in, and every point comes from the real scoring
+   engine. Run it again any day to top the workouts up to today.
+
+   **Presenter account** (for presenting the app): in the app pointed at staging, sign up with an email you
+   control (name it so it reads as demo, e.g. "Caleb (demo)"), finish onboarding, and do not join a squad. Put
+   that email on the `insert into demo_settings` line near the top of the script, then run it. The presenter
+   becomes captain of "Demo · Summit Crew" with 8 weeks of training, a goal streak, a high place in Saint George,
+   unread chat and someone waiting to join. Today is left open, so finishing a workout live paints today's mark.
+
+   **Remove it all**: `supabase/demo/staging-demo-remove.sql` deletes the demo athletes, the "Demo · ..." squads and
+   their chat, the seed's workouts and the points awarded for them. The presenter account is kept (out of the
+   squad, its demo workouts and points removed). It refuses to run outside staging or local.
 5. **Point the app at staging**: in `apps/mobile/.env.local`, set `EXPO_PUBLIC_SUPABASE_URL` and
    `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the staging project's values (publishable key only, never the secret
    key), restart Metro, sign up, choose a city, and start a squad or a workout.
