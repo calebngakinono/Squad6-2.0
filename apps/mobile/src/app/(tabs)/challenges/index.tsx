@@ -89,11 +89,6 @@ export default function ChallengesScreen() {
           message="Challenges appear once your home time zone is set. You can set it in Settings."
         />
       )}
-      {scoringOff && (
-        <T variant="small" tone="textMuted">
-          Challenge points aren&apos;t being awarded yet. Your progress still shows here.
-        </T>
-      )}
       {challenges?.map((c) => (
         <ChallengeCard
           key={c.challenge_id}
@@ -103,10 +98,16 @@ export default function ChallengesScreen() {
           onJoin={(week) => join(c, week)}
         />
       ))}
+      {/* Footnotes after the cards: the cards are what people came for. */}
+      {scoringOff && (
+        <T variant="small" tone="textMuted">
+          Challenge points show here once they&apos;re awarded. Your progress already counts.
+        </T>
+      )}
       {challenges && challenges.length > 0 && (
         <T variant="small" tone="textMuted">
-          A counted workout is one Squad Six scored and accepted. Only those you start after joining count toward a
-          challenge. Weeks run Monday to Sunday in your home time zone, and challenge points are capped at 250 a week.
+          A counted workout is one Squad Six scored and accepted. Weeks run Monday to Sunday in your home time zone,
+          and challenge points are capped at 250 a week.
         </T>
       )}
     </Screen>
@@ -141,37 +142,11 @@ function ChallengeCard({
           <Badge label="Joined" tone="accent" />
         ) : null}
       </View>
-      <T variant="small" tone="textMuted">
-        {c.description}
-      </T>
-
-      {c.kind === "individual_tiered" && (
-        <View>
-          {!open && (
-            <T variant="caption" tone="textMuted">
-              {c.config.tiers.every((t) => tierReached(c.config.tiers, c.tier, t)) ? "Top level" : "Next level"}
-            </T>
-          )}
-          {visibleTiers(c.config.tiers, c.tier, open).map((t, i, shown) => {
-            const reached = tierReached(c.config.tiers, c.tier, t);
-            return (
-              <ListRow
-                key={t.tier}
-                title={tierLabel(t.tier)}
-                subtitle={tierGoal(t, c.config.distance_goals)}
-                value={`${t.points} pts`}
-                highlighted={reached}
-                trailing={reached ? <Badge label="Reached" tone="success" /> : undefined}
-                divider={i < shown.length - 1}
-              />
-            );
-          })}
-          <Button
-            label={open ? "Show less" : `See all ${c.config.tiers.length} levels`}
-            variant="ghost"
-            onPress={() => setOpen((o) => !o)}
-          />
-        </View>
+      {/* Once joined, the card leads with progress; what the challenge is stays one tap away. */}
+      {(!c.joined || open) && (
+        <T variant="small" tone="textMuted">
+          {c.description}
+        </T>
       )}
 
       {c.joined && (
@@ -201,6 +176,26 @@ function ChallengeCard({
         </View>
       )}
 
+      {c.kind === "individual_tiered" && (
+        <View>
+          {visibleTiers(c.config.tiers, c.tier, open).map((t, i, shown) => {
+            const reached = tierReached(c.config.tiers, c.tier, t);
+            const folded = open ? "" : reached ? "Top level: " : "Next: ";
+            return (
+              <ListRow
+                key={t.tier}
+                title={`${folded}${tierLabel(t.tier)}`}
+                subtitle={tierGoal(t, c.config.distance_goals)}
+                value={`${t.points} pts`}
+                highlighted={reached}
+                trailing={reached ? <Badge label="Reached" tone="success" /> : undefined}
+                divider={i < shown.length - 1}
+              />
+            );
+          })}
+        </View>
+      )}
+
       {squadLine && <T variant="small">{squadLine}</T>}
       {note && (
         <T variant="small" tone="textMuted">
@@ -208,6 +203,13 @@ function ChallengeCard({
         </T>
       )}
       {error && <Notice message={error} />}
+      {(c.kind === "individual_tiered" || c.joined) && (
+        <Button
+          label={open ? "Show less" : c.kind === "individual_tiered" ? `All ${c.config.tiers.length} levels` : "What this challenge is"}
+          variant="ghost"
+          onPress={() => setOpen((o) => !o)}
+        />
+      )}
       {action && (
         <Button
           label={action.label}

@@ -1,5 +1,5 @@
 begin;
-select plan(64);
+select plan(65);
 
 -- Official challenges (supabase/migrations/*_challenges.sql, docs/scoring-proposal.md §5).
 -- Week under test: Monday 2026-06-01 to Sunday 2026-06-07, athletes in UTC unless stated.
@@ -260,6 +260,11 @@ select is((select join_blocked from public.my_challenges() where challenge_id = 
   'and says why a challenge cannot be joined');
 set local role anon;
 select throws_ok($$select * from public.my_challenges()$$, '42501', null, 'anonymous visitors cannot read challenges');
+
+-- The app's word is "counted workout" (DESIGN.md, Words); descriptions never say "accepted".
+reset role;
+select ok(not exists (select 1 from public.challenges where description ilike '%accepted%'),
+  'challenge descriptions say counted workouts, never accepted');
 
 select * from finish();
 rollback;

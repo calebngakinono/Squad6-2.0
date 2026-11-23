@@ -30,7 +30,7 @@ describe("tiers", () => {
 describe("squad progress", () => {
   it("shows the server's counts, or nothing without a squad", () => {
     expect(squadProgress({ squad_roster: 4, squad_required: 3, squad_qualified: 1 })).toBe(
-      "1 of 3 needed · squad of 4 when the week started",
+      "1 of 3 needed ∙ squad of 4 when the week started",
     );
     expect(squadProgress({ squad_roster: null, squad_required: null, squad_qualified: null })).toBeNull();
   });

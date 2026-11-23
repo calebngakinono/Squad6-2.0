@@ -1,8 +1,9 @@
+import { SEP } from "@squad-six/shared";
 import type { SquadActivityRow, WeekGoalRow } from "@squad-six/shared";
 import { router, Stack, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { RefreshControl, StyleSheet, View } from "react-native";
-import { Badge } from "@/components/badge";
+import { Alert, RefreshControl, StyleSheet, View } from "react-native";
+import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
 import { ListGroup } from "@/components/list-group";
 import { ListRow } from "@/components/list-row";
@@ -16,13 +17,15 @@ import { activityLabel, dayLabel, outcomeLabel } from "@/features/history/view";
 import { loadWeekGoals } from "@/features/goals/api";
 import { goalLabel, pips } from "@/features/goals/view";
 import { GoalPips } from "@/features/goals/week-strip";
-import { loadSquadHome, type SquadHome } from "@/features/squads/api";
+import { loadSquadHome, squadApi, type SquadHome } from "@/features/squads/api";
+import { squadErrorMessage } from "@/features/squads/errors";
+import { inviteFirst, SquadPanel } from "@/features/squads/squad-panel";
 import { useSession } from "@/lib/session";
 import { layout } from "@/theme/tokens";
 
-// Who in my squad trained this week, and what everyone did recently. Summaries only: no routes,
-// distances or health data are ever shown to teammates.
-export default function SquadActivityScreen() {
+// The Squad tab: who trained this week, what everyone did recently, then the squad itself (members,
+// invite code, leave). Summaries only: no routes, distances or health data are ever shown to teammates.
+export default function SquadScreen() {
   const { session } = useSession();
   const userId = session!.user.id;
   const [home, setHome] = useState<SquadHome | null>(null);
@@ -30,6 +33,7 @@ export default function SquadActivityScreen() {
   const [goals, setGoals] = useState<WeekGoalRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -48,6 +52,25 @@ export default function SquadActivityScreen() {
       load();
     }, [load]),
   );
+
+  // Runs a squad action, shows a friendly error if the server refuses, then reloads.
+  function act(fn: () => Promise<unknown>) {
+    setBusy(true);
+    fn()
+      .catch((e) => Alert.alert("Couldn't do that", squadErrorMessage(e)))
+      .finally(async () => {
+        await load();
+        setBusy(false);
+      });
+  }
+
+  const panelActions = {
+    decide: squadApi.decide,
+    remove: squadApi.remove,
+    makeCaptain: squadApi.makeCaptain,
+    newInviteCode: squadApi.newInviteCode,
+    leave: squadApi.leave,
+  };
 
   const now = new Date();
   const squad = home?.kind === "in-squad" ? home.squad : null;
@@ -68,20 +91,28 @@ export default function SquadActivityScreen() {
         />
       }
     >
-      <Stack.Screen options={{ headerShown: true, title: squad?.name ?? "Squad activity" }} />
+      <Stack.Screen options={{ headerShown: true, title: squad?.name ?? "Squad" }} />
       {error && <Notice message={error} action={{ label: "Try again", onPress: () => void load() }} />}
       {(home === null || rows === null || goals === null) && !error && <Loading label="Loading activity" />}
       {home?.kind === "no-squad" && (
-        <EmptyState
-          title="Not in a squad yet"
-          message="Join or start a squad to see what your teammates are doing."
-          action={{ label: "Back to home", onPress: () => router.back() }}
-        />
+        <View style={styles.section}>
+          <EmptyState
+            title="Not in a squad yet"
+            message="Train with up to five other people who are counting on you. Join one with an invite code, or start your own."
+            action={{ label: "Join with an invite code", onPress: () => router.push("/join") }}
+          />
+          <Button label="Start a squad" variant="ghost" onPress={() => router.push("/create-squad")} />
+        </View>
+      )}
+
+      {/* Too few members to be ranked: getting people in comes before everything else here. */}
+      {squad && inviteFirst(squad) && (
+        <SquadPanel squad={squad} myUserId={userId} busy={busy} act={act} part="invite" actions={panelActions} />
       )}
 
       {week && (
         <View style={styles.section}>
-          <SectionHeader title="This week" subtitle={`${trained} of ${week.length} have trained · weeks start Monday`} />
+          <SectionHeader title="This week" subtitle={`${trained} of ${week.length} have trained${SEP}weeks start Monday`} />
           <ListGroup>
             {week.map((m) => {
               const name = m.is_me ? "You" : (m.display_name ?? "Teammate");
@@ -91,9 +122,10 @@ export default function SquadActivityScreen() {
                 <ListRow
                   key={m.user_id}
                   title={name}
-                  subtitle={m.weekly_goal === null ? `${label} · no goal set` : label}
+                  subtitle={m.weekly_goal === null ? `${label}${SEP}no goal set` : label}
                   accessibilityLabel={`${name}, ${label}${reached ? ", goal reached" : ""}`}
-                  trailing={reached ? <Badge label="Goal reached" tone="accent" /> : <GoalPips marks={pips(m.days_this_week, m.weekly_goal)} />}
+                  // Blazes, like the trail sign on Home: all filled once the goal is reached (spoken in the label).
+                  trailing={<GoalPips marks={pips(m.days_this_week, m.weekly_goal)} />}
                   highlighted={m.is_me}
                 />
               );
@@ -112,14 +144,25 @@ export default function SquadActivityScreen() {
               {rows.map((r) => (
                 <ListRow
                   key={r.session_id}
-                  title={`${r.is_me ? "You" : (r.display_name ?? "Athlete")} · ${activityLabel(r.activity)}`}
-                  subtitle={`${dayLabel(r.local_date, now)} · ${r.active_minutes} min`}
+                  title={`${r.is_me ? "You" : (r.display_name ?? "Athlete")}${SEP}${activityLabel(r.activity)}`}
+                  subtitle={`${dayLabel(r.local_date, now)}${SEP}${r.active_minutes} min`}
                   value={outcomeLabel(r.status, r.points)}
                 />
               ))}
             </ListGroup>
           )}
         </View>
+      )}
+
+      {squad && (
+        <SquadPanel
+          squad={squad}
+          myUserId={userId}
+          busy={busy}
+          act={act}
+          part="manage"
+          actions={panelActions}
+        />
       )}
     </Screen>
   );

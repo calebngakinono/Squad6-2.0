@@ -1,3 +1,4 @@
+import { SEP } from "@squad-six/shared";
 import type { ChallengeTier, ChallengeWeek, DistanceGoal, MyChallenge } from "@squad-six/shared";
 
 // Display helpers for the challenges screen. Pure, so they are unit-tested. Nothing here decides a tier
@@ -48,7 +49,7 @@ export function visibleTiers(tiers: ChallengeTier[], reported: string | null, op
 /** The squad line: how many members are needed and how many have done it, as the server counted. */
 export function squadProgress(c: Pick<MyChallenge, "squad_roster" | "squad_required" | "squad_qualified">): string | null {
   if (c.squad_roster == null || c.squad_required == null || c.squad_qualified == null) return null;
-  return `${c.squad_qualified} of ${c.squad_required} needed · squad of ${c.squad_roster} when the week started`;
+  return `${c.squad_qualified} of ${c.squad_required} needed${SEP}squad of ${c.squad_roster} when the week started`;
 }
 
 /** The Join button to offer, if any. */

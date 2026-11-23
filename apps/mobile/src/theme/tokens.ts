@@ -39,6 +39,8 @@ export const palette = {
     accentSoft: "#D3E0D2",
     /** Pressed state of something on accentSoft (the trail sign). */
     accentSoftPressed: "#C3D4C2",
+    /** The trail sign's board edge (decorative, drawn 1.5pt). */
+    signEdge: "#ADB499",
     /** Unfilled part of a progress track: visible against the background. */
     track: "#C8CDB6",
     success: "#26604A",
@@ -69,6 +71,7 @@ export const palette = {
     onAccent: "#071E15",
     accentSoft: "#284936",
     accentSoftPressed: "#1C3829",
+    signEdge: "#7E8B6B",
     track: "#2A3B2D",
     success: "#B9D9B4",
     successSoft: "#284936",
@@ -224,6 +227,8 @@ export const state = {
   disabledOpacity: 0.42,
   /** Slight press-in on buttons and tiles. */
   pressedScale: 0.98,
+  /** A bare text label pressed (header items inside the system's own glass button). */
+  pressedOpacity: 0.55,
 } as const;
 
 /** Durations in ms. Motion is quiet: short, ease-out, never decorative. Honor Reduce Motion. */

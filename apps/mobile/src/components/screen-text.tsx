@@ -24,11 +24,19 @@ const toneRole: Record<TextTone, ColorRole> = {
   onAccent: "onAccent",
 };
 
+/**
+ * How far the already-large variants grow with the iOS text size. They start at 32–76pt, so letting
+ * them triple would push a timer or a score off the screen; reading text (body, label, small…) is never
+ * capped. A screen can still pass its own maxFontSizeMultiplier.
+ */
+const MAX_SCALE: Partial<Record<TypeVariant, number>> = { timer: 1.3, display: 1.4, sign: 1.5, title: 1.5 };
+
 // Text that always uses the token scale and palette, so screens never hard-code type or color.
-export function T({ variant = "body", tone = "text", numeric = false, align, style, ...rest }: Props) {
+export function T({ variant = "body", tone = "text", numeric = false, align, style, maxFontSizeMultiplier, ...rest }: Props) {
   const t = useTheme();
   return (
     <Text
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? MAX_SCALE[variant]}
       style={[
         t.text(variant),
         { color: t.color[toneRole[tone]] },
