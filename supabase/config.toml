@@ -253,6 +253,13 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# Forgot password: the email carries a 6-digit code ({{ .Token }}) that the app's Reset password screen
+# takes, so the reset never depends on a link opening the app. Staging and production need the same
+# template pasted into the dashboard (docs/deployment.md, "Password reset email").
+[auth.email.template.recovery]
+subject = "Your Squad Six code"
+content_path = "./supabase/templates/recovery.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

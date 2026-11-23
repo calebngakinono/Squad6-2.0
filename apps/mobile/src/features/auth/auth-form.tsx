@@ -1,4 +1,5 @@
 import * as AppleAuthentication from "expo-apple-authentication";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Button } from "@/components/button";
@@ -130,6 +131,13 @@ export function AuthForm({ initialMode }: Props) {
           busy={busy === "email"}
           disabled={!canSubmit || (busy !== null && busy !== "email")}
         />
+        {!isSignUp && (
+          <Button
+            variant="ghost"
+            label="Forgot password?"
+            onPress={() => router.push({ pathname: "/reset-password", params: email.trim() ? { email: email.trim() } : {} })}
+          />
+        )}
         <Button
           variant="ghost"
           label={isSignUp ? "I already have an account" : "Create an account with email"}
