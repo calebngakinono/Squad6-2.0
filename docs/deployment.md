@@ -116,6 +116,31 @@ About or Settings screen, and the marketing site footer) **before release**. To 
 merged one). Profiles and squads created before the list existed keep their old typed city as a label but have
 no `city_id`, so they do not appear in city or country standings until a city is chosen.
 
+## TestFlight builds
+
+TestFlight builds are store-signed builds of the iPhone app that testers install from Apple's TestFlight app.
+They point at **staging** until the production database is released.
+
+- Profile `testflight` in `apps/mobile/eas.json`: extends `production` (App Store distribution, build number
+  increased automatically) but uses the EAS **preview** environment.
+- The EAS **preview** environment holds `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  (staging) and `EXPO_PUBLIC_WEBSITE_URL`, all plain text because they ship inside the app anyway. A store
+  build bundles the code on EAS's servers, where `.env.local` never goes, so without these the app has no
+  server to talk to. Check them with `npx eas-cli@latest env:list preview`.
+- The `production` environment is still empty on purpose: fill it with the production values when production
+  is released, and use the `production` profile for the App Store release.
+
+Run it from `apps/mobile` in your own terminal (the first run asks for your Apple ID and creates the signing
+certificate and, if needed, the app in App Store Connect):
+
+```bash
+npx eas-cli@latest build --profile testflight --platform ios --auto-submit
+```
+
+After Apple finishes processing (usually 10–30 minutes), add yourself as an **internal tester** in App Store
+Connect → TestFlight. Internal testing needs no review. External testers need a short beta review, and Apple
+asks what the app does with Health data and for the privacy policy URL.
+
 ## Testing on staging
 
 Staging is the online copy of the whole system, with its own database, used with test accounts before
