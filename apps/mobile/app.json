@@ -75,7 +75,7 @@
         "@kingstinct/react-native-healthkit",
         {
           "NSHealthShareUsageDescription": "Squad Six reads workouts and heart rate from Apple Health to verify the workouts you log. It never sells or advertises with this data.",
-          "NSHealthUpdateUsageDescription": false,
+          "NSHealthUpdateUsageDescription": "Squad Six only reads from Apple Health to verify your workouts. It never saves anything to Apple Health.",
           "background": false
         }
       ],
