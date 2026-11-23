@@ -20,9 +20,9 @@ describe("display", () => {
   });
 
   it("says how many more members a squad needs to be ranked (four in total)", () => {
-    expect(squadSubtitle({ city: "Denver, Colorado", members: 4, is_ranked: true })).toBe("Denver, Colorado · 4 members");
-    expect(squadSubtitle({ city: "Denver, Colorado", members: 3, is_ranked: false })).toBe("Denver, Colorado · 3 members · ranked with 1 more");
-    expect(squadSubtitle({ city: "Denver, Colorado", members: 1, is_ranked: false })).toBe("Denver, Colorado · 1 member · ranked with 3 more");
+    expect(squadSubtitle({ city: "Denver, Colorado", members: 4, is_ranked: true })).toBe("Denver, Colorado ∙ 4 members");
+    expect(squadSubtitle({ city: "Denver, Colorado", members: 3, is_ranked: false })).toBe("Denver, Colorado ∙ 3 members ∙ 1 more member to be ranked");
+    expect(squadSubtitle({ city: "Denver, Colorado", members: 1, is_ranked: false })).toBe("Denver, Colorado ∙ 1 member ∙ 3 more members to be ranked");
   });
 });
 

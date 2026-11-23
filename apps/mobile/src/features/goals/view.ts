@@ -62,3 +62,18 @@ export function pips(days: number, goal: number | null): boolean[] {
   const count = Math.min(7, goal ?? days);
   return Array.from({ length: count }, (_, i) => i < days);
 }
+
+/**
+ * After a finished workout: did it add a new day to my week? Only answerable when my count was read
+ * before the workout finished (null: unknown, e.g. the app restarted in between).
+ */
+export function isNewDay(before: number | null, after: WeekGoalRow | undefined): boolean {
+  return before !== null && !!after && after.days_this_week > before;
+}
+
+/** The line under the trail on the finished workout. Counts only; never a judgement. */
+export function finishTrailLine(newDay: boolean | null, teammates: number): string | null {
+  if (newDay === true) return teammates > 0 ? "Today's blaze is on your trail. Your squad sees it on their Home screen." : "Today's blaze is on your trail.";
+  if (newDay === false) return "Today was already on your trail.";
+  return null;
+}

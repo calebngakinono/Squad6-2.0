@@ -308,7 +308,7 @@ that season ended.
 ## 10. Challenges: what is built (2026-11-18)
 
 Built in `supabase/migrations/20261118010000_challenges.sql`; tests in `supabase/tests/challenges.test.sql`;
-app screen `apps/mobile/src/app/challenges.tsx`. Values are exactly the approved ones in §5 and §8.
+app screen `apps/mobile/src/app/(tabs)/challenges/index.tsx`. Values are exactly the approved ones in §5 and §8.
 
 | Challenge | Rule | Award |
 |---|---|---|
